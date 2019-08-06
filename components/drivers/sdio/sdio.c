@@ -520,7 +520,7 @@ static rt_int32_t sdio_read_cis(struct rt_sdio_function *func)
 {
     rt_int32_t ret;
     struct rt_sdio_function_tuple *curr, **prev;
-    rt_uint32_t i, cisptr = 0;
+    rt_uint32_t i, cisptr = 0, tupindex = 0;
     rt_uint8_t data;
     rt_uint8_t tpl_code, tpl_link;
 
@@ -558,6 +558,8 @@ static rt_int32_t sdio_read_cis(struct rt_sdio_function *func)
         curr = rt_malloc(sizeof(struct rt_sdio_function_tuple) + tpl_link);
         if (!curr)
             return -RT_ENOMEM;
+
+        func->tup[tupindex++] = curr;
         curr->data = (rt_uint8_t *)curr + sizeof(struct rt_sdio_function_tuple);
 
         for (i = 0; i < tpl_link; i++)
@@ -1410,3 +1412,37 @@ void rt_sdio_init(void)
 
 }
 
+rt_int32_t sdio_reset(struct rt_mmcsd_host *host)
+{
+    rt_int32_t index = 0, i;
+    struct sdio_card *sc;
+    rt_list_t *l;
+
+    if (host->card && host->card->card_type != CARD_TYPE_SDIO) {
+        LOG_E("%s: invalid host!\n",__func__);
+        return -RT_EINVAL;
+    }
+
+    for (i = host->card->sdio_function_num ; i >=  0; i--) {
+        index = 0;
+        while(host->card->sdio_function[i]->tup[index++])
+            rt_free(host->card->sdio_function[i]->tup[index-1]);
+
+        rt_free(host->card->sdio_function[i]);
+        host->card->sdio_function[i] = RT_NULL;
+    }
+
+    for (l = (&sdio_cards)->next; l != &sdio_cards; l = l->next) {
+        sc = (struct sdio_card *)rt_list_entry(l, struct sdio_card, list);
+        if(host->card == sc->card) {
+            rt_list_remove(&sc->list);
+            rt_free(sc);
+            break;
+        }
+    }
+
+    rt_free(host->card);
+    host->card = RT_NULL;
+    mmcsd_change(host);
+    return 0;
+}

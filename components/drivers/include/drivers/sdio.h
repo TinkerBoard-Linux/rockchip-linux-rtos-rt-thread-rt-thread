@@ -221,6 +221,7 @@ rt_int32_t sdio_set_block_size(struct rt_sdio_function *func,
                                rt_uint32_t              blksize);
 rt_int32_t sdio_register_driver(struct rt_sdio_driver *driver);
 rt_int32_t sdio_unregister_driver(struct rt_sdio_driver *driver);
+rt_int32_t sdio_reset(struct rt_mmcsd_host *host);
 void rt_sdio_init(void);
 
 #ifdef __cplusplus

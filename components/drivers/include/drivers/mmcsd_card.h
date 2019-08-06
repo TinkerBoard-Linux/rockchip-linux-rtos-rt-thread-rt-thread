@@ -122,6 +122,7 @@ struct rt_sdio_function {
 
     struct rt_sdio_function_tuple *tuples;
 
+    void            *tup[32];
     void            *priv;
 };
 
