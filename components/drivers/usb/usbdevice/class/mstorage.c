@@ -12,6 +12,7 @@
  */
 
 #include <rtthread.h>
+#include <rthw.h>
 #include "drivers/usb_device.h"
 #include "mstorage.h"
 
@@ -179,6 +180,7 @@ static rt_size_t _read_capacity(ufunction_t func, ustorage_cbw_t cbw);
 static rt_size_t _read_10(ufunction_t func, ustorage_cbw_t cbw);
 static rt_size_t _write_10(ufunction_t func, ustorage_cbw_t cbw);
 static rt_size_t _verify_10(ufunction_t func, ustorage_cbw_t cbw);
+static rt_size_t  _reboot_loader(ufunction_t func, ustorage_cbw_t cbw);
 
 ALIGN(4)
 static struct scsi_cmd cmd_data[] =
@@ -194,6 +196,7 @@ static struct scsi_cmd cmd_data[] =
     {SCSI_READ_10,         _read_10,         10, BLOCK_COUNT, 0, DIR_IN},
     {SCSI_WRITE_10,        _write_10,        10, BLOCK_COUNT, 0, DIR_OUT},
     {SCSI_VERIFY_10,       _verify_10,       10, FIXED,       0, DIR_NONE},
+    {SCSI_REBOOT_LOADER,   _reboot_loader,   6,  FIXED,       0, DIR_NONE},
 };
 
 static void _send_status(ufunction_t func)
@@ -563,6 +566,30 @@ static rt_size_t _start_stop(ufunction_t func,
 
     data = (struct mstorage*)func->user_data;
     data->csw_response.status = 0;
+
+    return 0;
+}
+
+#ifdef RT_USING_RESET
+extern void BSP_SetLoaderFlag(void);
+#endif
+static rt_size_t _reboot_loader(ufunction_t func,
+    ustorage_cbw_t cbw)
+{
+    RT_ASSERT(cbw != RT_NULL);
+
+    RT_DEBUG_LOG(RT_DEBUG_USB, ("_reboot_loader\n"));
+
+    if (cbw->cb[1] != 0xe0 || cbw->cb[2] != 0xff
+        || cbw->cb[3] != 0xff || cbw->cb[4] != 0xff)
+        return 0;
+
+#ifdef RT_USING_RESET
+    if (cbw->cb[5] == 0xfe) {
+        BSP_SetLoaderFlag();
+        rt_hw_cpu_reset();
+    }
+#endif
 
     return 0;
 }

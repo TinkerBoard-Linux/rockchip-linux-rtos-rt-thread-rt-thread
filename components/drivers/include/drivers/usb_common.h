@@ -511,6 +511,7 @@ typedef struct urequest* ureq_t;
 #define SCSI_READ_10                    0x28
 #define SCSI_WRITE_10                   0x2a
 #define SCSI_VERIFY_10                  0x2f
+#define SCSI_REBOOT_LOADER              0xff
 
 #define CBW_SIGNATURE                   0x43425355
 #define CSW_SIGNATURE                   0x53425355
