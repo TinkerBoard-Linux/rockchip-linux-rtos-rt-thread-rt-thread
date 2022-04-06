@@ -14,13 +14,13 @@
 #include <rtthread.h>
 #include <rtdevice.h>
 
-#define PWM_CMD_ENABLE      (128 + 0)
-#define PWM_CMD_DISABLE     (128 + 1)
-#define PWM_CMD_SET         (128 + 2)
-#define PWM_CMD_GET         (128 + 3)
-#define PWMN_CMD_ENABLE     (128 + 4)
-#define PWMN_CMD_DISABLE    (128 + 5)
-#define PWM_CMD_SET_ONESHOT (128 + 6)
+#define PWM_CMD_ENABLE      (RT_DEVICE_CTRL_BASE(PWM) + 0)
+#define PWM_CMD_DISABLE     (RT_DEVICE_CTRL_BASE(PWM) + 1)
+#define PWM_CMD_SET         (RT_DEVICE_CTRL_BASE(PWM) + 2)
+#define PWM_CMD_GET         (RT_DEVICE_CTRL_BASE(PWM) + 3)
+#define PWMN_CMD_ENABLE     (RT_DEVICE_CTRL_BASE(PWM) + 4)
+#define PWMN_CMD_DISABLE    (RT_DEVICE_CTRL_BASE(PWM) + 5)
+#define PWM_CMD_SET_ONESHOT (RT_DEVICE_CTRL_BASE(PWM) + 6)
 
 struct rt_pwm_configuration
 {
