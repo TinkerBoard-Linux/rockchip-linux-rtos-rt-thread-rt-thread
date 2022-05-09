@@ -27,6 +27,7 @@ struct hid_s
     int status;
     USB_DMA_ALIGN rt_uint8_t protocol;
     USB_DMA_ALIGN rt_uint8_t report_buf[MAX_REPORT_SIZE];
+    USB_DMA_ALIGN rt_uint8_t idle;
     struct rt_messagequeue hid_mq;
 };
 
@@ -484,8 +485,7 @@ static rt_err_t _interface_handler(ufunction_t func, ureq_t setup)
         rt_usbd_ep0_write(func->device, data->report_buf,setup->wLength);
         break;
     case USB_HID_REQ_GET_IDLE:
-
-        dcd_ep0_send_status(func->device->dcd);
+        rt_usbd_ep0_write(func->device, &data->idle, 1);
         break;
     case USB_HID_REQ_GET_PROTOCOL:
         rt_usbd_ep0_write(func->device, &data->protocol,1);
@@ -498,6 +498,7 @@ static rt_err_t _interface_handler(ufunction_t func, ureq_t setup)
         rt_usbd_ep0_read(func->device, data->report_buf, setup->wLength, _hid_set_report_callback);
         break;
     case USB_HID_REQ_SET_IDLE:
+        data->idle = setup->wValue >> 8;
         dcd_ep0_send_status(func->device->dcd);
         break;
     case USB_HID_REQ_SET_PROTOCOL:
@@ -659,6 +660,7 @@ static void rt_usb_hid_init(struct ufunction *func)
     hiddev->parent.write = _hid_write;
 #endif
     hiddev->func = func;
+    hiddev->idle = 1;
 
     rt_device_register(&hiddev->parent, "hidd", RT_DEVICE_FLAG_RDWR);
     rt_mq_init(&hiddev->hid_mq, "hiddmq", hid_mq_pool, sizeof(struct hid_report),
