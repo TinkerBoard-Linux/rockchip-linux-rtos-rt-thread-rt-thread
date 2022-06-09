@@ -407,6 +407,7 @@ RT_WEAK  void key_ctrl_iomux_config(void)
     HAL_PINCTRL_SetParam(GPIO_BANK1,
                          GPIO_PIN_B6,
                          PIN_CONFIG_PUL_NORMAL);
+>>>>>>> [BSP] Rockchip: Merge rockchip porting code
 }
 
 /**

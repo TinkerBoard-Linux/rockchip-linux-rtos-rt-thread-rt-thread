@@ -20,8 +20,7 @@ if PROJECT == 'CA':
     #add include path
     path = [hal_lib + '/hal/inc',
         hal_lib + '/bsp/' + SOC,
-        hal_lib + '/CMSIS/Device/' + SOC + '/Include',
-        hal_lib + '/CMSIS/Core_A/Include']
+        hal_lib + '/CMSIS/Device/' + SOC + '/Include']
 
 else:
 
@@ -44,8 +43,18 @@ else:
     path = [hal_lib + '/hal/inc',
         hal_lib + '/bsp/' + PROJECT,
         hal_lib + '/CMSIS/Device',
-        hal_lib + '/CMSIS/Device/' + PROJECT + '/Include',
-        hal_lib + '/CMSIS/Core/Include']
+        hal_lib + '/CMSIS/Device/' + PROJECT + '/Include']
+
+if rtconfig.ARCH == 'arm':
+    if PROJECT == 'CA':
+        path.append(hal_lib + '/CMSIS/Core_A/Include')
+    else:
+        path.append(hal_lib + '/CMSIS/Core/Include')
+elif rtconfig.ARCH == 'risc-v':
+    path.append(hal_lib + '/CMSIS/RISCV/Include')
+else:
+    print('you must defined ARCH!!!')
+
 
 group = DefineGroup(PROJECT + '_StdPeriph', src, depend = [''], CPPPATH = path)
 

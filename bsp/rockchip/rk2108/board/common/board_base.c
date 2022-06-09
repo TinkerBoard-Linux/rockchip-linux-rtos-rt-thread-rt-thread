@@ -11,9 +11,9 @@
 #include <rthw.h>
 #include <rtthread.h>
 
-#include "hal_base.h"
 #include "board.h"
 #include "drv_cache.h"
+#include "hal_base.h"
 #include "hal_bsp.h"
 
 #ifdef RT_USING_CRU
@@ -118,7 +118,7 @@ RT_WEAK const struct uart_board g_uart0_board =
 #if defined(RT_USING_UART1)
 RT_WEAK const struct uart_board g_uart1_board =
 {
-    .baud_rate = UART_BR_1500000,
+    .baud_rate = ROCKCHIP_UART_BAUD_RATE_DEFAULT,
     .dev_flag = ROCKCHIP_UART_SUPPORT_FLAG_DEFAULT,
     .bufer_size = RT_SERIAL_RB_BUFSZ,
     .name = "uart1",
@@ -518,7 +518,7 @@ RT_WEAK void tick_isr(int vector, void *param)
     rt_interrupt_leave();
 }
 
-RT_SECTION(".sram.text") void BSP_MPU_Init(void)
+SECTION(".sram.text") void BSP_MPU_Init(void)
 {
     static const ARM_MPU_Region_t table[] =
     {
