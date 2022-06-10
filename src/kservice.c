@@ -1563,6 +1563,8 @@ RT_WEAK void rt_free(void *rmem)
 
     /* call 'rt_free' hook */
     RT_OBJECT_HOOK_CALL(rt_free_hook, (rmem));
+    /* NULL check */
+    if (rmem == RT_NULL) return;
     /* Enter critical zone */
     level = _heap_lock();
     _MEM_FREE(rmem);
@@ -1684,6 +1686,8 @@ RT_WEAK void rt_free_align(void *ptr)
 {
     void *real_ptr;
 
+    /* NULL check */
+    if (ptr == RT_NULL) return;
     real_ptr = (void *) * (rt_ubase_t *)((rt_ubase_t)ptr - sizeof(void *));
     rt_free(real_ptr);
 }
