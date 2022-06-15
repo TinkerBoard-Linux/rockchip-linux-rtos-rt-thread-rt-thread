@@ -22,25 +22,37 @@
 #define PWM_CMD_SET_PERIOD  (RT_DEVICE_CTRL_BASE(PWM) + 6)
 #define PWM_CMD_SET_PULSE   (RT_DEVICE_CTRL_BASE(PWM) + 7)
 #define PWM_CMD_SET_ONESHOT (RT_DEVICE_CTRL_BASE(PWM) + 8)
+#define PWM_CMD_SET_OFFSET  (RT_DEVICE_CTRL_BASE(PWM) + 9)
+#define PWM_CMD_SET_CAPTURE (RT_DEVICE_CTRL_BASE(PWM) + 10)
+#define PWM_CMD_LOCK        (RT_DEVICE_CTRL_BASE(PWM) + 11)
+#define PWM_CMD_UNLOCK      (RT_DEVICE_CTRL_BASE(PWM) + 12)
+#define PWM_CMD_INT_ENABLE  (RT_DEVICE_CTRL_BASE(PWM) + 13)
+#define PWM_CMD_INT_DISABLE (RT_DEVICE_CTRL_BASE(PWM) + 14)
+
+enum rt_pwm_aligned_mode
+{
+    PWM_LEFT_ALIGNED = 1,
+    PWM_CENTER_ALIGNED,
+    PWM_UNALIGNED,
+};
 
 struct rt_pwm_configuration
 {
     rt_uint32_t channel; /* 1-n or 0-n, which depends on specific MCU requirements */
     rt_uint32_t period;  /* unit:ns 1ns~4.29s:1Ghz~0.23hz */
     rt_uint32_t pulse;   /* unit:ns (pulse<=period) */
-    rt_bool_t polarity;  /* polarity inverted or not */
+    rt_uint32_t count;   /* (count+1) repeated effective periods */
+    rt_uint32_t offset;  /* unit:ns 0ns<=offset<=(period-duty) */
+    rt_uint32_t mask;    /* channel mask for lock/unlock, such as 0x5 indicates channel0 and channel2 */
 
+    rt_bool_t polarity;  /* polarity inverted or not */
     /*
      * RT_TRUE  : The channel of pwm is complememtary.
      * RT_FALSE : The channel of pwm is nomal.
     */
     rt_bool_t  complementary;
-};
 
-struct rt_pwm_oneshot
-{
-    struct rt_pwm_configuration config;
-    rt_uint32_t count;   /* (count+1) repeated effective periods */
+    enum rt_pwm_aligned_mode aligned; /* aligned mode */
 };
 
 struct rt_device_pwm;
@@ -59,8 +71,16 @@ rt_err_t rt_device_pwm_register(struct rt_device_pwm *device, const char *name, 
 
 rt_err_t rt_pwm_enable(struct rt_device_pwm *device, int channel);
 rt_err_t rt_pwm_disable(struct rt_device_pwm *device, int channel);
-rt_err_t rt_pwm_set(struct rt_device_pwm *device, int channel, rt_uint32_t period, rt_uint32_t pulse);
+rt_err_t rt_pwm_set(struct rt_device_pwm *device, int channel, rt_uint32_t period, rt_uint32_t pulse, rt_uint32_t polarity, enum rt_pwm_aligned_mode aligned);
 rt_err_t rt_pwm_set_period(struct rt_device_pwm *device, int channel, rt_uint32_t period);
 rt_err_t rt_pwm_set_pulse(struct rt_device_pwm *device, int channel, rt_uint32_t pulse);
+rt_err_t rt_pwm_set_offset(struct rt_device_pwm *device, int channel, rt_uint32_t offset);
+rt_err_t rt_pwm_set_oneshot(struct rt_device_pwm *device, int channel, rt_uint32_t count);
+rt_err_t rt_pwm_set_capture(struct rt_device_pwm *device, int channel);
+rt_err_t rt_pwm_lock(struct rt_device_pwm *device, rt_uint32_t channel_mask);
+rt_err_t rt_pwm_unlock(struct rt_device_pwm *device, rt_uint8_t channel_mask);
+rt_err_t rt_pwm_int_enable(struct rt_device_pwm *device);
+rt_err_t rt_pwm_int_disable(struct rt_device_pwm *device);
+
 
 #endif /* __DRV_PWM_H_INCLUDE__ */

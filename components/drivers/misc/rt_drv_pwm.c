@@ -160,7 +160,7 @@ rt_err_t rt_pwm_disable(struct rt_device_pwm *device, int channel)
     return result;
 }
 
-rt_err_t rt_pwm_set(struct rt_device_pwm *device, int channel, rt_uint32_t period, rt_uint32_t pulse)
+rt_err_t rt_pwm_set(struct rt_device_pwm *device, int channel, rt_uint32_t period, rt_uint32_t pulse, rt_uint32_t polarity, enum rt_pwm_aligned_mode aligned)
 {
     rt_err_t result = RT_EOK;
     struct rt_pwm_configuration configuration = {0};
@@ -173,6 +173,8 @@ rt_err_t rt_pwm_set(struct rt_device_pwm *device, int channel, rt_uint32_t perio
     configuration.channel = (channel > 0) ? (channel) : (-channel);
     configuration.period = period;
     configuration.pulse = pulse;
+    configuration.polarity = polarity ? RT_TRUE : RT_FALSE;
+    configuration.aligned = aligned;
     result = rt_device_control(&device->parent, PWM_CMD_SET, &configuration);
 
     return result;
@@ -208,6 +210,116 @@ rt_err_t rt_pwm_set_pulse(struct rt_device_pwm *device, int channel, rt_uint32_t
     configuration.channel = (channel > 0) ? (channel) : (-channel);
     configuration.pulse = pulse;
     result = rt_device_control(&device->parent, PWM_CMD_SET_PULSE, &configuration);
+
+    return result;
+}
+
+rt_err_t rt_pwm_set_offset(struct rt_device_pwm *device, int channel, rt_uint32_t offset)
+{
+    rt_err_t result = RT_EOK;
+    struct rt_pwm_configuration configuration = {0};
+
+    if (!device)
+    {
+        return -RT_EIO;
+    }
+
+    configuration.channel = channel;
+    configuration.offset = offset;
+    result = rt_device_control(&device->parent, PWM_CMD_SET_OFFSET, &configuration);
+
+    return result;
+}
+
+rt_err_t rt_pwm_set_oneshot(struct rt_device_pwm *device, int channel, rt_uint32_t count)
+{
+    rt_err_t result = RT_EOK;
+    struct rt_pwm_configuration configuration = {0};
+
+    if (!device)
+    {
+        return -RT_EIO;
+    }
+
+    configuration.channel = channel;
+    configuration.count = count;
+    result = rt_device_control(&device->parent, PWM_CMD_SET_ONESHOT, &configuration);
+
+    return result;
+}
+
+rt_err_t rt_pwm_set_capture(struct rt_device_pwm *device, int channel)
+{
+    rt_err_t result = RT_EOK;
+    struct rt_pwm_configuration configuration = {0};
+
+    if (!device)
+    {
+        return -RT_EIO;
+    }
+
+    configuration.channel = channel;
+    result = rt_device_control(&device->parent, PWM_CMD_SET_CAPTURE, &configuration);
+
+    return result;
+}
+
+rt_err_t rt_pwm_lock(struct rt_device_pwm *device, rt_uint32_t channel_mask)
+{
+    rt_err_t result = RT_EOK;
+    struct rt_pwm_configuration configuration = {0};
+
+    if (!device)
+    {
+        return -RT_EIO;
+    }
+
+    configuration.mask = channel_mask;
+    result = rt_device_control(&device->parent, PWM_CMD_LOCK, &configuration);
+
+    return result;
+}
+
+rt_err_t rt_pwm_unlock(struct rt_device_pwm *device, rt_uint8_t channel_mask)
+{
+    rt_err_t result = RT_EOK;
+    struct rt_pwm_configuration configuration = {0};
+
+    if (!device)
+    {
+        return -RT_EIO;
+    }
+
+    configuration.mask = channel_mask;
+    result = rt_device_control(&device->parent, PWM_CMD_UNLOCK, &configuration);
+
+    return result;
+}
+
+rt_err_t rt_pwm_int_enable(struct rt_device_pwm *device)
+{
+    rt_err_t result = RT_EOK;
+
+    if (!device)
+    {
+        return -RT_EIO;
+    }
+
+    result = rt_device_control(&device->parent, PWM_CMD_INT_ENABLE, NULL);
+
+    return result;
+}
+
+rt_err_t rt_pwm_int_disable(struct rt_device_pwm *device)
+{
+    rt_err_t result = RT_EOK;
+
+    if (!device)
+    {
+        return -RT_EIO;
+    }
+
+    result = rt_device_control(&device->parent, PWM_CMD_INT_DISABLE, NULL);
 
     return result;
 }
@@ -295,6 +407,8 @@ static int pwm(int argc, char **argv)
                     rt_kprintf("Info of device [%s] channel [%d]:\n",pwm_device, atoi(argv[2]));
                     rt_kprintf("period      : %d\n", cfg.period);
                     rt_kprintf("pulse       : %d\n", cfg.pulse);
+                    rt_kprintf("polarity    : %s\n", cfg.polarity ? "inversed" : "normal");
+                    rt_kprintf("aligned     : %d\n", cfg.aligned);
                     rt_kprintf("Duty cycle  : %d%%\n",(int)(((double)(cfg.pulse)/(cfg.period)) * 100));
                 }
                 else
@@ -304,32 +418,132 @@ static int pwm(int argc, char **argv)
             }
             else if (!strcmp(argv[1], "set"))
             {
-                if(argc == 5)
+                if(argc == 7)
                 {
-                    result = rt_pwm_set(pwm_device, atoi(argv[2]), atoi(argv[3]), atoi(argv[4]));
-                    rt_kprintf("pwm info set on %s at channel %d\n",pwm_device,atoi(argv[2]));
+                    result = rt_pwm_set(pwm_device, atoi(argv[2]), atoi(argv[3]), atoi(argv[4]), atoi(argv[5]), atoi(argv[6]));
+                    rt_kprintf("pwm info set on %s at channel %d\n", pwm_device, atoi(argv[2]));
                 }
                 else
                 {
                     rt_kprintf("Set info of device: [%s] error\n", pwm_device);
-                    rt_kprintf("Usage: pwm set <channel> <period> <pulse>\n");
+                    rt_kprintf("Usage: pwm set <channel> <period> <pulse> <polarity> <aligned>\n");
                 }
             }
-
-            else
+            else if (!strcmp(argv[1], "offset"))
             {
-                rt_kprintf("pwm get <channel>                        - get pwm channel info\n");
+                if(argc == 4)
+                {
+                    result = rt_pwm_set_offset(pwm_device, atoi(argv[2]), atoi(argv[3]));
+                    result_str = (result == RT_EOK) ? "Success" : "Fail";
+                    rt_kprintf("%s to set oneshot count to %d on %s at channel %d\n", result_str, atoi(argv[3]), pwm_device, atoi(argv[2]));
+                }
+                else
+                {
+                    rt_kprintf("Set oneshot count of device: [%s] error\n", pwm_device);
+                    rt_kprintf("Usage: pwm offset <channel> <offset> <polarity>\n");
+                }
+            }
+            else if (!strcmp(argv[1], "oneshot"))
+            {
+                if(argc == 4)
+                {
+                    result = rt_pwm_set_oneshot(pwm_device, atoi(argv[2]), atoi(argv[3]));
+                    result_str = (result == RT_EOK) ? "Success" : "Fail";
+                    rt_kprintf("%s to set offset %dns on %s at channel %d\n", result_str, atoi(argv[3]), pwm_device, atoi(argv[2]));
+                }
+                else
+                {
+                    rt_kprintf("Set offset of device: [%s] error\n", pwm_device);
+                    rt_kprintf("Usage: pwm oneshot <channel> <count>\n");
+                }
+            }
+            else if (!strcmp(argv[1], "capture"))
+            {
+                if(argc == 3)
+                {
+                    result = rt_pwm_set_capture(pwm_device, atoi(argv[2]));
+                    result_str = (result == RT_EOK) ? "Success" : "Fail";
+                    rt_kprintf("%s to set capture mode on %s at channel %d\n", result_str, pwm_device, atoi(argv[2]));
+                }
+                else
+                {
+                    rt_kprintf("Set capture mode of device: [%s] error\n", pwm_device);
+                    rt_kprintf("Usage: pwm capture <channel>\n");
+                }
+            }
+            else if (!strcmp(argv[1], "lock"))
+            {
+                if(argc == 3)
+                {
+                    result = rt_pwm_lock(pwm_device, atoi(argv[2]));
+                    result_str = (result == RT_EOK) ? "Success" : "Fail";
+                    rt_kprintf("%s to enable global lock on %s for channel mask 0x%04x\n", result_str, pwm_device, atoi(argv[2]));
+                }
+                else
+                {
+                    rt_kprintf("Enable global lock of device: [%s] error\n", pwm_device);
+                    rt_kprintf("Usage: pwm lock <channel_mask>\n");
+                }
+            }
+            else if (!strcmp(argv[1], "unlock"))
+            {
+                if(argc == 3)
+                {
+                    result = rt_pwm_unlock(pwm_device, atoi(argv[2]));
+                    result_str = (result == RT_EOK) ? "Success" : "Fail";
+                    rt_kprintf("%s to disable global lock on %s for channel mask 0x%04x\n", result_str, pwm_device, atoi(argv[2]));
+                }
+                else
+                {
+                    rt_kprintf("Disable global lock of device: [%s] error\n", pwm_device);
+                    rt_kprintf("Usage: pwm unlock <channel_mask>\n");
+                }
+            }
+            else if (!strcmp(argv[1], "int_enable"))
+            {
+                if(argc == 2)
+                {
+                    result = rt_pwm_int_enable(pwm_device);
+                    result_str = (result == RT_EOK) ? "Success" : "Fail";
+                    rt_kprintf("%s to enable interrupt on %s\n", result_str, pwm_device);
+                }
+                else
+                {
+                    rt_kprintf("Enable interrupt of device: [%s] error\n", pwm_device);
+                    rt_kprintf("Usage: pwm int_enable\n");
+                }
+            }
+            else if (!strcmp(argv[1], "int_disable"))
+            {
+                if(argc == 2)
+                {
+                    result = rt_pwm_int_disable(pwm_device);
+                    result_str = (result == RT_EOK) ? "Success" : "Fail";
+                    rt_kprintf("%s to disable interrupt on %s\n", result_str, pwm_device);
+                }
+                else
+                {
+                    rt_kprintf("Disable interrupt of device: [%s] error\n", pwm_device);
+                    rt_kprintf("Usage: pwm int_disable\n");
+                }
             }
         }
     }
     else
     {
         rt_kprintf("Usage: \n");
-        rt_kprintf("pwm probe   <device name>                - probe pwm by name\n");
-        rt_kprintf("pwm enable  <channel>                    - enable pwm channel\n");
-        rt_kprintf("pwm disable <channel>                    - disable pwm channel\n");
-        rt_kprintf("pwm get     <channel>                    - get pwm channel info\n");
-        rt_kprintf("pwm set     <channel> <period> <pulse>   - set pwm channel info\n");
+        rt_kprintf("pwm probe   <device name>                                   - probe pwm by name\n");
+        rt_kprintf("pwm enable  <channel>                                       - enable pwm channel\n");
+        rt_kprintf("pwm disable <channel>                                       - disable pwm channel\n");
+        rt_kprintf("pwm get     <channel>                                       - get pwm channel info\n");
+        rt_kprintf("pwm set     <channel> <period> <pulse> <polarity> <aligned> - set pwm channel info\n");
+        rt_kprintf("pwm offset  <channel> <offset>                              - set pwm channel offset\n");
+        rt_kprintf("pwm oneshot <channel> <count>                               - set pwm oneshot mode\n");
+        rt_kprintf("pwm capture <channel>                                       - set pwm capture mode\n");
+        rt_kprintf("pwm lock    <channel_mask>                                  - enable pwm global lock\n");
+        rt_kprintf("pwm unlock  <channel_mask>                                  - disable pwm global lock\n");
+        rt_kprintf("pwm int_enable                                              - enable pwm interrupt\n");
+        rt_kprintf("pwm int_disable                                             - disable pwm interrupt\n");
 
         result = - RT_ERROR;
     }

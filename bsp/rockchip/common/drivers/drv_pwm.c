@@ -60,14 +60,26 @@ struct rockchip_pwm
     const struct HAL_PWM_DEV *hal_dev;
     struct clk_gate *clk_gate;
     struct clk_gate *pclk_gate;
+    rt_bool_t is_int_enable;
+
+    /* irq handler */
+    rt_isr_handler_t irq_handler;
 };
 
+static void rockchip_pwm_irq(struct rockchip_pwm *pwm);
+
 #define DEFINE_ROCKCHIP_PWM(ID)      \
-static struct rockchip_pwm pwm##ID = \
-{                                    \
-    .hal_dev = &g_pwm##ID##Dev,      \
-    .name = "pwm"#ID,                \
-};
+static void rockchip_pwm##ID##_irq(int irq, void *param);   \
+static struct rockchip_pwm pwm##ID =                        \
+{                                                           \
+    .hal_dev = &g_pwm##ID##Dev,                             \
+    .name = "pwm"#ID,                                       \
+    .irq_handler = rockchip_pwm##ID##_irq,                  \
+};                                                          \
+static void rockchip_pwm##ID##_irq(int irq, void *param)    \
+{                                                           \
+    rockchip_pwm_irq(&pwm##ID);                             \
+}                                                           \
 
 #ifdef RT_USING_PWM0
 DEFINE_ROCKCHIP_PWM(0)
@@ -81,6 +93,10 @@ DEFINE_ROCKCHIP_PWM(1)
 DEFINE_ROCKCHIP_PWM(2)
 #endif
 
+#ifdef RT_USING_PWM3
+DEFINE_ROCKCHIP_PWM(3)
+#endif
+
 static struct rockchip_pwm *const rockchip_pwm_table[] =
 {
 #ifdef RT_USING_PWM0
@@ -92,18 +108,34 @@ static struct rockchip_pwm *const rockchip_pwm_table[] =
 #ifdef RT_USING_PWM2
     &pwm2,
 #endif
+#ifdef RT_USING_PWM3
+    &pwm3,
+#endif
     RT_NULL
 };
 
-static rt_err_t rockchip_pwm_oneshot(struct rockchip_pwm *pwm, rt_uint32_t channel,
-                                     struct rt_pwm_oneshot *config)
+static void rockchip_pwm_irq(struct rockchip_pwm *pwm)
 {
-    struct PWM_HANDLE *pPWM = &pwm->instance;
+    struct PWM_HANDLE *pPWM = RT_NULL;
+    int i;
 
-    return HAL_PWM_SetOneshot(pPWM, channel, config->count);
+    RT_ASSERT(pwm != RT_NULL);
+    pPWM = &pwm->instance;
+
+    rt_interrupt_enter();
+
+    HAL_PWM_IRQHandler(pPWM);
+
+    for (i = 0; i < HAL_PWM_NUM_CHANNELS; i++)
+    {
+        if (pPWM->mode[i] == HAL_PWM_CAPTURE)
+            rk_pwm_dbg(&pwm->dev, "%s chanel%d period cycles = %ld\n", pwm->name, i, pPWM->result[i].period);
+    }
+
+    rt_interrupt_leave();
 }
 
-static rt_err_t rockchip_pwm_control(struct rt_device_pwm *device, int cmd, void *arg)
+rt_err_t rockchip_pwm_control(struct rt_device_pwm *device, int cmd, void *arg)
 {
     struct rt_pwm_configuration *config = (struct rt_pwm_configuration *)arg;
     struct rockchip_pwm *pwm = (struct rockchip_pwm *)device->parent.user_data;
@@ -113,7 +145,8 @@ static rt_err_t rockchip_pwm_control(struct rt_device_pwm *device, int cmd, void
 
     rk_pwm_dbg(device, "cmd: %d\n", cmd);
 
-    clk_enable(pwm->pclk_gate);
+    if (!pwm->is_int_enable)
+        clk_enable(pwm->pclk_gate);
 
     switch (cmd)
     {
@@ -125,22 +158,48 @@ static rt_err_t rockchip_pwm_control(struct rt_device_pwm *device, int cmd, void
         clk_disable(pwm->clk_gate);
         ret = HAL_PWM_Disable(pPWM, config->channel);
         break;
-    case PWM_CMD_SET_ONESHOT:
-        ret = rockchip_pwm_oneshot(pwm, config->channel, (struct rt_pwm_oneshot *)arg);
-        if (ret)
-            break;
     case PWM_CMD_SET:
         hal_config.channel = config->channel;
         hal_config.periodNS = config->period;
         hal_config.dutyNS = config->pulse;
         hal_config.polarity = config->polarity;
+        hal_config.alignedMode = config->aligned;
         ret = HAL_PWM_SetConfig(pPWM, config->channel, &hal_config);
+        break;
+    case PWM_CMD_SET_ONESHOT:
+        HAL_PWM_SetOneshot(pPWM, config->channel, config->count);
+        clk_enable(pwm->clk_gate);
+        ret = HAL_PWM_Enable(pPWM, config->channel, HAL_PWM_ONE_SHOT);
+        break;
+    case PWM_CMD_SET_OFFSET:
+        ret = HAL_PWM_SetOutputOffset(pPWM, config->channel, config->offset);
+        break;
+    case PWM_CMD_SET_CAPTURE:
+        clk_enable(pwm->clk_gate);
+        ret = HAL_PWM_Enable(pPWM, config->channel, HAL_PWM_CAPTURE);
+        break;
+    case PWM_CMD_LOCK:
+        ret = HAL_PWM_GlobalLock(pPWM, config->mask);
+        break;
+    case PWM_CMD_UNLOCK:
+        ret = HAL_PWM_GlobalUnlock(pPWM, config->mask);
+        break;
+    case PWM_CMD_INT_ENABLE:
+        rt_hw_interrupt_install(pwm->hal_dev->irqNum, pwm->irq_handler, NULL, NULL);
+        rt_hw_interrupt_umask(pwm->hal_dev->irqNum);
+        pwm->is_int_enable = true;
+        break;
+    case PWM_CMD_INT_DISABLE:
+        rt_hw_interrupt_mask(pwm->hal_dev->irqNum);
+        pwm->is_int_enable = false;
         break;
     default:
         break;
     }
 
-    clk_disable(pwm->pclk_gate);
+    if (!pwm->is_int_enable)
+        clk_disable(pwm->pclk_gate);
+
     return ret;
 }
 
