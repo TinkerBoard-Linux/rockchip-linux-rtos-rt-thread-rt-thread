@@ -596,6 +596,7 @@ void rt_console_set_output_hook(console_hook hook);
 rt_err_t rt_get_errno(void);
 void rt_set_errno(rt_err_t no);
 int *_rt_errno(void);
+const char *rt_strerror(rt_err_t error);
 #if !defined(RT_USING_NEWLIB) && !defined(_WIN32)
 #ifndef errno
 #define errno    *_rt_errno()
