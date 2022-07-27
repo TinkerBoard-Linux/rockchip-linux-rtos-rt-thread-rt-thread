@@ -20,6 +20,10 @@ if GetDepend(['BSP_RK3562']):
     src += Glob(rpmsg_lite_lib + '/rpmsg_lite/porting/platform/RK3562/*.c')
     path += [rpmsg_lite_lib + '/include/platform/RK3562/']
 
+if GetDepend(['BSP_RK3308']):
+    src += Glob(rpmsg_lite_lib + '/rpmsg_lite/porting/platform/RK3308/*.c')
+    path += [rpmsg_lite_lib + '/include/platform/RK3308/']
+
 group = DefineGroup('rpmsg-lite', src, depend = ['RT_USING_RPMSG_LITE'], CPPPATH = path)
 
 Return('group')
