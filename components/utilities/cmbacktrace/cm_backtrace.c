@@ -131,6 +131,8 @@ static uint32_t main_stack_start_addr = 0;
 static size_t main_stack_size = 0;
 static uint32_t code_start_addr = 0;
 static size_t code_size = 0;
+static uint32_t ext_code_start_addr = 0;
+static size_t ext_code_size = 0;
 static bool init_ok = false;
 static char call_stack_info[CMB_CALL_STACK_MAX_DEPTH * (8 + 1)] = { 0 };
 static bool on_fault = false;
@@ -350,12 +352,6 @@ size_t cm_backtrace_call_stack(uint32_t *buffer, size_t size, uint32_t sp) {
             /* first depth is PC */
             buffer[depth++] = regs.saved.pc;
             /* fix the LR address in thumb mode */
-            pc = regs.saved.lr - 1;
-            if (is_valid_pc(pc) && (depth < CMB_CALL_STACK_MAX_DEPTH)
-                    && (depth < size)) {
-                buffer[depth++] = pc;
-                regs_saved_lr_is_valid = true;
-            }
         }
 
 #ifdef CMB_USING_OS_PLATFORM

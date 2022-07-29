@@ -2,16 +2,12 @@ import os
 import sys
 
 from building import *
+# from buildutil import *
 
 # toolchains options
-ARCH        ='arm'
-CPU         ='cortex-m4'
-CROSS_TOOL  ='gcc'
-
-if os.getenv('RTT_ROOT'):
-    RTT_ROOT = os.getenv('RTT_ROOT')
-else:
-    RTT_ROOT = r'../../..'
+ARCH='arm'
+CPU='cortex-m4'
+CROSS_TOOL='gcc'
 
 if os.getenv('RTT_CC'):
     CROSS_TOOL = os.getenv('RTT_CC')

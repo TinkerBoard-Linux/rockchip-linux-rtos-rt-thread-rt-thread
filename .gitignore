@@ -30,6 +30,9 @@ documentation/html
 *.su
 #source insight 4 project files
 *.si4project 
+*.patch
+*.swo
+*.swp
 tools/kconfig-frontends/kconfig-mconf
 packages
 dist

@@ -31,7 +31,6 @@
 
 /* print line, must config by user */
 #include <rtthread.h>
-
 #ifndef RT_USING_ULOG
 #ifndef CMB_USING_FLASH_LOG_BACKUP
 #define cmb_println(...)               rt_kprintf(__VA_ARGS__);rt_kprintf("\r\n")
@@ -51,7 +50,6 @@ extern void cmb_flash_log_println(const char *fmt, ...);
 #define CMB_USING_OS_PLATFORM
 /* OS platform type, must config when CMB_USING_OS_PLATFORM is enable */
 #define CMB_OS_PLATFORM_TYPE           CMB_OS_PLATFORM_RTT
-
 /* cpu platform type, must config by user */
 #if defined(PKG_CMBACKTRACE_PLATFORM_M0_M0PLUS)
     #define CMB_CPU_PLATFORM_TYPE      CMB_CPU_ARM_CORTEX_M0
