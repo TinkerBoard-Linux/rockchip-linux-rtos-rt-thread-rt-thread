@@ -23,12 +23,40 @@ documentation/html
 *.a
 *.i
 *.d
+*.patch
+*.swo
+*.swp
 tools/kconfig-frontends/kconfig-mconf
 packages
 dist
 dist_ide_project
 cconfig.h
 GPUCache
+
+# Ignore rockchip output file
+bsp/rockchip/common/hal
+bsp/rockchip/*/documents/html
+bsp/rockchip/*/documents/latex
+bsp/rockchip/*/auto_version.h
+bsp/rockchip/*/Image/Firmware.*
+bsp/rockchip/*/Image/rtthread.img
+bsp/rockchip/tools/log
+bsp/rockchip/swallow
+bsp/rockchip/pisces
+components/hifi3
+third_party/audio/audio_server/source
+applications/wearable
+.repo
+
+# Ignore apps
+applications/rtthread-apps
+
+# Ignore documents
+Rockchip-docs*
+
+# Ignore OS X Desktop Services Store files
+.DS_Store
+._.DS_Store
 
 #cscope files
 cscope.*

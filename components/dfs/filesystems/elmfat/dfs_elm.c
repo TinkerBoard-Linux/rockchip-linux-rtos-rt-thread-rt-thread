@@ -29,6 +29,29 @@
 #include <dfs_fs.h>
 #include <dfs_file.h>
 
+#ifdef FF_MAX_DISK_BUFFER
+
+#define FAT_TABLE_THRESH 256
+
+struct disk_buffer
+{
+    FATFS* fs;
+    rt_device_t id;
+    DWORD  start;
+    DWORD  end;
+    DWORD  sector;
+    UINT count;
+    BYTE data[FF_MAX_DISK_BUFFER];
+};
+
+#if FORCE_PLACED_IN_PSRAM
+SECTION(".psram.bss") static struct disk_buffer dsk_buf;
+#else
+static struct disk_buffer dsk_buf;
+#endif   /* end of FORCE_PLACED_IN_PSRAM */
+
+#endif   /* end of FF_MAX_DISK_BUFFER */
+
 static rt_device_t disk[FF_VOLUMES] = {0};
 
 static int elm_result_to_dfs(FRESULT result)
@@ -153,6 +176,15 @@ int dfs_elm_mount(struct dfs_filesystem *fs, unsigned long rwflag, const void *d
         /* mount succeed! */
         fs->data = fat;
         rt_free(dir);
+#ifdef FF_MAX_DISK_BUFFER
+        if (fat->fsize > FAT_TABLE_THRESH && dsk_buf.id == RT_NULL)
+        {
+            dsk_buf.id = fs->dev_id;
+            dsk_buf.start = fat->fatbase;
+            dsk_buf.end = fat->fatbase + fat->fsize;
+            dsk_buf.fs = fat;
+        }
+#endif
         return 0;
     }
 
@@ -868,11 +900,59 @@ DRESULT disk_read(BYTE drv, BYTE *buff, DWORD sector, UINT count)
     rt_size_t result;
     rt_device_t device = disk[drv];
 
+#ifdef FF_MAX_DISK_BUFFER
+#if FF_MAX_SS != FF_MIN_SS
+    UINT ssize = dsk_buf.fs->ssize;
+#else
+    UINT ssize = FF_MIN_SS;
+#endif
+    UINT len = FF_MAX_DISK_BUFFER / ssize;
+
+    if (dsk_buf.id == device && dsk_buf.start != 0
+        && dsk_buf.end != 0 && dsk_buf.sector != 0)
+    {
+        if (sector >= dsk_buf.sector
+            && (sector + count) <= (dsk_buf.sector + dsk_buf.count))
+        {
+            UINT offset;
+
+            offset = (sector - dsk_buf.sector) * ssize;
+            memcpy(buff, &(dsk_buf.data[offset]), count * ssize);
+            return RES_OK;
+        }
+    }
+
+    if (dsk_buf.id != device || sector < dsk_buf.start
+        || (sector + count) > dsk_buf.end || count >= len)
+    {
+        result = rt_device_read(device, sector, buff, count);
+        if (result == count)
+        {
+            return RES_OK;
+        }
+    }
+    else
+    {
+        len = len > count ? len : count;
+        if ((sector + len) > dsk_buf.end)
+            len = dsk_buf.end - sector;
+
+        result = rt_device_read(device, sector, dsk_buf.data, len);
+        if (result == len)
+        {
+            dsk_buf.sector = sector;
+            dsk_buf.count = len;
+            memcpy(buff, dsk_buf.data, count * ssize);
+            return RES_OK;
+        }
+    }
+#else
     result = rt_device_read(device, sector, buff, count);
     if (result == count)
     {
         return RES_OK;
     }
+#endif
 
     return RES_ERROR;
 }
@@ -882,6 +962,29 @@ DRESULT disk_write(BYTE drv, const BYTE *buff, DWORD sector, UINT count)
 {
     rt_size_t result;
     rt_device_t device = disk[drv];
+
+#ifdef FF_MAX_DISK_BUFFER
+#if FF_MAX_SS != FF_MIN_SS
+    UINT ssize = dsk_buf.fs->ssize;
+#else
+    UINT ssize = FF_MIN_SS;
+#endif
+
+    if (dsk_buf.id == device && dsk_buf.start != 0
+        && dsk_buf.end != 0 && dsk_buf.sector != 0)
+    {
+        if (sector >= dsk_buf.sector
+            && (sector + count) <= (dsk_buf.sector + dsk_buf.count))
+        {
+            UINT offset, len;
+
+            len = dsk_buf.sector + dsk_buf.count - sector;
+            len = len < count ? len : count;
+            offset = (sector - dsk_buf.sector) * ssize;
+            memcpy(&(dsk_buf.data[offset]), buff, len * ssize);
+        }
+    }
+#endif
 
     result = rt_device_write(device, sector, buff, count);
     if (result == count)

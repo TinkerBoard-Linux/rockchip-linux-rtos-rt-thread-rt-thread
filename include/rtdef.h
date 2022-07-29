@@ -606,6 +606,16 @@ struct rt_cpu
 
 #endif
 
+
+#ifdef RT_USING_CORE_FREERTOS
+
+#include "FreeRTOS.h"
+/**
+ * Thread structure
+ */
+#define rt_thread xSTATIC_TCB
+typedef struct rt_thread *rt_thread_t;
+#else
 /**
  * Thread structure
  */
@@ -688,6 +698,7 @@ struct rt_thread
     rt_ubase_t user_data;                             /**< private user data beyond this thread */
 };
 typedef struct rt_thread *rt_thread_t;
+#endif  /* RT_USING_CORE_FREERTOS */
 
 /**@}*/
 
@@ -992,6 +1003,7 @@ enum rt_device_class_type
 #define RT_DEVICE_CTRL_SUSPEND          0x02            /**< suspend device */
 #define RT_DEVICE_CTRL_CONFIG           0x03            /**< configure device */
 #define RT_DEVICE_CTRL_CLOSE            0x04            /**< close device */
+#define RT_DEVICE_CTRL_OPEN             0x05            /**< open device */
 
 #define RT_DEVICE_CTRL_SET_INT          0x10            /**< set interrupt */
 #define RT_DEVICE_CTRL_CLR_INT          0x11            /**< clear interrupt */
@@ -1119,8 +1131,10 @@ struct rt_device_blk_sectors
 enum
 {
     RTGRAPHIC_PIXEL_FORMAT_MONO = 0,
+    RTGRAPHIC_PIXEL_FORMAT_GRAY1,
     RTGRAPHIC_PIXEL_FORMAT_GRAY4,
     RTGRAPHIC_PIXEL_FORMAT_GRAY16,
+    RTGRAPHIC_PIXEL_FORMAT_GRAY256,
     RTGRAPHIC_PIXEL_FORMAT_RGB332,
     RTGRAPHIC_PIXEL_FORMAT_RGB444,
     RTGRAPHIC_PIXEL_FORMAT_RGB565,
@@ -1130,6 +1144,18 @@ enum
     RTGRAPHIC_PIXEL_FORMAT_RGB888,
     RTGRAPHIC_PIXEL_FORMAT_ARGB888,
     RTGRAPHIC_PIXEL_FORMAT_ABGR888,
+	RTGRAPHIC_PIXEL_FORMAT_ARGB565,
+    RTGRAPHIC_PIXEL_FORMAT_ALPHA,
+    RTGRAPHIC_PIXEL_FORMAT_YUV420,
+    RTGRAPHIC_PIXEL_FORMAT_YUV422,
+    RTGRAPHIC_PIXEL_FORMAT_YUV444,
+    RTGRAPHIC_PIXEL_FORMAT_YVYU422,
+    RTGRAPHIC_PIXEL_FORMAT_VYUY422,
+    RTGRAPHIC_PIXEL_FORMAT_YUV420_4,
+    RTGRAPHIC_PIXEL_FORMAT_YUV422_4,
+    RTGRAPHIC_PIXEL_FORMAT_YUV444_4,
+    RTGRAPHIC_PIXEL_FORMAT_YVYU422_4,
+    RTGRAPHIC_PIXEL_FORMAT_VYUY422_4,
     RTGRAPHIC_PIXEL_FORMAT_RESERVED,
 };
 

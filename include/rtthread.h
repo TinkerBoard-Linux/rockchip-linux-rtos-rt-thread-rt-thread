@@ -150,6 +150,7 @@ rt_err_t rt_thread_delete(rt_thread_t thread);
 #endif
 rt_thread_t rt_thread_self(void);
 rt_thread_t rt_thread_find(char *name);
+void rt_thread_get_stack_info(rt_thread_t thread, rt_uint32_t *pxStack, rt_uint32_t *pxSize);
 rt_err_t rt_thread_startup(rt_thread_t thread);
 rt_err_t rt_thread_yield(void);
 rt_err_t rt_thread_delay(rt_tick_t tick);
@@ -587,6 +588,9 @@ int rt_snprintf(char *buf, rt_size_t size, const char *format, ...);
 rt_device_t rt_console_set_device(const char *name);
 rt_device_t rt_console_get_device(void);
 #endif
+
+typedef void (* console_hook)(const char *str, int flush);
+void rt_console_set_output_hook(console_hook hook);
 
 rt_err_t rt_get_errno(void);
 void rt_set_errno(rt_err_t no);

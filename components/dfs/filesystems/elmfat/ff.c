@@ -4772,9 +4772,9 @@ FRESULT f_getfree (
 {
 	FRESULT res;
 	FATFS *fs;
-	DWORD nfree, clst, stat;
+	DWORD nfree, clst, stat, last_alloc;
 	LBA_t sect;
-	UINT i;
+	UINT i, cur_cons, max_cons;
 	FFOBJID obj;
 
 
@@ -4822,16 +4822,36 @@ FRESULT f_getfree (
 					clst = fs->n_fatent;	/* Number of entries */
 					sect = fs->fatbase;		/* Top of the FAT */
 					i = 0;					/* Offset in the sector */
+					cur_cons = max_cons = 0;
+					last_alloc = 2;
 					do {	/* Counts numbuer of entries with zero in the FAT */
 						if (i == 0) {
 							res = move_window(fs, sect++);
 							if (res != FR_OK) break;
 						}
 						if (fs->fs_type == FS_FAT16) {
-							if (ld_word(fs->win + i) == 0) nfree++;
+							if (ld_word(fs->win + i) == 0) {
+								cur_cons++;
+								nfree++;
+							}
+							else {
+								max_cons = max_cons > cur_cons ? max_cons : cur_cons;
+								cur_cons = 0;
+								fs->last_clst = last_alloc;
+								last_alloc = (sect - fs->fatbase - 1) * 256 + (i / 2);
+							}
 							i += 2;
 						} else {
-							if ((ld_dword(fs->win + i) & 0x0FFFFFFF) == 0) nfree++;
+							if ((ld_dword(fs->win + i) & 0x0FFFFFFF) == 0) {
+								cur_cons++;
+								nfree++;
+							}
+							else {
+								max_cons = max_cons > cur_cons ? max_cons : cur_cons;
+								cur_cons = 0;
+								fs->last_clst = last_alloc;
+								last_alloc = (sect - fs->fatbase - 1) * 128 + (i / 4);
+							}
 							i += 4;
 						}
 						i %= SS(fs);

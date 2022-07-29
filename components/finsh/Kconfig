@@ -6,6 +6,7 @@ if RT_USING_MSH
 
     config RT_USING_FINSH
         bool
+        depends on RT_USING_CONSOLE
         default y
 
     config FINSH_USING_MSH

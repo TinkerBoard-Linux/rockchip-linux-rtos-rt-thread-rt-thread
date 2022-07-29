@@ -498,6 +498,8 @@ rt_err_t rt_thread_delete(rt_thread_t thread)
 {
     rt_base_t lock;
 
+    if (thread == RT_NULL)
+        return RT_EOK;
     /* parameter check */
     RT_ASSERT(thread != RT_NULL);
     RT_ASSERT(rt_object_get_type((rt_object_t)thread) == RT_Object_Class_Thread);
@@ -934,5 +936,16 @@ rt_thread_t rt_thread_find(char *name)
 }
 
 RTM_EXPORT(rt_thread_find);
+
+void rt_thread_get_stack_info(rt_thread_t thread, rt_uint32_t *pxStack, rt_uint32_t *pxSize)
+{
+    rt_thread_t task = thread;
+
+    if (thread == RT_NULL)
+        task = rt_thread_self();
+
+    *pxStack = (rt_uint32_t)task->stack_addr;
+    *pxSize = task->stack_size;
+}
 
 /**@}*/

@@ -20,18 +20,26 @@
 #define PWM_CMD_GET         (128 + 3)
 #define PWMN_CMD_ENABLE     (128 + 4)
 #define PWMN_CMD_DISABLE    (128 + 5)
+#define PWM_CMD_SET_ONESHOT (128 + 6)
 
 struct rt_pwm_configuration
 {
     rt_uint32_t channel; /* 0-n */
     rt_uint32_t period;  /* unit:ns 1ns~4.29s:1Ghz~0.23hz */
     rt_uint32_t pulse;   /* unit:ns (pulse<=period) */
+    rt_bool_t polarity;  /* polarity inverted or not */
 
     /*
      * RT_TRUE  : The channel of pwm is complememtary.
      * RT_FALSE : The channel of pwm is nomal.
     */
     rt_bool_t  complementary;
+};
+
+struct rt_pwm_oneshot
+{
+    struct rt_pwm_configuration config;
+    rt_uint32_t count;   /* (count+1) repeated effective periods */
 };
 
 struct rt_device_pwm;

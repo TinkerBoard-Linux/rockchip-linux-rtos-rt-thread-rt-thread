@@ -21,6 +21,7 @@ extern "C" {
 #define ALL_SEND_CID          2   /* bcr                     R2  */
 #define SET_RELATIVE_ADDR     3   /* ac   [31:16] RCA        R1  */
 #define SET_DSR               4   /* bc   [31:16] RCA            */
+#define SLEEP_AWAKE           5
 #define SWITCH                6   /* ac   [31:0] See below   R1b */
 #define SELECT_CARD           7   /* ac   [31:16] RCA        R1  */
 #define SEND_EXT_CSD          8   /* adtc                    R1  */

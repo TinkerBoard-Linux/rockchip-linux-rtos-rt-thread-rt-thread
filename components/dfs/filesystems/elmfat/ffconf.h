@@ -337,6 +337,13 @@
 /  SemaphoreHandle_t and etc. A header file for O/S definitions needs to be
 /  included somewhere in the scope of ff.h. */
 
-
+#ifdef RT_DFS_ELM_ENABLE_DISK_BUFFER
+#ifdef RT_DFS_ELM_DISK_BUFFER_SIZE
+#define FF_MAX_DISK_BUFFER  RT_DFS_ELM_DISK_BUFFER_SIZE
+#else
+#define FF_MAX_DISK_BUFFER  (32 * 1024)
+#endif
+#define FORCE_PLACED_IN_PSRAM 0     /* 1: placed in psram */
+#endif
 
 /*--- End of configuration options ---*/

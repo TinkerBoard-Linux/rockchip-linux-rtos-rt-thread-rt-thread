@@ -130,6 +130,16 @@ if RT_USING_DFS
             range 0 1000000
             default 3000
             depends on RT_DFS_ELM_REENTRANT
+	
+	config RT_DFS_ELM_ENABLE_DISK_BUFFER
+            bool "Enable the disk buffer for FatFs"
+            default n
+
+        if RT_DFS_ELM_ENABLE_DISK_BUFFER
+            config RT_DFS_ELM_DISK_BUFFER_SIZE
+                int "Size of disk buffer in bytes"
+                default 32768
+        endif
         endmenu
     endif
 
@@ -155,6 +165,10 @@ if RT_USING_DFS
         config RT_NFS_HOST_EXPORT
             string "NFSv3 host export"
             default "192.168.1.5:/"
+    endif
+
+    if !PKG_USING_LITTLEFS
+       source "$RTT_DIR/components/dfs/filesystems/littlefs/Kconfig"
     endif
 
 endif

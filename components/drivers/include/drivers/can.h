@@ -131,10 +131,10 @@ struct rt_can_ops;
 
 enum RT_CAN_STATUS_MODE
 {
-    NORMAL = 0,
-    ERRWARNING = 1,
-    ERRPASSIVE = 2,
-    BUSOFF = 4,
+    RT_CAN_NORMAL = 0,
+    RT_CAN_ERRWARNING = 1,
+    RT_CAN_ERRPASSIVE = 2,
+    RT_CAN_BUSOFF = 4,
 };
 enum RT_CAN_BUS_ERR
 {

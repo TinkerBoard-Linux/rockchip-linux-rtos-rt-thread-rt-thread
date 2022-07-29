@@ -1262,6 +1262,13 @@ void rt_kputs(const char *str)
 #endif /* RT_USING_DEVICE */
 }
 
+console_hook console_output_hook = RT_NULL;
+
+void rt_console_set_output_hook(console_hook hook)
+{
+    console_output_hook = hook;
+}
+
 /**
  * This function will print a formatted string on system console.
  *
@@ -1284,6 +1291,11 @@ RT_WEAK int rt_kprintf(const char *fmt, ...)
     length = rt_vsnprintf(rt_log_buf, sizeof(rt_log_buf) - 1, fmt, args);
     if (length > RT_CONSOLEBUF_SIZE - 1)
         length = RT_CONSOLEBUF_SIZE - 1;
+
+    if (console_output_hook) {
+        console_output_hook(rt_log_buf, 0);
+    }
+	
 #ifdef RT_USING_DEVICE
     if (_console_device == RT_NULL)
     {

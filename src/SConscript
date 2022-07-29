@@ -2,6 +2,7 @@ Import('RTT_ROOT')
 Import('rtconfig')
 from building import *
 
+group = []
 src = Glob('*.c')
 
 CPPPATH = [RTT_ROOT + '/include']
@@ -29,6 +30,12 @@ if GetDepend('RT_USING_SMP') == False:
 
 CPPDEFINES = ['__RTTHREAD__']
 
+if GetDepend('RT_USING_CORE_RTTHREAD') == False:
+    SrcRemove(src, ['clock.c', 'idle.c', 'ipc.c', 'irq.c', 'scheduler.c', 'signal.c', 'thread.c', 'timer.c'])
+
 group = DefineGroup('Kernel', src, depend = [''], CPPPATH = CPPPATH, CPPDEFINES = CPPDEFINES)
+
+if GetDepend('RT_USING_CORE_FREERTOS') == True:
+    group += SConscript(os.path.join(RTT_ROOT, 'third_party/os/freertos/SConscript')) 
 
 Return('group')

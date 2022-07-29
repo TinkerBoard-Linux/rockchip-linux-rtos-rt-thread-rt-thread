@@ -102,10 +102,14 @@ rt_err_t rt_hw_adc_register(rt_adc_device_t device, const char *name, const stru
 rt_uint32_t rt_adc_read(rt_adc_device_t dev, rt_uint32_t channel)
 {
     rt_uint32_t value;
+    rt_uint32_t ret;
 
     RT_ASSERT(dev);
 
-    dev->ops->convert(dev, channel, &value);
+    ret = dev->ops->convert(dev, channel, &value);
+
+    if (ret != RT_EOK)
+        return 0;
 
     return value;
 }

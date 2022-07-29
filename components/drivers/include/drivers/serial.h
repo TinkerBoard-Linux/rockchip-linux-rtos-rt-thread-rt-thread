@@ -26,8 +26,10 @@
 #define BAUD_RATE_230400                230400
 #define BAUD_RATE_460800                460800
 #define BAUD_RATE_921600                921600
+#define BAUD_RATE_1500000               1500000
 #define BAUD_RATE_2000000               2000000
 #define BAUD_RATE_3000000               3000000
+#define BAUD_RATE_4000000               4000000
 
 #define DATA_BITS_5                     5
 #define DATA_BITS_6                     6
