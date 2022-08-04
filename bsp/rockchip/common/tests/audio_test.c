@@ -139,12 +139,6 @@ void audio_playback()
     rt_err_t ret = RT_EOK;
 
     rt_kprintf("%s\n", __func__);
-
-    /* set i2s1 tx bus via m0 */
-    GRF->GPIO0A_IOMUX_H = 0x77774444;
-    GRF->GPIO0B_IOMUX_L = 0x00070004;
-    //GRF->SOC_CON[4] = 0x04000400;
-
     audio_dev = rt_device_find("sound1p");
     RT_ASSERT(audio_dev);
 
