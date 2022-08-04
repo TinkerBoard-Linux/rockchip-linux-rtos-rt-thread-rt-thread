@@ -62,7 +62,6 @@ static int rockchip_pl330_irq(struct rt_dma_pl330 *rt_pl330);
 
 #define DEFINE_ROCKCHIP_PL330(ID)                            \
 static void rockchip_pl330##ID##_irq(int irq, void *param);  \
-static struct rt_dma_device *dma##ID;                        \
 static struct rt_dma_pl330 rk_pl330##ID =                    \
 {                                                            \
     .pl330 = &g_pl330Dev##ID,                                \
