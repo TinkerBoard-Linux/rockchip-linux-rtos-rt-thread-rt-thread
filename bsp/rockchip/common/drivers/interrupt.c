@@ -17,7 +17,7 @@
 #include <rthw.h>
 #include "hal_base.h"
 
-#if (defined(ARCH_ARM_CORTEX_M0) || defined(ARCH_ARM_CORTEX_M3) || defined(ARCH_ARM_CORTEX_M4) || defined(ARCH_ARM_CORTEX_M7)) && !defined(HAS_CUSTOME_INTC)
+#if (defined(ARCH_ARM_CORTEX_M0) || defined(ARCH_ARM_CORTEX_M3) || defined(ARCH_ARM_CORTEX_M4) || defined(ARCH_ARM_CORTEX_M7) || defined(ARCH_ARM_CORTEX_M33)) && !defined(HAS_CUSTOME_INTC)
 
 #if EXT_INTERRUPT
 
