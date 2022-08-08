@@ -1,11 +1,11 @@
 menu "RT-Thread Components"
 
 config RT_USING_COMPONENTS_INIT
-    bool 
+    bool "Use components automatically initialization"
     default n
     
 config RT_USING_USER_MAIN
-    bool 
+    bool "The main() function as user entry function"
     default n
     
     if RT_USING_USER_MAIN
