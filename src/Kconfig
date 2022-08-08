@@ -185,6 +185,10 @@ if RT_DEBUG
         int
         default 1 if RT_DEBUG_INIT_CONFIG
 
+   config RT_DEBUG_USING_IO
+        bool "Enable io cmd"
+        default y
+
     config RT_DEBUG_THREAD_CONFIG
         bool "Enable debugging of Thread State Changes"
         default n
