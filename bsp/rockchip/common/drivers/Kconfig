@@ -110,7 +110,7 @@ config RT_USING_UNCACHE_HEAP
     config RT_UNCACHE_HEAP_ORDER
         hex "For MCU uncache heap size(0x0D=16KB, 0x0E=32KB, 0x0F=64KB)"
         range 0x0D 0x10
-        depends on RT_USING_UNCACHE_HEAP
+        depends on RT_USING_UNCACHE_HEAP && ARCH_ARM_CORTEX_M4
         default 0x0E
         help
             set uncache heap size, it in tail of sram
