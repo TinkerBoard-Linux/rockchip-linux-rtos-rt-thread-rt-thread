@@ -64,8 +64,6 @@ static void systick_isr(int vector, void *param)
     rt_interrupt_leave();
 }
 
-extern const rt_uint32_t __heap_begin__[];
-extern const rt_uint32_t __heap_end__[];
 #ifdef RT_USING_UNCACHE_HEAP
 extern const rt_uint32_t __uncache_heap_start__[];
 extern const rt_uint32_t __uncache_heap_end__[];
@@ -102,6 +100,18 @@ static void mpu_init(void)
     ARM_MPU_Enable(MPU_CTRL_PRIVDEFENA_Msk);
 }
 
+#ifdef __ARMCC_VERSION
+extern const rt_uint32_t Image$$ARM_LIB_HEAP$$Limit[];
+extern const rt_uint32_t Image$$ARM_LIB_STACK$$Base[];
+#define HEAP_START       Image$$ARM_LIB_HEAP$$Limit
+#define HEAP_END         Image$$ARM_LIB_STACK$$Base
+#else
+extern const rt_uint32_t __heap_begin__[];
+extern const rt_uint32_t __heap_end__[];
+#define HEAP_START       (__heap_begin__)
+#define HEAP_END         (__heap_end__)
+#endif
+
 /**
  * This function will initial Pisces board.
  */
@@ -121,7 +131,7 @@ void rt_hw_board_init()
     HAL_SetTickFreq(1000 / RT_TICK_PER_SECOND);
     HAL_SYSTICK_Init();
 
-    rt_system_heap_init((void *)__heap_begin__, (void *)__heap_end__);
+    rt_system_heap_init((void *)HEAP_START, (void *)HEAP_END);
 #ifdef RT_USING_UNCACHE_HEAP
     rt_uncache_heap_init((void *)__uncache_heap_start__, (void *)__uncache_heap_end__);
 #endif
@@ -143,8 +153,16 @@ void rt_hw_board_init()
 #endif
 }
 
+#ifdef __ARMCC_VERSION
+extern int $Super$$main(void);
+void _start(void)
+{
+    $Super$$main();
+}
+#else
 extern int entry(void);
 void _start(void)
 {
     entry();
 }
+#endif
