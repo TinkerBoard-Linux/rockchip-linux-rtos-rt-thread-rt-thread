@@ -31,6 +31,7 @@
 
 /* print line, must config by user */
 #include <rtthread.h>
+
 #ifndef RT_USING_ULOG
 #ifndef CMB_USING_FLASH_LOG_BACKUP
 #define cmb_println(...)               rt_kprintf(__VA_ARGS__);rt_kprintf("\r\n")
@@ -44,20 +45,13 @@ extern void cmb_flash_log_println(const char *fmt, ...);
 #define cmb_println(...)               ulog_e(CMB_LOG_TAG, __VA_ARGS__);ulog_flush()
 #endif /* RT_USING_ULOG */
 
-#ifdef RT_USNING_FAULT_DUMP_HOOK
-#undef cmb_println(...)
-#define cmb_println(...)               hook_println(__VA_ARGS__)
-void hook_println(const char *format, ...);
-typedef void (* fault_println)(const char *format);
-typedef void (* dump_end)(void);
-void cmb_set_hook(fault_println, dump_end);
-#endif
 /* enable bare metal(no OS) platform */
 /* #define CMB_USING_BARE_METAL_PLATFORM */
 /* enable OS platform */
 #define CMB_USING_OS_PLATFORM
 /* OS platform type, must config when CMB_USING_OS_PLATFORM is enable */
 #define CMB_OS_PLATFORM_TYPE           CMB_OS_PLATFORM_RTT
+
 /* cpu platform type, must config by user */
 #if defined(PKG_CMBACKTRACE_PLATFORM_M0_M0PLUS)
     #define CMB_CPU_PLATFORM_TYPE      CMB_CPU_ARM_CORTEX_M0
@@ -67,17 +61,27 @@ void cmb_set_hook(fault_println, dump_end);
     #define CMB_CPU_PLATFORM_TYPE      CMB_CPU_ARM_CORTEX_M4
 #elif defined(PKG_CMBACKTRACE_PLATFORM_M7)
     #define CMB_CPU_PLATFORM_TYPE      CMB_CPU_ARM_CORTEX_M7
+#elif defined(PKG_CMBACKTRACE_PLATFORM_M33)
+    #define CMB_CPU_PLATFORM_TYPE      CMB_CPU_ARM_CORTEX_M33
 #else
     #error "You must select a CPU platform on menuconfig"
 #endif /* PKG_CMBACKTRACE_PLATFORM_M0_M0PLUS */
+
 /* enable dump stack information */
 #if defined(PKG_CMBACKTRACE_DUMP_STACK)
     #define CMB_USING_DUMP_STACK_INFO
 #endif
+
 /* language of print information */
 #if defined(PKG_CMBACKTRACE_PRINT_ENGLISH)
     #define CMB_PRINT_LANGUAGE         CMB_PRINT_LANGUAGE_ENGLISH
 #elif defined(PKG_CMBACKTRACE_PRINT_CHINESE)
     #define CMB_PRINT_LANGUAGE         CMB_PRINT_LANGUAGE_CHINESE
+#elif defined(PKG_CMBACKTRACE_PRINT_CHINESE_UTF8)
+    #define CMB_PRINT_LANGUAGE         CMB_PRINT_LANGUAGE_CHINESE_UTF8
 #endif /* PKG_CMBACKTRACE_PRINT_ENGLISH */
+
+/* max number of extend code section */
+#define CMB_EXT_CODE_SECTION_MAX       4
+
 #endif /* _CMB_CFG_H_ */
