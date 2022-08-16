@@ -17,6 +17,7 @@
 #define RT_TICK_PER_SECOND 1000
 #define RT_USING_OVERFLOW_CHECK
 #define RT_USING_HOOK
+#define RT_HOOK_USING_FUNC_PTR
 #define RT_USING_IDLE_HOOK
 #define RT_IDEL_HOOK_LIST_SIZE 4
 #define IDLE_THREAD_STACK_SIZE 512
@@ -34,8 +35,10 @@
 /* Memory Management */
 
 #define RT_USING_MEMPOOL
-#define RT_USING_MEMHEAP
 #define RT_USING_SMALL_MEM
+#define RT_USING_MEMHEAP
+#define RT_MEMHEAP_FAST_MODE
+#define RT_USING_SMALL_MEM_AS_HEAP
 #define RT_USING_HEAP
 
 /* Kernel Device Object */
@@ -44,8 +47,8 @@
 #define RT_USING_DEVICE_OPS
 #define RT_USING_CONSOLE
 #define RT_CONSOLEBUF_SIZE 128
-#define RT_CONSOLE_DEVICE_NAME "uart1"
-#define RT_VER_NUM 0x30103
+#define RT_CONSOLE_DEVICE_NAME "uart2"
+#define RT_VER_NUM 0x40101
 #define ARCH_ARM
 #define ARCH_ARM_CORTEX_M
 #define ARCH_ARM_CORTEX_M4
@@ -53,13 +56,12 @@
 /* RT-Thread Components */
 
 #define RT_USING_COMPONENTS_INIT
-
-/* C++ features */
-
-
-/* Command shell */
-
+#define RT_USING_USER_MAIN
+#define RT_MAIN_THREAD_STACK_SIZE 2048
+#define RT_MAIN_THREAD_PRIORITY 10
+#define RT_USING_MSH
 #define RT_USING_FINSH
+#define FINSH_USING_MSH
 #define FINSH_THREAD_NAME "tshell"
 #define FINSH_USING_HISTORY
 #define FINSH_HISTORY_LINES 5
@@ -72,10 +74,6 @@
 #define FINSH_USING_MSH_DEFAULT
 #define FINSH_USING_MSH_ONLY
 #define FINSH_ARG_MAX 10
-#define MSH_USING_BUILT_IN_COMMANDS
-
-/* Device virtual file system */
-
 #define RT_USING_DFS
 #define DFS_USING_WORKDIR
 #define DFS_FILESYSTEMS_MAX 2
@@ -101,7 +99,6 @@
 /* Device Drivers */
 
 #define RT_USING_DEVICE_IPC
-#define RT_PIPE_BUFSZ 512
 #define RT_USING_SERIAL
 #define RT_SERIAL_USING_DMA
 #define RT_SERIAL_RB_BUFSZ 64
@@ -116,40 +113,22 @@
 /* Using WiFi */
 
 
-/* Using USB */
+/* C/C++ and POSIX layer */
 
-/*#define RT_USING_USB_DEVICE
-#define RT_USBD_THREAD_STACK_SZ 4096
-#define USB_VENDOR_ID 0x2207
-#define USB_PRODUCT_ID 0x0007
-#define _RT_USB_DEVICE_HID
-#define RT_USB_DEVICE_HID
-#define RT_USB_DEVICE_HID_KEYBOARD
-#define RT_USB_DEVICE_HID_KEYBOARD_NUMBER 1*/
+#define RT_LIBC_DEFAULT_TIMEZONE 8
 
 /* POSIX layer and C standard library */
 
 #define RT_USING_LIBC
 #define RT_USING_POSIX
 
+/* Interprocess Communication (IPC) */
+
+
+/* Socket is in the 'Network' category */
+
+
 /* Network */
-
-/* Socket abstraction layer */
-
-
-/* light weight TCP/IP stack */
-
-
-/* Modbus master and slave stack */
-
-
-/* AT commands */
-
-
-/* System */
-
-
-/* VBUS(Virtual Software BUS) */
 
 
 /* Utilities */
