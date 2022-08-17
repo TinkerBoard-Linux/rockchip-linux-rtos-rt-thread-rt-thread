@@ -193,6 +193,8 @@ SECTIONS
         __StackTop = .;
         . = ALIGN(32);
         PROVIDE(__stack = __StackTop);
+        PROVIDE(_sstack = __StackLimit);
+        PROVIDE(_estack = __StackTop);
     } > SRAM
 
 #ifdef RT_USING_UNCACHE_HEAP

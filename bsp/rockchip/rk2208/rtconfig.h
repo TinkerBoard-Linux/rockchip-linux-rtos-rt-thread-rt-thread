@@ -102,6 +102,10 @@
 
 /* Utilities */
 
+#define RT_USING_CMBACKTRACE
+#define PKG_CMBACKTRACE_PLATFORM_M33
+#define PKG_CMBACKTRACE_DUMP_STACK
+#define PKG_CMBACKTRACE_PRINT_ENGLISH
 
 /* RT-Thread Benchmarks */
 
