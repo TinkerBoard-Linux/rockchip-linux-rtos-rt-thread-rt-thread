@@ -66,6 +66,7 @@
 #endif
 
 #define SPIFLASH_MTD_DEV_NAME_MAX 8
+#define SPINOR_ID_MAX_LENGTH      5    /**< SPI Nor id data max length */
 
 #define MTD_TO_SPIFLASH(m) (struct spiflash_device *)(m)
 
@@ -113,11 +114,88 @@ static HAL_Status fspi_xip_config(struct SNOR_HOST *spi, struct HAL_SPI_MEM_OP *
 }
 #endif
 
+static int rockchip_sfc_delay_lines_tuning(struct SPI_NOR *nor, struct HAL_FSPI_HOST *host)
+{
+    uint8_t id_temp[SPINOR_ID_MAX_LENGTH];
+    uint16_t cell_max = (uint16_t)HAL_FSPI_GetMaxDllCells(host);
+    uint16_t right, left = 0;
+    uint16_t step = HAL_FSPI_DLL_TRANING_STEP;
+    bool dll_valid = false;
+
+    HAL_SNOR_Init(nor);
+    for (right = 0; right <= cell_max; right += step)
+    {
+        int ret;
+
+        ret = HAL_FSPI_SetDelayLines(host, right);
+        if (ret)
+        {
+            dll_valid = false;
+            break;
+        }
+        ret = HAL_SNOR_ReadID(nor, id_temp);
+        if (ret)
+        {
+            dll_valid = false;
+            break;
+        }
+
+        SNOR_DBG("dll read flash id:%x %x %x\n",
+                 id_temp[0], id_temp[1], id_temp[2]);
+
+        ret = HAL_SNOR_IsFlashSupported(id_temp);
+        if (dll_valid && !ret)
+        {
+            right -= step;
+            break;
+        }
+        if (!dll_valid && ret)
+            left = right;
+
+        if (ret)
+            dll_valid = true;
+
+        /* Add cell_max to loop */
+        if (right == cell_max)
+            break;
+        if (right + step > cell_max)
+            right = cell_max - step;
+    }
+
+    if (dll_valid && (right - left) >= HAL_FSPI_DLL_TRANING_VALID_WINDOW)
+    {
+        if (left == 0 && right < cell_max)
+            host->cell = left + (right - left) * 2 / 5;
+        else
+            host->cell = left + (right - left) / 2;
+    }
+    else
+    {
+        host->cell = 0;
+    }
+
+    if (host->cell)
+    {
+        SNOR_DBG("%d %d %d dll training success in %dMHz max_cells=%u\n",
+                 left, right, host->cell, nor->spi->speed, cell_max);
+        HAL_FSPI_SetDelayLines(host, host->cell);
+        return 0;
+    }
+    else
+    {
+        SNOR_DBG("%d %d dll training failed in %dMHz, reduce the frequency\n",
+                 left, right, nor->spi->speed);
+        HAL_FSPI_DLLDisable(host);
+        return -1;
+    }
+}
+
 static uint32_t fspi_snor_adapt(struct SPI_NOR *nor)
 {
     struct HAL_FSPI_HOST *host = &g_fspi0Dev;
     uint32_t ret;
     rt_base_t level;
+    int dll_result = 0;
 
     RT_ASSERT(host);
 
@@ -132,8 +210,10 @@ static uint32_t fspi_snor_adapt(struct SPI_NOR *nor)
         nor->spi->speed = SNOR_SPEED_DEFAULT;
     }
     HAL_CRU_ClkSetFreq(host->sclkID, nor->spi->speed);
+    nor->spi->speed = HAL_CRU_ClkGetFreq(host->sclkID);
 
     host->xmmcDev[0].type = DEV_NOR;
+    /* XIP disabeld */
     HAL_FSPI_Init(host);
     nor->spi->userdata = (void *)host;
     nor->spi->mode = HAL_SPI_MODE_3;
@@ -141,38 +221,11 @@ static uint32_t fspi_snor_adapt(struct SPI_NOR *nor)
 
     if (nor->spi->speed > HAL_FSPI_SPEED_THRESHOLD)
     {
-        uint8_t idByte[5], id[5];
-        int32_t right, left;
-
-        HAL_SNOR_Init(nor);
-        left = -1;
-        for (right = 0; right <= HAL_FSPI_MAX_DELAY_LINE_CELLS; right++)
-        {
-            HAL_FSPI_SetDelayLines(host, (uint8_t)right);
-            HAL_SNOR_ReadID(nor, idByte);
-            if (left == -1 && HAL_SNOR_IsFlashSupported(idByte))
-            {
-                id[0] = idByte[0];
-                id[1] = idByte[1];
-                id[2] = idByte[2];
-                left = right;
-            }
-            else if (left >= 0 && (idByte[0] != id[0] || idByte[1] != id[1] ||
-                                   idByte[2] != id[2]))
-            {
-                break;
-            }
-        }
-
-        if (left >= 0 && (right - left > 10))
-        {
-            host->cell = (uint8_t)((right + left) / 2);
-            HAL_FSPI_SetDelayLines(host, host->cell);
-        }
-        else
-        {
-            HAL_FSPI_DLLDisable(host);
-        }
+        dll_result = rockchip_sfc_delay_lines_tuning(nor, host);
+    }
+    else
+    {
+        HAL_FSPI_DLLDisable(host);
     }
 
 #ifndef RT_SNOR_DUAL_IO
@@ -193,6 +246,14 @@ static uint32_t fspi_snor_adapt(struct SPI_NOR *nor)
     {
         HAL_SNOR_XIPEnable(nor);
     }
+
+    if (dll_result)
+    {
+        HAL_CRU_ClkSetFreq(host->sclkID, HAL_FSPI_SPEED_THRESHOLD);
+        nor->spi->speed = HAL_CRU_ClkGetFreq(host->sclkID);
+        rt_kprintf("%s dll turning failed %d\n", __func__, dll_result);
+    }
+
     rt_hw_interrupt_enable(level);
 
     return ret;
