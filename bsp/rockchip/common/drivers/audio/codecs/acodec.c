@@ -20,6 +20,7 @@
 #include "rk_audio.h"
 #include "drv_clock.h"
 
+#include "board.h"
 #include "hal_base.h"
 #include "hal_bsp.h"
 
@@ -78,6 +79,10 @@ static rt_err_t rk_acodec_start(struct audio_codec *codec,
 
     HAL_ACODEC_Enable(acodec->hAcodec, stream);
 
+#ifdef PA_MUTE_PIN
+    HAL_GPIO_SetPinLevel(PA_MUTE_GPIO, PA_MUTE_PIN, PA_MUTE_SWITCH_ON);
+#endif
+
     return RT_EOK;
 }
 
@@ -87,6 +92,10 @@ static rt_err_t rk_acodec_stop(struct audio_codec *codec,
     struct rk_acodec_dev *acodec = to_acodec(codec);
 
     HAL_ACODEC_Disable(acodec->hAcodec, stream);
+
+#ifdef PA_MUTE_PIN
+    HAL_GPIO_SetPinLevel(PA_MUTE_GPIO, PA_MUTE_PIN, PA_MUTE_SWITCH_OFF);
+#endif
 
     return RT_EOK;
 }
