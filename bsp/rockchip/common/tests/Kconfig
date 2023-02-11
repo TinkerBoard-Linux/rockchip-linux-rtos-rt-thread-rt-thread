@@ -220,5 +220,17 @@ config RT_USING_COMMON_TEST
         bool "Enable rpmsg lite test"
         depends on RT_USING_RPMSG_LITE
         default n
+
+    config RT_USING_COMMON_TEST_IPC
+        bool "Enable shmem ipc test"
+        default n
+
+    config RT_USING_COMMON_TEST_AMPMSG
+        bool "Enable shmem ampmsg test"
+        default n
+
+    config RT_USING_COMMON_TEST_PCIE_DMA
+        bool "Enable BSP Common PCIE DMA TEST"
+        default n
     endif
 endmenu
