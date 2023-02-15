@@ -73,6 +73,14 @@ void rt_hw_iomux_config(void)
     spi0_m0_iomux_config();
 #endif
 
+#ifdef RT_USING_SPI1
+    spi1_m0_iomux_config();
+#endif
+
+#ifdef RT_USING_SPI2
+    spi2_m0_iomux_config();
+#endif
+
 #ifdef RT_USING_SDIO0
     emmc_iomux_config();
 #endif

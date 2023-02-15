@@ -117,6 +117,67 @@ RT_WEAK  void spi0_m0_iomux_config(void)
 }
 #endif
 
+#ifdef RT_USING_SPI1
+RT_WEAK void spi1_m0_iomux_config(void)
+{
+    /* SPI1 M0 */
+    HAL_PINCTRL_SetIOMUX(GPIO_BANK3,
+                         GPIO_PIN_B2 |  // SPI1_MISO
+                         GPIO_PIN_B3 |  // SPI1_CLK
+                         GPIO_PIN_B4 |  // SPI1_MOSI
+                         GPIO_PIN_B5,   // SPI1_CSN0
+                         PIN_CONFIG_MUX_FUNC3);
+
+    /* set SPI master 1 IOMUX selection to M0 */
+    WRITE_REG_MASK_WE(GRF->SOC_CON5,
+                      GRF_SOC_CON5_GRF_SPI1_MULTI_IOFUNC_SRC_SEL_MASK,
+                      (0 << GRF_SOC_CON5_GRF_SPI1_MULTI_IOFUNC_SRC_SEL_SHIFT));
+
+    /* set SOC_CON15 sel plus */
+    WRITE_REG_MASK_WE(GRF->SOC_CON15,
+                      GRF_SOC_CON15_GPIO3B2_SEL_PLUS_MASK | GRF_SOC_CON15_GPIO3B2_SEL_PLUS_MASK |
+                      GRF_SOC_CON15_GPIO3B3_SEL_PLUS_MASK | GRF_SOC_CON15_GPIO3B3_SEL_SRC_CTRL_MASK,
+                      (3 << GRF_SOC_CON15_GPIO3B2_SEL_PLUS_SHIFT) + (1 << GRF_SOC_CON15_GPIO3B2_SEL_SRC_CTRL_SHIFT) |
+                      (3 << GRF_SOC_CON15_GPIO3B3_SEL_PLUS_SHIFT) + (1 << GRF_SOC_CON15_GPIO3B3_SEL_SRC_CTRL_SHIFT));
+}
+
+RT_WEAK void spi1_m1_iomux_config(void)
+{
+    /* SPI1 M0 */
+    HAL_PINCTRL_SetIOMUX(GPIO_BANK2,
+                         GPIO_PIN_A4 |  // SPI1_MISO_M1
+                         GPIO_PIN_A5 |  // SPI1_MOSI_M1
+                         GPIO_PIN_A7,   // SPI1_CLK_M1
+                         PIN_CONFIG_MUX_FUNC2);
+
+    HAL_PINCTRL_SetIOMUX(GPIO_BANK2,
+                         GPIO_PIN_B1,   // SPI1_CSN0_M1
+                         PIN_CONFIG_MUX_FUNC2);
+
+    /* set SPI master 1 IOMUX selection to M1 */
+    WRITE_REG_MASK_WE(GRF->SOC_CON5,
+                      GRF_SOC_CON5_GRF_SPI1_MULTI_IOFUNC_SRC_SEL_MASK,
+                      (1 << GRF_SOC_CON5_GRF_SPI1_MULTI_IOFUNC_SRC_SEL_SHIFT));
+}
+#endif
+
+#ifdef RT_USING_SPI2
+RT_WEAK void spi2_m0_iomux_config(void)
+{
+    /* SPI2 */
+    HAL_PINCTRL_SetIOMUX(GPIO_BANK1,
+                         GPIO_PIN_D0 |  // SPI2_CLK
+                         GPIO_PIN_D1,  // SPI2_CS0N0
+                         PIN_CONFIG_MUX_FUNC3);
+
+    /* set SPI master 2 IOMUX selection to M0 */
+    HAL_PINCTRL_SetIOMUX(GPIO_BANK1,
+                         GPIO_PIN_C6 |  //SPI2_MISO
+                         GPIO_PIN_C7,   // SPI2_MOSI
+                         PIN_CONFIG_MUX_FUNC3);
+}
+#endif
+
 #ifdef RT_USING_AUDIO_CARD_I2S0
 RT_WEAK void i2s0_8ch_m0_iomux_config(void)
 {
