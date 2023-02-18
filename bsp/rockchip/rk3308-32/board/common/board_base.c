@@ -325,6 +325,37 @@ RT_WEAK struct ep_id g_usb_ep_pool[] =
 };
 #endif
 
+#ifndef RT_USING_SMP
+
+#ifdef PRIMARY_CPU
+extern int __share_heap_begin, __share_heap_end;
+#define SHMEM_HEAP_BEGIN   (&__share_heap_begin)
+#define SHMEM_HEAP_SIZE    ((rt_uint32_t)(&__share_heap_end) - (rt_uint32_t)(&__share_heap_begin))
+
+static struct rt_memheap _shmem_heap;
+
+rt_err_t rt_shmem_heap_init(void)
+{
+    /* initialize a share memory heap in the system */
+    return rt_memheap_init(&_shmem_heap,
+                           "shmemheap",
+                           SHMEM_HEAP_BEGIN,
+                           SHMEM_HEAP_SIZE);
+}
+
+void *rt_malloc_shmem(rt_size_t size)
+{
+    return rt_memheap_alloc(&_shmem_heap, size);
+}
+
+void rt_free_shmem(void *ptr)
+{
+    rt_memheap_free(ptr);
+}
+#endif
+
+#endif // #ifndef RT_USING_SMP
+
 /**
  *  Initialize the Hardware related stuffs. Called from rtthread_startup()
  *  after interrupt disabled.
@@ -398,6 +429,13 @@ void rt_hw_board_init(void)
     rt_kprintf("base_mem: BASE = 0x%08x, SIZE = 0x%08x\n", FIRMWARE_BASE, DRAM_SIZE);
 #endif
     rt_kprintf("share_mem: BASE = 0x%08x, SIZE = 0x%08x\n", SHMEM_BASE, SHMEM_SIZE);
+
+#ifndef RT_USING_SMP
+#if defined PRIMARY_CPU
+    rt_shmem_heap_init();
+    rt_kprintf("share_heap: BASE = 0x%08x, SIZE = 0x%08x\n", SHMEM_HEAP_BEGIN, SHMEM_HEAP_SIZE);
+#endif
+#endif
 
     rt_thread_idle_sethook(idle_wfi);
 

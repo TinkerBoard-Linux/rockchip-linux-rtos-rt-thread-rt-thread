@@ -65,4 +65,11 @@ rt_inline rt_uint32_t platform_get_gic_cpu_base(void)
 
 void rt_hw_board_init(void);
 
+#ifndef RT_USING_SMP
+#ifdef PRIMARY_CPU
+void *rt_malloc_shmem(rt_size_t size);
+void rt_free_shmem(void *ptr);
+#endif
+#endif //RT_USING_SMP
+
 #endif
