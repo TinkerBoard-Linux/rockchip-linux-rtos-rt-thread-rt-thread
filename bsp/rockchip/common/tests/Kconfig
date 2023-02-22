@@ -35,7 +35,7 @@ config RT_USING_COMMON_TEST
         default n
 
     config RT_USING_COMMON_TEST_CPU_USAGE
-        bool "Enable BSP Common CPU Usage TEST"
+        bool "Enable BSP Common RK PM CPU Usage TEST"
         default n
 
     config RT_USING_COMMON_TEST_CRYPTO
@@ -161,6 +161,11 @@ config RT_USING_COMMON_TEST
     config RT_USING_COMMON_TEST_UART
         bool "Enable BSP Common UART TEST"
         depends on RT_USING_UART && RT_USING_POSIX_TERMIOS && RT_USING_POSIX
+        default n
+
+    config RT_USING_COMMON_TEST_USAGE
+        bool "Enable BSP Common USAGE TEST"
+        depends on RT_USING_CPU_USAGE
         default n
 
     config RT_USING_COMMON_TEST_WDT

@@ -1,5 +1,10 @@
 menu "RT-Thread rockchip common drivers"
 
+config RT_USING_CPU_USAGE
+    bool "Enable CPU usage"
+    depends on RT_USING_HOOK
+    default n
+
 menuconfig HAL_DBG_ON
     bool "Enable HAL Debug Features"
     help

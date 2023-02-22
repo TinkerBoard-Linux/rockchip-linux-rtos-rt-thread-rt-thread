@@ -701,6 +701,9 @@ struct rt_thread
 
 #ifdef RT_USING_CPU_USAGE
     rt_uint64_t  duration_tick;                         /**< cpu usage tick */
+    rt_tick_t  last_schedule_tick;                      /**< thread's last be scheduled tick */
+    rt_tick_t  total_running_tick;                      /**< thread's total running tick */
+    rt_tick_t  snap_running_tick;                       /**< thread's snap running tick */
 #endif /* RT_USING_CPU_USAGE */
 
 #ifdef RT_USING_PTHREADS
