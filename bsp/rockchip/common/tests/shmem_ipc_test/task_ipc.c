@@ -7,6 +7,7 @@
 #include "hal_bsp.h"
 #include "hal_base.h"
 #include "task_ipc.h"
+#include "board.h"
 
 #if defined(RT_USING_COMMON_TEST_IPC) || defined(RT_USING_COMMON_TEST_AMPMSG)
 

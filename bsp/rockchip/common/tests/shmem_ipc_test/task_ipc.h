@@ -6,12 +6,6 @@
 #ifndef _TASK_IPC_H_
 #define _TASK_IPC_H_
 
-#define IPC_ENABLE
-
-/* spinlock ID define */
-#define RK_PRINTF_SPINLOCK_ID 0U
-#define RK_SHMEM_SPINLOCK_ID  1U
-
 /* IPC memory section define */
 #define IPC_DATA_MEM __attribute__((section(".share_data")))
 

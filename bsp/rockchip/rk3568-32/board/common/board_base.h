@@ -15,6 +15,12 @@
 #include <stdint.h>
 #include "hal_base.h"
 
+#include "spinlock_id.h"
+
+#ifdef RT_USING_RPMSG_LITE
+#include "rpmsg_base.h"
+#endif
+
 #define MAX_HANDLERS        NUM_INTERRUPTS
 #define __REG32(x) (*((volatile unsigned int*)((rt_uint32_t)x)))
 
