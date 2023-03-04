@@ -38,5 +38,5 @@ source "$RTT_DIR/components/aupipe/Kconfig"
 source "$RTT_DIR/components/benchmark/Kconfig"
 source "$RTT_DIR/components/ota/Kconfig"
 source "$RTT_DIR/components/system/Kconfig"
-
+source "$RTT_DIR/components/rpmsg_cmd/Kconfig"
 endmenu

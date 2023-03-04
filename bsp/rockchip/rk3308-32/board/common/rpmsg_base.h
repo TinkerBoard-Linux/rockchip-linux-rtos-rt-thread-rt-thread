@@ -31,13 +31,17 @@ extern uint32_t __share_rpmsg_end__[];
 
 /* RPMSG ID Define */
 /* RPMSG master(cpu1) to remote(cpu2) endpoint index define */
-#define EPT_M1R2_INIT   0UL
+#define EPT_M1R2_INIT       0UL
+#define EPT_M1R2_SYSCMD     1UL
 
 /* RPMSG master(cpu1) to remote(cpu3) endpoint index define */
-#define EPT_M1R2_INIT   0UL
+#define EPT_M1R3_INIT       0UL
+#define EPT_M1R3_SYSCMD     1UL
 
 /* RPMSG master(cpu1) to remote(cpu0) endpoint index define */
-#define EPT_M1R0_INIT   0UL
+#define EPT_M1R0_INIT       0UL
+#define EPT_M1R0_SYSCMD     1UL
+#define EPT_M1R0_ECNR       2UL
 
 #ifdef PRIMARY_CPU
 struct rpmsg_lite_instance *rpmsg_master_get_instance(uint32_t master_id, uint32_t remote_id);
