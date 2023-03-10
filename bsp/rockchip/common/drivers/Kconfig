@@ -27,6 +27,10 @@ config HAL_DBG_ERR_ON
         Select to enable HAL log with error level.
 endif
 
+config RT_USING_LOGBUFFER
+    bool "Enable log buffer support"
+    depends on RT_USING_DEVICE_IPC
+
 config RT_USING_SND_GLB_RST
     bool "Using second global reset"
     help

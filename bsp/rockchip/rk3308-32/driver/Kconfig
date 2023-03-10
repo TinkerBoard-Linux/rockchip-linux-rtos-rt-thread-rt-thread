@@ -149,4 +149,8 @@ choice
         default n
 endchoice
 
+config RT_USING_SHARE_CONSOLE_OUT
+    bool "Enable spinlock for share console output"
+    default y
+
 endmenu

@@ -34,6 +34,18 @@ extern uint32_t __bss_end[];
 extern uint32_t __heap_begin[];
 extern uint32_t __heap_end[];
 
+extern uint32_t __share_log0_start__[];
+extern uint32_t __share_log0_end__[];
+
+extern uint32_t __share_log1_start__[];
+extern uint32_t __share_log1_end__[];
+
+extern uint32_t __share_log2_start__[];
+extern uint32_t __share_log2_end__[];
+
+extern uint32_t __share_log3_start__[];
+extern uint32_t __share_log3_end__[];
+
 #ifdef RT_USING_UNCACHE_HEAP
 #define RT_HW_HEAP_BEGIN        (void*)&__heap_begin
 #define RT_HW_HEAP_END          ((void*)&__heap_end - RT_UNCACHE_HEAP_SIZE)
@@ -68,10 +80,16 @@ rt_inline rt_uint32_t platform_get_gic_cpu_base(void)
 void rt_hw_board_init(void);
 
 #ifndef RT_USING_SMP
+
 #ifdef PRIMARY_CPU
 void *rt_malloc_shmem(rt_size_t size);
 void rt_free_shmem(void *ptr);
 #endif
+
+#ifdef RT_USING_LOGBUFFER
+struct ringbuffer_t *get_log_ringbuffer(void);
+#endif
+
 #endif //RT_USING_SMP
 
 #endif

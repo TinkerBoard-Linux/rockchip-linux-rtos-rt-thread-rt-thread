@@ -10,6 +10,7 @@
 
 #include <rthw.h>
 #include <rtthread.h>
+#include <rtdevice.h>
 
 #include "board.h"
 #include "cp15.h"
@@ -354,6 +355,111 @@ void rt_free_shmem(void *ptr)
 }
 #endif
 
+
+#ifdef RT_USING_LOGBUFFER
+
+#if defined(CPU0)
+#define LOG_MEM_BASE ((uint32_t)&__share_log0_start__)
+#define LOG_MEM_END  ((uint32_t)&__share_log0_end__)
+#elif defined(PRIMARY_CPU)
+#define LOG_MEM_BASE ((uint32_t)&__share_log1_start__)
+#define LOG_MEM_END  ((uint32_t)&__share_log1_end__)
+#elif defined(CPU2)
+#define LOG_MEM_BASE ((uint32_t)&__share_log2_start__)
+#define LOG_MEM_END  ((uint32_t)&__share_log2_end__)
+#elif defined(CPU3)
+#define LOG_MEM_BASE ((uint32_t)&__share_log3_start__)
+#define LOG_MEM_END  ((uint32_t)&__share_log3_end__)
+#else
+#error "error: Undefined CPU id!"
+#endif
+
+static struct rt_ringbuffer log_buffer, *plog_buf = NULL;
+static void log_buffer_init(void)
+{
+    rt_ringbuffer_init(&log_buffer, (uint8_t *)LOG_MEM_BASE, (int16_t)(LOG_MEM_END - LOG_MEM_BASE));
+    plog_buf = &log_buffer;
+}
+
+struct ringbuffer_t *get_log_ringbuffer(void)
+{
+    RT_ASSERT(plog_buf != NULL);
+    return plog_buf;
+}
+#endif
+
+#ifdef RT_USING_CONSOLE
+extern console_hook console_output_hook;
+int rt_kprintf(const char *fmt, ...)
+{
+    va_list args;
+    rt_size_t length, outlen;
+    static char rt_log_buf[32 + RT_CONSOLEBUF_SIZE];
+    char *p_log_str = &rt_log_buf[32];
+
+    va_start(args, fmt);
+    /* the return value of vsnprintf is the number of bytes that would be
+     * written to buffer had if the size of the buffer been sufficiently
+     * large excluding the terminating null byte. If the output string
+     * would be larger than the rt_log_buf, we have to adjust the output
+     * length. */
+    length = rt_vsnprintf(p_log_str, RT_CONSOLEBUF_SIZE - 1, fmt, args);
+    va_end(args);
+
+    if (length > RT_CONSOLEBUF_SIZE - 1)
+        length = RT_CONSOLEBUF_SIZE - 1;
+
+    p_log_str[RT_CONSOLEBUF_SIZE - 1] = 0;
+
+    /* Add time stamp */
+    outlen = 0;
+    if ((p_log_str[strlen(p_log_str) - 1] == '\n') &&
+            (strlen(p_log_str) > 1))    // fix shell command input
+    {
+        uint64_t cnt64;
+        uint32_t cpu_id, sec, ms, us;
+        cpu_id = HAL_CPU_TOPOLOGY_GetCurrentCpuId();
+        cnt64 = HAL_GetSysTimerCount();
+        us = (uint32_t)((cnt64 / (PLL_INPUT_OSC_RATE / 1000000)) % 1000);
+        ms = (uint32_t)((cnt64 / (PLL_INPUT_OSC_RATE / 1000)) % 1000);
+        sec = (uint32_t)(cnt64 / PLL_INPUT_OSC_RATE);
+        outlen = snprintf(rt_log_buf, 32 - 1, "[(%d)%d.%03d.%03d] ", cpu_id, sec, ms, us);
+    }
+    outlen += snprintf(rt_log_buf + outlen, RT_CONSOLEBUF_SIZE - 1, "%s", p_log_str);
+
+    /* Save log to buffer */
+#ifdef RT_USING_LOGBUFFER
+    rt_ringbuffer_put_force(get_log_ringbuffer(), rt_log_buf, outlen);
+#endif
+
+#ifdef RT_USING_SHARE_CONSOLE_OUT
+    HAL_SPINLOCK_Lock(RK_PRINTF_SPINLOCK_ID);
+#endif
+
+#ifdef RT_USING_DEVICE
+    rt_device_t _console_device = rt_console_get_device();
+    if (_console_device == RT_NULL)
+    {
+        rt_hw_console_output(rt_log_buf);
+    }
+    else
+    {
+        rt_uint16_t old_flag = _console_device->open_flag;
+        _console_device->open_flag |= RT_DEVICE_FLAG_STREAM;
+        rt_device_write(_console_device, 0, rt_log_buf, outlen);
+        _console_device->open_flag = old_flag;
+    }
+#else
+    rt_hw_console_output(rt_log_buf);
+#endif
+
+#ifdef RT_USING_SHARE_CONSOLE_OUT
+    HAL_SPINLOCK_Unlock(RK_PRINTF_SPINLOCK_ID);
+#endif
+    return RT_EOK;
+}
+#endif
+
 #endif // #ifndef RT_USING_SMP
 
 /**
@@ -402,6 +508,12 @@ void rt_hw_board_init(void)
 
 #ifdef RT_USING_PIN
     rt_hw_iomux_config();
+#endif
+
+#ifndef RT_USING_SMP
+#ifdef RT_USING_LOGBUFFER
+    log_buffer_init();
+#endif
 #endif
 
     /* initialize uart */
