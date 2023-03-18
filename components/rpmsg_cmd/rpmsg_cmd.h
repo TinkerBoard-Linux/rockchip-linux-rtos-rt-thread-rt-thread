@@ -17,34 +17,28 @@
 #include "rpmsg_base.h"
 
 /* RPMsg cmd callback */
-struct rpmsg_cmd_func_t
+struct rpmsg_cmd_table_t
 {
     uint32_t cmd;
-    void (*rx_cb)(void *param);
+    void (*callback)(void *param);
 };
-typedef struct rpmsg_cmd_func_t rpmsg_func_t;
 
 /* RPMsg cmd handle */
-struct rpmsg_cmd_handle_t
+struct rpmsg_ept_handle_t
 {
+    uint32_t master_id;
+    uint32_t remote_id;
+
     struct rpmsg_lite_instance *instance;
     struct rpmsg_lite_endpoint *ept;
     uint32_t endpoint;
-    uint32_t master;
-    uint32_t remote;
-    struct rt_messagequeue *mq;
-    rpmsg_func_t *ftable;
-    uint32_t ftable_size;
-};
-typedef struct rpmsg_cmd_handle_t rpmsg_handle_t;
 
-/* RPMsg cmd handle */
-struct rpmsg_cmd_handle_list_t
-{
-    rpmsg_handle_t *handles;
-    uint32_t count;
+    uint32_t cmd_counter;
+    struct rpmsg_cmd_table_t *cmd_table;
+
+    rt_thread_t thread;
+    struct rt_messagequeue *mq;
 };
-typedef struct rpmsg_cmd_handle_list_t rpmsg_handle_list;
 
 /* RPMSG cmd head format */
 struct rpmsg_cmd_head_t
@@ -54,17 +48,14 @@ struct rpmsg_cmd_head_t
     void    *priv;
     void    *addr;
 };
-typedef struct rpmsg_cmd_head_t rpmsg_head_t;
 
 /* RPMSG cmd data format */
 struct rpmsg_cmd_data_t
 {
-    rpmsg_head_t head;
-    rpmsg_handle_t *handle;
-    void (*rx_cb)(void *param);
-    void *param;
+    struct rpmsg_cmd_head_t head;
+    struct rpmsg_ept_handle_t *handle;
+    uint32_t endpoint;
 };
-typedef struct rpmsg_cmd_data_t rpmsg_data_t;
 
 /* RPMsg mq max count */
 #define RPMSG_MQ_MAX        32UL
@@ -84,9 +75,15 @@ typedef struct rpmsg_cmd_data_t rpmsg_data_t;
 #define RPMSG_ACK_GET_ECN_USAGE ((2UL << 1) + 1)
 
 /* RPMsg Common API Functions */
-rt_err_t rpmsg_cmd_send(rpmsg_handle_t *handle, rpmsg_head_t *head, uint32_t timeout);
-rpmsg_handle_t *rpmsg_cmd_get_handle(uint32_t id);
-int rpmsg_cmd_thread_init(rpmsg_handle_list *handle_list, rt_uint32_t stack_size, rt_uint8_t  priority);
+void rpmsg_cmd_ept_init(struct rpmsg_ept_handle_t *handle,
+                        uint32_t master_id, uint32_t remote_id, uint32_t endpoint,
+                        struct rpmsg_cmd_table_t *cmd_table, uint32_t cmd_counter,
+                        uint32_t stack_size, uint32_t priority);
+
+void rpmsg_cmd_ept_thread_init(struct rpmsg_ept_handle_t *handle,
+                                uint32_t stack_size, uint32_t priority);
+
+rt_err_t rpmsg_cmd_send(struct rpmsg_cmd_data_t *p_rpmsg_data, uint32_t timeout);
 
 /* RPMsg Command Functions */
 #if defined(PRIMARY_CPU) /*CPU1*/

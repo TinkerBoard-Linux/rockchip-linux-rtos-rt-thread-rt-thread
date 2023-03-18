@@ -29,35 +29,29 @@
 #endif
 #define REMOTE_EPT EPT_M2R_ADDR(MASTER_EPT)
 
-static rpmsg_func_t rpmsg_cmd_func_table[] =
+static struct rpmsg_ept_handle_t rpmsg_cmd_handle;
+
+static struct rpmsg_cmd_table_t rpmsg_cmd_table[] =
 {
     { RPMSG_CMD_GET_CPU_USAGE, rpmsg_cmd_cpuusage_callback},
 };
 
-static rpmsg_handle_t shell_handle[1] =
+struct rpmsg_ept_handle_t *rpmsg_cmd_remote_get_handle(void)
 {
-    {
-        .remote = REMOTE_ID,
-        .endpoint = REMOTE_EPT,
-        .ftable = rpmsg_cmd_func_table,
-    },
-};
+    return &rpmsg_cmd_handle;
+}
 
-static int rpmsg_cmd_remote_init(void)
+/*
+ * Initial epts:
+ */
+int rpmsg_cmd_remote_init(void)
 {
-    rpmsg_handle_t *handle = &shell_handle;
-    uint32_t i, count = sizeof(shell_handle) / sizeof(rpmsg_handle_t);
-
-    for (i = 0; i < count; i++)
-    {
-        handle->ftable_size = sizeof(rpmsg_cmd_func_table) / sizeof(rpmsg_func_t);
-        handle++;
-    }
-
-    rpmsg_handle_list handle_list;
-    handle_list.handles = &shell_handle;
-    handle_list.count = count;
-    rpmsg_cmd_thread_init(&handle_list, 2048, RT_THREAD_PRIORITY_MAX / 2);
+    /* Use rpmsg_cmd_ept_init() initial ept & creat thread */
+    rpmsg_cmd_ept_init(&rpmsg_cmd_handle,
+                        MASTER_ID, REMOTE_ID, REMOTE_EPT,
+                        rpmsg_cmd_table,
+                        sizeof(rpmsg_cmd_table) / sizeof(struct rpmsg_cmd_table_t),
+                        2048, RT_THREAD_PRIORITY_MAX / 2);
 }
 INIT_APP_EXPORT(rpmsg_cmd_remote_init);
 

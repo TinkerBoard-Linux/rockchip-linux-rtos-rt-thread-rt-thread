@@ -15,45 +15,64 @@
 
 #if defined(PRIMARY_CPU)
 
-static rpmsg_func_t rpmsg_cmd_func_table[] =
+static struct rpmsg_ept_handle_t rpmsg_cmd_handles[3];
+
+static struct rpmsg_cmd_table_t rpmsg_cmd_table[] =
 {
     { RPMSG_ACK_GET_CPU_USAGE, rpmsg_cmd_cpuusage_callback},
 };
 
-static rpmsg_handle_t shell_handle[PLATFORM_CORE_COUNT - 1] =
+/*
+ * Get ept handle by remote cpu id
+ */
+struct rpmsg_ept_handle_t *rpmsg_cmd_master_get_handle(uint32_t remote_id)
 {
-    {
-        .remote = REMOTE_ID_0,
-        .endpoint = EPT_M1R0_SYSCMD,
-        .ftable = rpmsg_cmd_func_table,
-    },
-    {
-        .remote = REMOTE_ID_2,
-        .endpoint = EPT_M1R2_SYSCMD,
-        .ftable = rpmsg_cmd_func_table,
-    },
-    {
-        .remote = REMOTE_ID_3,
-        .endpoint = EPT_M1R3_SYSCMD,
-        .ftable = rpmsg_cmd_func_table,
-    },
-};
-
-int rpmsg_cmd_master_init(void)
-{
-    rpmsg_handle_t *handle = &shell_handle;
-    uint32_t i, count = sizeof(shell_handle) / sizeof(rpmsg_handle_t);
-
-    for (i = 0; i < count; i++)
-    {
-        handle->ftable_size = sizeof(rpmsg_cmd_func_table) / sizeof(rpmsg_func_t);
-        handle++;
+    if (remote_id == REMOTE_ID_0) {
+        return &rpmsg_cmd_handles[0];
+    }
+    else if (remote_id == REMOTE_ID_2) {
+        return &rpmsg_cmd_handles[1];
+    }
+    else if (remote_id == REMOTE_ID_3) {
+        return &rpmsg_cmd_handles[2];
     }
 
-    rpmsg_handle_list handle_list;
-    handle_list.handles = &shell_handle;
-    handle_list.count = count;
-    rpmsg_cmd_thread_init(&handle_list, 2048, RT_THREAD_PRIORITY_MAX / 2);
+    return RT_NULL;
+}
+
+/*
+ * Initial epts:
+ */
+int rpmsg_cmd_master_init(void)
+{
+    struct rpmsg_ept_handle_t *handle;
+
+    /* Init ept0: master(1) --> remote(0) */
+    handle = &rpmsg_cmd_handles[0];
+    handle->master_id = MASTER_ID;
+    handle->remote_id = REMOTE_ID_0;
+    handle->endpoint  = EPT_M1R0_SYSCMD;
+    handle->cmd_counter = sizeof(rpmsg_cmd_table) / sizeof(struct rpmsg_cmd_table_t);
+    handle->cmd_table = rpmsg_cmd_table;
+    rpmsg_cmd_ept_thread_init(handle, 2048, RT_THREAD_PRIORITY_MAX / 2);
+
+    /* Init ept1: master(1) --> remote(2) */
+    handle = &rpmsg_cmd_handles[1];
+    handle->master_id = MASTER_ID;
+    handle->remote_id = REMOTE_ID_2;
+    handle->endpoint  = EPT_M1R2_SYSCMD;
+    handle->cmd_counter = sizeof(rpmsg_cmd_table) / sizeof(struct rpmsg_cmd_table_t);
+    handle->cmd_table = rpmsg_cmd_table;
+    rpmsg_cmd_ept_thread_init(handle, 2048, RT_THREAD_PRIORITY_MAX / 2);
+
+    /* Init ept2: master(1) --> remote(3) */
+    handle = &rpmsg_cmd_handles[2];
+    handle->master_id = MASTER_ID;
+    handle->remote_id = REMOTE_ID_3;
+    handle->endpoint  = EPT_M1R3_SYSCMD;
+    handle->cmd_counter = sizeof(rpmsg_cmd_table) / sizeof(struct rpmsg_cmd_table_t);
+    handle->cmd_table = rpmsg_cmd_table;
+    rpmsg_cmd_ept_thread_init(handle, 2048, RT_THREAD_PRIORITY_MAX / 2);
 }
 INIT_APP_EXPORT(rpmsg_cmd_master_init);
 
