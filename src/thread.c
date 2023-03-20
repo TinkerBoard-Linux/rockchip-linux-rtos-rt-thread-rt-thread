@@ -938,14 +938,14 @@ rt_thread_t rt_thread_find(char *name)
 
 RTM_EXPORT(rt_thread_find);
 
-void rt_thread_get_stack_info(rt_thread_t thread, rt_uint32_t *pxStack, rt_uint32_t *pxSize)
+void rt_thread_get_stack_info(rt_thread_t thread, rt_ubase_t *pxStack, rt_uint32_t *pxSize)
 {
     rt_thread_t task = thread;
 
     if (thread == RT_NULL)
         task = rt_thread_self();
 
-    *pxStack = (rt_uint32_t)task->stack_addr;
+    *pxStack = (rt_ubase_t)task->stack_addr;
     *pxSize = task->stack_size;
 }
 

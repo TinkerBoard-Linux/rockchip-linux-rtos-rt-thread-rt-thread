@@ -151,7 +151,7 @@ rt_err_t rt_thread_delete(rt_thread_t thread);
 #endif
 rt_thread_t rt_thread_self(void);
 rt_thread_t rt_thread_find(char *name);
-void rt_thread_get_stack_info(rt_thread_t thread, rt_uint32_t *pxStack, rt_uint32_t *pxSize);
+void rt_thread_get_stack_info(rt_thread_t thread, rt_ubase_t *pxStack, rt_uint32_t *pxSize);
 rt_err_t rt_thread_startup(rt_thread_t thread);
 rt_err_t rt_thread_yield(void);
 rt_err_t rt_thread_delay(rt_tick_t tick);
