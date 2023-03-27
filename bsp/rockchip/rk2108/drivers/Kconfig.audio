@@ -182,6 +182,22 @@ menu "Enable Audio"
           PDM - stereo pdm digital mics
           External ES8388 - stereo loopback
 
+    config RT_USING_AUDIO_CARD_ES7202_ACDCDIG_COMBINE
+        bool "Enable mix audio card with ES7202 + ADC"
+        depends on RT_USING_AUDIO_CARD
+        select RT_USING_PDM0
+        select RT_USING_MULTI_CODECS
+        select RT_USING_CODEC_ES7202
+        select RT_USING_AUDIO_CARD_ACDCDIG
+        select RT_USING_ACDCDIG_PDM0_SDI2
+        default n
+        help
+          Say Y if you want to use mix audio card which support six channels
+          capture.
+
+          The first four channels come from ES7202(SDI0 SDI1)
+          The last two channels come from ADC(SDI2)
+
     endmenu
 
     menu "Audio Interfaces"
@@ -190,6 +206,9 @@ menu "Enable Audio"
         bool
         select RT_USING_DMA
         default y
+
+    config RT_USING_MULTI_CODECS
+        bool
 
     config RT_USING_MULTI_DAIS
         bool

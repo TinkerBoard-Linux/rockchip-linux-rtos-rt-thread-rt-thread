@@ -63,6 +63,7 @@
 /** audio stream num: playback and capture */
 #define AUDIO_STREAM_NUM 2
 #define MAX_DAIS 4
+#define MAX_CODECS 4
 
 typedef enum
 {
@@ -219,6 +220,16 @@ struct audio_mdais_desc
     void *dais[MAX_DAIS]; /**< dai instance array */
     uint8_t capture_mapping[MAX_DAIS]; /**< capture channel mapping */
     uint8_t playback_mapping[MAX_DAIS]; /**< playback channel mapping */
+};
+
+/**
+ * struct audio_mcodecs_desc - audio multi codecs desc.
+ */
+struct audio_mcodecs_desc
+{
+    void *codecs[MAX_CODECS]; /**< codec instance array */
+    uint8_t capture_mapping[MAX_CODECS]; /**< capture channel mapping */
+    uint8_t playback_mapping[MAX_CODECS]; /**< playback channel mapping */
 };
 
 /**
