@@ -35,7 +35,11 @@
 /* device mapping type */
 #define DEVICE_MEM     (SHARED|AP_RW|DOMAIN0|SHAREDEVICE|DESC_SEC|XN)
 /* normal memory mapping type */
-#define NORMAL_MEM     (SHARED|AP_RW|DOMAIN0|MEMWBWA|DESC_SEC)
+#define NORMAL_MEM     (AP_RW|DOMAIN0|MEMWBWA|DESC_SEC)
+/* share memory mapping type*/
+#define SHARED_MEM     (SHARED|AP_RW|DOMAIN0|MEMWBWA|DESC_SEC)
+/* uncached memory mapping type */
+#define UNCACHED_MEM   (SHARED|AP_RW|DOMAIN0|STRONGORDER|DESC_SEC|XN)
 
 struct mem_desc
 {
