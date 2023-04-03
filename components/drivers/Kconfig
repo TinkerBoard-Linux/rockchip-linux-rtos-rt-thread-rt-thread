@@ -106,6 +106,10 @@ if RT_USING_I2C
             bool "Use simulate I2C debug message"
             default n
     endif
+
+    config RT_USING_I2C_CMD
+        bool "Enable I2C cmds"
+        default n
 endif
 
 config RT_USING_PHY

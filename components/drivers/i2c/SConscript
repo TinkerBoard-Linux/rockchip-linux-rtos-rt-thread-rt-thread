@@ -7,6 +7,9 @@ i2c_core.c
 i2c_dev.c
 """)
 
+if GetDepend('RT_USING_I2C_CMD'):
+    src = src + ['i2c_cmd.c']
+
 if GetDepend('RT_USING_I2C_BITOPS'):
     src = src + ['i2c-bit-ops.c']
 
