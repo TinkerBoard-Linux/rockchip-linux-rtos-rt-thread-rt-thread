@@ -19,6 +19,7 @@
 
 #include <rthw.h>
 #include <rtthread.h>
+#include <string.h>
 
 #ifdef RT_USING_SMP
 #define rt_tick rt_cpu_index(0)->tick
