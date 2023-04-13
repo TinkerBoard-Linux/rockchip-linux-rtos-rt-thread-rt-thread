@@ -1299,6 +1299,10 @@ void rt_console_set_output_hook(console_hook hook)
     console_output_hook = hook;
 }
 
+#ifdef RT_USING_SMP
+struct rt_spinlock _print_lock;
+#endif
+
 /**
  * This function will print a formatted string on system console.
  *
@@ -1310,7 +1314,7 @@ RT_WEAK int rt_kprintf(const char *fmt, ...)
 {
     va_list args;
     rt_size_t length;
-    static char rt_log_buf[RT_CONSOLEBUF_SIZE];
+    char rt_log_buf[RT_CONSOLEBUF_SIZE];
 
     va_start(args, fmt);
     /* the return value of vsnprintf is the number of bytes that would be
@@ -1325,7 +1329,11 @@ RT_WEAK int rt_kprintf(const char *fmt, ...)
     if (console_output_hook) {
         console_output_hook(rt_log_buf, 0);
     }
-	
+
+#ifdef RT_USING_SMP    
+    rt_spin_lock(&_print_lock);
+#endif
+
 #ifdef RT_USING_DEVICE
     if (_console_device == RT_NULL)
     {
@@ -1338,6 +1346,11 @@ RT_WEAK int rt_kprintf(const char *fmt, ...)
 #else
     rt_hw_console_output(rt_log_buf);
 #endif /* RT_USING_DEVICE */
+
+#ifdef RT_USING_SMP
+    rt_spin_unlock(&_print_lock);
+#endif
+
     va_end(args);
 
     return length;
