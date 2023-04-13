@@ -161,7 +161,6 @@ config RT_USING_PWM_REGULATOR
     depends on RT_USING_PWM
     default n
 
->>>>>>> [BSP] Rockchip: Merge rockchip porting code
 config RT_USING_CACHE
     bool "Enable cache"
     default y

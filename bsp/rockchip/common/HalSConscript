@@ -45,7 +45,7 @@ else:
         hal_lib + '/CMSIS/Device',
         hal_lib + '/CMSIS/Device/' + PROJECT + '/Include']
 
-if rtconfig.ARCH == 'arm':
+if rtconfig.ARCH == 'arm' or rtconfig.ARCH == 'aarch64':
     if PROJECT == 'CA':
         path.append(hal_lib + '/CMSIS/Core_A/Include')
     else:
