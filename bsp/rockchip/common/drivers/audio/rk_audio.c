@@ -159,10 +159,6 @@ static rt_err_t rk_audio_start(struct audio_stream *as)
             return ret;
     }
 
-    ret = dai->ops->start(dai, stream);
-    if (ret)
-        return ret;
-
     if (codec)
     {
         ret = codec->ops->start(codec, stream);
@@ -170,9 +166,15 @@ static rt_err_t rk_audio_start(struct audio_stream *as)
             return ret;
     }
 
-    audio_stream_set_state(as, AUDIO_STREAM_STATE_RUNNING);
-
     ret = pcm->ops->start(pcm);
+    if (ret)
+        return ret;
+
+    ret = dai->ops->start(dai, stream);
+    if (ret)
+        return ret;
+
+    audio_stream_set_state(as, AUDIO_STREAM_STATE_RUNNING);
 
     return ret;
 }
@@ -187,24 +189,24 @@ static rt_err_t _rk_audio_stop(struct audio_stream *as, audio_stream_state_t sta
     eAUDIO_streamType stream = as->stream;
     rt_err_t ret = RT_EOK;
 
-    if (vad_dai)
-    {
-        ret = vad_dai->ops->stop(vad_dai, stream);
-        if (ret)
-            return ret;
-    }
-
-    ret = pcm->ops->stop(pcm);
+    ret = dai->ops->stop(dai, stream);
     if (ret)
         return ret;
 
-    ret = dai->ops->stop(dai, stream);
+    ret = pcm->ops->stop(pcm);
     if (ret)
         return ret;
 
     if (codec)
     {
         ret = codec->ops->stop(codec, stream);
+        if (ret)
+            return ret;
+    }
+
+    if (vad_dai)
+    {
+        ret = vad_dai->ops->stop(vad_dai, stream);
         if (ret)
             return ret;
     }
