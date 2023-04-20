@@ -622,8 +622,8 @@ void rk_audio_stream_update(struct audio_stream *as)
 
     if (avail >= pcm->abuf.buf_size)
     {
-        rt_kprintf("[0x%08x] stream %d: xrun, avail: %lu!\n",
-                   HAL_GetTick(), as->stream, avail);
+        RK_AUDIO_DBG("[0x%08x] stream %d: xrun, avail: %lu!\n",
+                     HAL_GetTick(), as->stream, avail);
         rk_audio_xrun(pcm->as);
     }
     else if (pcm->waiting)
