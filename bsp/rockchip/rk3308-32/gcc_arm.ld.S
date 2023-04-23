@@ -143,13 +143,13 @@ SECTIONS
     . = ALIGN(16);
     .bss (NOLOAD) :
     {
-        PROVIDE(__bss_start__ = .);
+        PROVIDE(__bss_start = .);
         *(.bss)
         *(.bss.*)
         *(.dynbss)
         *(COMMON)
         . = ALIGN(16);
-        PROVIDE(__bss_end__ = .);
+        PROVIDE(__bss_end = .);
     } > DRAM
 
     .heap :

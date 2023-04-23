@@ -38,6 +38,21 @@ extern uint32_t __heap_end[];
 #define RT_HW_HEAP_END          (void*)&__heap_end
 #endif
 
+#define GIC_IRQ_START               0
+#define ARM_GIC_NR_IRQS             NUM_INTERRUPTS
+#define ARM_GIC_MAX_NR              NUM_INTERRUPTS
+#define GIC_ACK_INTID_MASK          0x000003ff
+
+rt_inline rt_uint32_t platform_get_gic_dist_base(void)
+{
+    return GIC_DISTRIBUTOR_BASE;
+}
+
+rt_inline rt_uint32_t platform_get_gic_cpu_base(void)
+{
+    return GIC_CPU_INTERFACE_BASE;
+}
+
 void rt_hw_board_init(void);
 
 #endif

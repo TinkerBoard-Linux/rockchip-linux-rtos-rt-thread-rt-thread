@@ -1,7 +1,4 @@
 import os
-import sys
-
-from building import *
 
 # toolchains options
 ARCH        ='arm'
