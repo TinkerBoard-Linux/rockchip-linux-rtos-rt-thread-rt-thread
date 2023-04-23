@@ -11,6 +11,8 @@
 #ifndef __DRV_CODECS_H__
 #define __DRV_CODECS_H__
 
+#include "drv_clock.h"
+
 #ifdef RT_USING_CODEC_AW8896
 extern const struct codec_desc codec_aw8896;
 #endif
@@ -49,6 +51,8 @@ struct codec_desc
     char name[RT_NAME_MAX];
     char i2c_bus[RT_NAME_MAX];
     uint8_t i2c_addr;
+    uint32_t mclk_gate;
+    bool mclk_always_on;
 };
 
 #endif /* __DRV_CODECS_H__ */

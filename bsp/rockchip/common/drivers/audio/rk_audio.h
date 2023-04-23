@@ -207,6 +207,7 @@ struct audio_codec
     uint32_t id; /**< assign from codee base as the unique id. */
     struct audio_card *card; /**< parent card */
     const struct audio_codec_ops *ops; /**< audio ops function */
+    struct clk_gate *mclk_gate;
 };
 
 /**
