@@ -189,6 +189,9 @@ static rt_err_t _rk_audio_stop(struct audio_stream *as, audio_stream_state_t sta
     eAUDIO_streamType stream = as->stream;
     rt_err_t ret = RT_EOK;
 
+    if (as->state != AUDIO_STREAM_STATE_RUNNING)
+        goto end;
+
     ret = dai->ops->stop(dai, stream);
     if (ret)
         return ret;
@@ -211,6 +214,7 @@ static rt_err_t _rk_audio_stop(struct audio_stream *as, audio_stream_state_t sta
             return ret;
     }
 
+end:
     rt_mutex_take(&as->lock, RT_WAITING_FOREVER);
     as->state = state;
     pcm->waiting = RT_FALSE;
