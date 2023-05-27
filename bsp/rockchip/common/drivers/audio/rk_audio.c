@@ -249,6 +249,7 @@ static rt_err_t rk_audio_init(rt_device_t dev)
 
     cfg.master = !desc->codec_master;
     cfg.clkInvert = desc->clk_invert;
+    cfg.frameInvert = desc->frame_invert;
     cfg.format = desc->format;
     cfg.trcmMode = desc->trcm_mode;
     cfg.pdmMode = desc->pdm_mode;
