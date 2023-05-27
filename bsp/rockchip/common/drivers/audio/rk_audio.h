@@ -231,6 +231,7 @@ struct audio_card_desc
     void *codec; /**< codec instance */
     bool codec_master; /**< indicate codec is master */
     bool clk_invert; /**< indicate clk is invert */
+    bool frame_invert; /**< indicate frame clk is invert */
     bool playback; /**< indicate support playback */
     bool capture; /**< indicate support capture */
     bool multi_dais; /**< indicate support for multi dais */
