@@ -269,7 +269,7 @@ static void rockchip_spi_dma_txcb(void *data)
     rt_sem_release(&spi->sem_lock);
 }
 
-static rt_err_t rockchip_spi_wait_idle(struct rockchip_spi *spi)
+static rt_err_t rockchip_spi_wait_idle(struct rockchip_spi *spi, bool forever)
 {
     struct SPI_HANDLE *pSPI = &spi->instance;
     rt_err_t ret = RT_EBUSY;
@@ -282,7 +282,7 @@ static rt_err_t rockchip_spi_wait_idle(struct rockchip_spi *spi)
         if (ret == HAL_OK)
             break;
     }
-    while (timeout > rt_tick_get());
+    while (timeout > rt_tick_get() || forever);
 
     return ret;
 }
@@ -528,7 +528,7 @@ static rt_uint32_t rockchip_spi_xfer(struct rt_spi_device *device, struct rt_spi
             }
             if (message->send_buf && ret == RT_EOK)
             {
-                rockchip_spi_wait_idle(spi);
+                rockchip_spi_wait_idle(spi, false);
             }
         }
         else
@@ -536,7 +536,7 @@ static rt_uint32_t rockchip_spi_xfer(struct rt_spi_device *device, struct rt_spi
             HAL_SPI_PioTransfer(pSPI);
             if (message->send_buf)
             {
-                rockchip_spi_wait_idle(spi);
+                rockchip_spi_wait_idle(spi, false);
             }
         }
     }
@@ -555,7 +555,7 @@ static rt_uint32_t rockchip_spi_xfer(struct rt_spi_device *device, struct rt_spi
             rockchip_spi_dma_complete(spi, message);
             if (message->send_buf && ret == RT_EOK)
             {
-                rockchip_spi_wait_idle(spi);
+                rockchip_spi_wait_idle(spi, true);
             }
         }
         else
@@ -569,7 +569,7 @@ static rt_uint32_t rockchip_spi_xfer(struct rt_spi_device *device, struct rt_spi
             rt_hw_interrupt_mask(spi->hal_dev->irqNum);
             if (message->send_buf)
             {
-                rockchip_spi_wait_idle(spi);
+                rockchip_spi_wait_idle(spi, true);
             }
         }
     }
@@ -620,7 +620,7 @@ static rt_err_t rockchip_spi_probe(struct rockchip_spi *spi, char *bus_name)
     rt_err_t ret;
 
 #ifdef RT_USING_DMA
-    spi->dma = rt_dma_get(spi->hal_dev->txDma.dmac);
+    spi->dma = rt_dma_get((uint32_t)(spi->hal_dev->txDma.dmac));
 #endif
     if (spi->dma == NULL)
         rt_kprintf("%s only support CPU transfer\n", __func__);
