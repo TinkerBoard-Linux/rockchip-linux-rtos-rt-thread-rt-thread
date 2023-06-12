@@ -281,19 +281,19 @@ rt_err_t rt_udisk_run(struct uhintf* intf)
         stor->capicity[0], stor->capicity[1]));
 
     /* get the first sector to read partition table */
-    sector = (rt_uint8_t*) rt_malloc (SECTOR_SIZE);
+    sector = (rt_uint8_t*) rt_malloc (SECTOR_SIZE * 8);
     if (sector == RT_NULL)
     {
         rt_kprintf("allocate partition sector buffer failed\n");
         return -RT_ERROR;
     }
 
-    rt_memset(sector, 0, SECTOR_SIZE);
+    rt_memset(sector, 0, SECTOR_SIZE * 8);
 
     RT_DEBUG_LOG(RT_DEBUG_USB, ("read partition table\n"));
 
     /* get the partition table */
-    ret = rt_usbh_storage_read10(intf, sector, 0, 1, USB_TIMEOUT_LONG);
+    ret = rt_usbh_storage_read10(intf, sector, 0, 8, USB_TIMEOUT_LONG);
     if(ret != RT_EOK)
     {
         rt_kprintf("read parition table error\n");
@@ -307,7 +307,7 @@ rt_err_t rt_udisk_run(struct uhintf* intf)
     for(i=0; i<MAX_PARTITION_COUNT; i++)
     {
         /* get the first partition */
-        ret = dfs_filesystem_get_partition(&part[i], sector, i);
+        ret = dfs_filesystem_get_partition(&part[i], sector, 8, i);
         if (ret == RT_EOK)
         {
             struct ustor_data* data = rt_malloc(sizeof(struct ustor_data));

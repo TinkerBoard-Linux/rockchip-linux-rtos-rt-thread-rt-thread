@@ -80,8 +80,9 @@ struct dfs_filesystem *dfs_filesystem_lookup(const char *path);
 const char *dfs_filesystem_get_mounted_path(struct rt_device *device);
 
 int dfs_filesystem_get_partition(struct dfs_partition *part,
-                                 uint8_t         *buf,
-                                 uint32_t        pindex);
+                                      uint8_t         *buf,
+                                      uint8_t         sect_count,
+                                      uint32_t        pindex);
 
 int dfs_mount(const char *device_name,
               const char *path,

@@ -436,7 +436,7 @@ rt_int32_t rt_mmcsd_blk_probe(struct rt_mmcsd_card *card)
     LOG_D("probe mmcsd block device!");
 
     /* get the first sector to read partition table */
-    sector = (rt_uint8_t *)rt_malloc(SECTOR_SIZE);
+    sector = (rt_uint8_t *)rt_malloc(SECTOR_SIZE * 8);
     if (sector == RT_NULL)
     {
         LOG_E("allocate partition sector buffer failed!");
@@ -444,7 +444,8 @@ rt_int32_t rt_mmcsd_blk_probe(struct rt_mmcsd_card *card)
         return -RT_ENOMEM;
     }
 
-    status = rt_mmcsd_req_blk(card, 0, sector, 1, 0);
+    /* 8 sectors support up to 24 gpt partitions */
+    status = rt_mmcsd_req_blk(card, 0, sector, 8, 0);
     if (status == RT_EOK)
     {
         rt_uint8_t i;
@@ -458,8 +459,8 @@ rt_int32_t rt_mmcsd_blk_probe(struct rt_mmcsd_card *card)
 
         for (i = 0; i < RT_MMCSD_MAX_PARTITION; i++)
         {
-            /* Get the first partition */
-            status = dfs_filesystem_get_partition(&part, sector, i);
+            /* get the first partition */
+            status = dfs_filesystem_get_partition(&part, sector, 8, i);
             if (status == RT_EOK)
             {
                 /* TODO: Avoid fake MBR in GPT */

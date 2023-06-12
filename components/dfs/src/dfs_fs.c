@@ -16,6 +16,32 @@
 #include <dfs_file.h>
 #include "dfs_private.h"
 
+typedef struct _gpt_header {
+    uint64_t signature;                        /* 0x0  */
+    uint32_t revision;                         /* 0x8  */
+    uint32_t header_size;                      /* 0xC  */
+    uint32_t header_crc32;                     /* 0x10 */
+    uint32_t reserved1;                        /* 0x14 */
+    uint64_t my_lba;                           /* 0x18 */
+    uint64_t alternate_lba;                    /* 0x20 */
+    uint64_t first_usable_lba;                 /* 0x28 */
+    uint64_t last_usable_lba;                  /* 0x30 */
+    uint8_t  disk_guid[16];                    /* 0x38 */
+    uint64_t partition_entry_lba;              /* 0x48 */
+    uint32_t num_partition_entries;            /* 0x50 */
+    uint32_t sizeof_partition_entry;           /* 0x54 */
+    uint32_t partition_entry_array_crc32;      /* 0x58 */
+} __packed gpt_header;
+
+typedef struct _gpt_entry {
+    uint8_t  partition_type_guid[16];          /* 0x0  */
+    uint8_t  unique_partition_guid[16];        /* 0x10 */
+    uint64_t starting_lba;                     /* 0x20 */
+    uint64_t ending_lba;                       /* 0x28 */
+    uint64_t attributes;                       /* 0x30 */
+    uint8_t  partition_name[72];               /* 0x38 */
+} __packed gpt_entry;
+
 /**
  * @addtogroup FsApi
  */
@@ -145,17 +171,62 @@ const char *dfs_filesystem_get_mounted_path(struct rt_device *device)
 }
 
 /**
+ * this function will fetch the GPT partition table on specified buffer.
+ *
+ * @param part the returned partition structure.
+ * @param buf the buffer contains partition table.
+ * @param sect_count the sector count in the buffer.
+ * @param pindex the index of partition table to fetch.
+ *
+ * @return RT_EOK on successful or -RT_ERROR on failed.
+ */
+static int dfs_filesystem_get_gpt_partition(struct dfs_partition *part,
+                                      uint8_t         *buf,
+                                      uint8_t         sect_count,
+                                      uint32_t        pindex)
+{
+    gpt_header *gpt_head;
+    gpt_entry  *gpt_ent;
+    uint32_t gpt_table_begin, index;
+
+    if (sect_count <= (2 + pindex / 4))
+        return -EIO;
+
+    /* check gpt main header */
+    gpt_head = (gpt_header *)(&buf[512]);
+    if (gpt_head->signature != 0x4546492050415254 || gpt_head->my_lba == 1)
+        return -EIO;
+
+    /* get partition table LBA */
+    gpt_table_begin = gpt_head->partition_entry_lba;
+    index = ((gpt_table_begin + pindex / 4) * 512) + ((pindex % 4) * 128);
+    if (index >= sect_count)
+        return -EIO;
+
+    gpt_ent = (gpt_entry *)(&buf[index]);
+
+    /* get partition info for gpt entry */
+    part->type = 0x0B;
+    part->offset = gpt_ent->starting_lba;
+    part->size = gpt_ent->ending_lba - gpt_ent->starting_lba;
+
+    return RT_EOK;
+}
+
+/**
  * this function will fetch the partition table on specified buffer.
  *
  * @param part the returned partition structure.
  * @param buf the buffer contains partition table.
+ * @param sect_count the sector count in the buffer.
  * @param pindex the index of partition table to fetch.
  *
  * @return RT_EOK on successful or -RT_ERROR on failed.
  */
 int dfs_filesystem_get_partition(struct dfs_partition *part,
-                                 uint8_t         *buf,
-                                 uint32_t        pindex)
+                                      uint8_t         *buf,
+                                      uint8_t         sect_count,
+                                      uint32_t        pindex)
 {
 #define DPT_ADDRESS     0x1be       /* device partition offset in Boot Sector */
 #define DPT_ITEM_SIZE   16          /* partition item size */
@@ -176,6 +247,9 @@ int dfs_filesystem_get_partition(struct dfs_partition *part,
     type = *(dpt + 4);
     if (type == 0)
         return -EIO;
+
+    if (type == 0xee)
+        return dfs_filesystem_get_gpt_partition(part, buf, sect_count, pindex);
 
     /* set partition information
      *    size is the number of 512-Byte */
