@@ -462,6 +462,12 @@ rt_int32_t rt_mmcsd_blk_probe(struct rt_mmcsd_card *card)
             status = dfs_filesystem_get_partition(&part, sector, i);
             if (status == RT_EOK)
             {
+                /* TODO: Avoid fake MBR in GPT */
+                if (part.offset < 0 || part.size > (card->card_capacity * 2)) {
+                    part.offset = 0;
+                    part.size = card->card_capacity * 2;
+                }
+
                 /* Given name is with allocated host id and its partition index. */
                 rt_snprintf(dname, sizeof(dname), "sd%dp%d", host_id, i);
                 blk_dev = rt_mmcsd_create_blkdev(card, (const char*)dname, &part);
