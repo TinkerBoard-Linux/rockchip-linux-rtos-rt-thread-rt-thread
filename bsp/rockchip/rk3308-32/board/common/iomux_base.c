@@ -12,6 +12,7 @@
 #include "iomux.h"
 #include "hal_base.h"
 
+#ifdef RT_USING_UART2
 RT_WEAK  void uart2_m1_iomux_config(void)
 {
     /* UART2 M1 RX-4D2 TX-4D3 */
@@ -20,7 +21,9 @@ RT_WEAK  void uart2_m1_iomux_config(void)
                          GPIO_PIN_D3,
                          PIN_CONFIG_MUX_FUNC2);
 }
+#endif
 
+#ifdef RT_USING_UART4
 RT_WEAK  void uart4_m0_iomux_config(void)
 {
     /* UART4 M0 RX-4B0 TX-4B1 */
@@ -29,7 +32,9 @@ RT_WEAK  void uart4_m0_iomux_config(void)
                          GPIO_PIN_B1,
                          PIN_CONFIG_MUX_FUNC1);
 }
+#endif
 
+#ifdef RT_USING_I2C1
 RT_WEAK  void i2c1_m0_iomux_config(void)
 {
     /* I2C1 */
@@ -38,7 +43,9 @@ RT_WEAK  void i2c1_m0_iomux_config(void)
                          GPIO_PIN_B4,
                          PIN_CONFIG_MUX_FUNC1);
 }
+#endif
 
+#ifdef RT_USING_AUDIO_CARD_I2S0
 RT_WEAK void i2s0_8ch_m0_iomux_config(void)
 {
     /* I2S0 8CH */
@@ -52,7 +59,9 @@ RT_WEAK void i2s0_8ch_m0_iomux_config(void)
                          GPIO_PIN_B5,   // I2S0_SDI0(8CH)
                          PIN_CONFIG_MUX_FUNC1);
 }
+#endif
 
+#ifdef RT_USING_AUDIO_CARD_I2S1
 RT_WEAK void i2s1_8ch_m0_iomux_config(void)
 {
     /* I2S1 8CH M0 */
@@ -66,11 +75,14 @@ RT_WEAK void i2s1_8ch_m0_iomux_config(void)
                          GPIO_PIN_B3,   // I2S1_SDI0_M0(8CH)
                          PIN_CONFIG_MUX_FUNC2);
 }
+#endif
 
 /**
  * @brief  Config iomux for RK3308
  */
 RT_WEAK  void rt_hw_iomux_config(void)
 {
+#ifdef RT_USING_UART2
     uart2_m1_iomux_config();
+#endif
 }

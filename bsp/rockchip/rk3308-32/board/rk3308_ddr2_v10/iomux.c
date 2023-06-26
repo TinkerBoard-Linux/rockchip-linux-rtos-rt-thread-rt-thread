@@ -23,26 +23,26 @@ void rt_hw_iodomain_config(void)
                     (GRF_SOC_CON0_IO_VSEL2_MASK << 16);
 }
 
-void spkmute_iomux_config(void)
-{
-    /* SPK_MUTE is GPIO0_A5 */
-    HAL_PINCTRL_SetIOMUX(GPIO_BANK0,
-                         GPIO_PIN_A5,
-                         PIN_CONFIG_MUX_FUNC0);
-
-    HAL_GPIO_SetPinDirection(GPIO0, GPIO_PIN_A5, GPIO_OUT);
-    HAL_GPIO_SetPinLevel(GPIO0, GPIO_PIN_A5, GPIO_HIGH);
-}
-
 /**
  * @brief  Config iomux for RK3308
  */
 void rt_hw_iomux_config(void)
 {
     rt_hw_iodomain_config();
+
+#ifdef RT_USING_UART2
     uart2_m1_iomux_config();
+#endif
+
+#ifdef RT_USING_UART4
     uart4_m0_iomux_config();
+#endif
+
+#ifdef RT_USING_I2C1
     i2c1_m0_iomux_config();
+#endif
+
+#ifdef RT_USING_AUDIO_CARD_I2S0
     i2s0_8ch_m0_iomux_config();
-    spkmute_iomux_config();
+#endif
 }
