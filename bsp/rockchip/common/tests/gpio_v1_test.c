@@ -15,7 +15,7 @@
 #include <rtthread.h>
 #include <rtdevice.h>
 
-#ifdef RT_USING_COMMON_TEST_GPIO
+#if defined(RT_USING_COMMON_TEST_GPIO) && defined(RKMCU_RK2108)
 
 #include <unistd.h>
 #include <stdlib.h>
