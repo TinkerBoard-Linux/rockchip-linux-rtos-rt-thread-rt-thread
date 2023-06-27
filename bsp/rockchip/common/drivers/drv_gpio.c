@@ -219,16 +219,28 @@ static void pin_mode(struct rt_device *dev, rt_base_t pin, rt_base_t mode)
     case PIN_MODE_OUTPUT:
     case PIN_MODE_OUTPUT_OD:
 #ifdef HAL_PINCTRL_MODULE_ENABLED
-        HAL_PINCTRL_SetIOMUX(PIN_BANK(pin), HAL_BIT(pin), PIN_CONFIG_MUX_FUNC0);
+        HAL_PINCTRL_SetIOMUX(PIN_BANK(pin), HAL_BIT(pin & 0x1f), PIN_CONFIG_MUX_FUNC0);
 #endif
         HAL_GPIO_SetPinDirection(get_st_gpio(pin), get_st_pin(pin), GPIO_OUT);
         break;
 
     case PIN_MODE_INPUT:
+#ifdef HAL_PINCTRL_MODULE_ENABLED
+        HAL_PINCTRL_SetIOMUX(PIN_BANK(pin), HAL_BIT(pin & 0x1f), PIN_CONFIG_MUX_FUNC0);
+#endif
+        HAL_GPIO_SetPinDirection(get_st_gpio(pin), get_st_pin(pin), GPIO_IN);
+        break;
+
     case PIN_MODE_INPUT_PULLUP:
+#ifdef HAL_PINCTRL_MODULE_ENABLED
+        HAL_PINCTRL_SetIOMUX(PIN_BANK(pin), HAL_BIT(pin & 0x1f), PIN_CONFIG_MUX_FUNC0 | PIN_CONFIG_PUL_UP);
+#endif
+        HAL_GPIO_SetPinDirection(get_st_gpio(pin), get_st_pin(pin), GPIO_IN);
+        break;
+
     case PIN_MODE_INPUT_PULLDOWN:
 #ifdef HAL_PINCTRL_MODULE_ENABLED
-        HAL_PINCTRL_SetIOMUX(PIN_BANK(pin), HAL_BIT(pin), PIN_CONFIG_MUX_FUNC0);
+        HAL_PINCTRL_SetIOMUX(PIN_BANK(pin), HAL_BIT(pin & 0x1f), PIN_CONFIG_MUX_FUNC0 | PIN_CONFIG_PUL_DOWN);
 #endif
         HAL_GPIO_SetPinDirection(get_st_gpio(pin), get_st_pin(pin), GPIO_IN);
         break;
