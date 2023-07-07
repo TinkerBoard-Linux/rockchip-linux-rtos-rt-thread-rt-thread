@@ -347,6 +347,9 @@ static rt_err_t rockchip_spi_dma_prepare(struct rockchip_spi *spi, struct rt_spi
                                 &spi->rx_dma_xfer);
         if (ret)
             goto rx_release;
+#ifdef RT_USING_CACHE
+        rt_hw_cpu_dcache_ops(RT_HW_CACHE_FLUSH, (void *)message->recv_buf, message->length);
+#endif
     }
 
     if (message->send_buf)
@@ -616,7 +619,9 @@ static rt_err_t rockchip_spi_probe(struct rockchip_spi *spi, char *bus_name)
     char *dev_name;
     rt_err_t ret;
 
-    spi->dma = rt_device_find("dmac0");
+#ifdef RT_USING_DMA
+    spi->dma = rt_dma_get(spi->hal_dev->txDma.dmac);
+#endif
     if (spi->dma == NULL)
         rt_kprintf("%s only support CPU transfer\n", __func__);
 
@@ -660,7 +665,7 @@ static void rockchip_spi##ID##_irq(int irq, void *param);                       
                                                                                                       \
 static struct rockchip_spi s_spi##ID =                                                                \
 {                                                                                                     \
-    .hal_dev = &g_spiDev##ID,                                                                         \
+    .hal_dev = &g_spi##ID##Dev,                                                                         \
     .isr = (void *)&rockchip_spi##ID##_irq,                                                           \
     .rt_spi_cs[0].pin = ROCKCHIP_SPI_CS_0,                                                            \
     .rt_spi_cs[1].pin = ROCKCHIP_SPI_CS_1,                                                            \
