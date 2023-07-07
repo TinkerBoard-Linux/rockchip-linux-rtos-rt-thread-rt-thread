@@ -38,8 +38,20 @@ void rt_hw_iomux_config(void)
     uart4_m0_iomux_config();
 #endif
 
+#ifdef RT_USING_I2C0
+    i2c0_m0_iomux_config();
+#endif
+
 #ifdef RT_USING_I2C1
     i2c1_m0_iomux_config();
+#endif
+
+#ifdef RT_USING_I2C2
+    i2c2_m0_iomux_config();
+#endif
+
+#ifdef RT_USING_SPI0
+    spi0_m0_iomux_config();
 #endif
 
 #ifdef RT_USING_AUDIO_CARD_I2S0

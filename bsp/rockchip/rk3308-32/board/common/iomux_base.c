@@ -34,6 +34,17 @@ RT_WEAK  void uart4_m0_iomux_config(void)
 }
 #endif
 
+#ifdef RT_USING_I2C0
+RT_WEAK  void i2c0_m0_iomux_config(void)
+{
+    /* I2C0 */
+    HAL_PINCTRL_SetIOMUX(GPIO_BANK1,
+                         GPIO_PIN_D0 |
+                         GPIO_PIN_D1,
+                         PIN_CONFIG_MUX_FUNC2);
+}
+#endif
+
 #ifdef RT_USING_I2C1
 RT_WEAK  void i2c1_m0_iomux_config(void)
 {
@@ -42,6 +53,40 @@ RT_WEAK  void i2c1_m0_iomux_config(void)
                          GPIO_PIN_B3 |
                          GPIO_PIN_B4,
                          PIN_CONFIG_MUX_FUNC1);
+}
+#endif
+
+#ifdef RT_USING_I2C2
+RT_WEAK  void i2c2_m0_iomux_config(void)
+{
+    /* I2C2 */
+    HAL_PINCTRL_SetIOMUX(GPIO_BANK2,
+                         GPIO_PIN_A2 |
+                         GPIO_PIN_A3,
+                         PIN_CONFIG_MUX_FUNC3);
+
+    /* set SOC_CON13 sel plus: GPIO2_A2 IOMUX FUN3 (I2C2_SDA) */
+    WRITE_REG_MASK_WE(GRF->SOC_CON13,
+                     GRF_SOC_CON13_GPIO2A2_SEL_SRC_CTRL_MASK | GRF_SOC_CON13_GPIO2A2_SEL_PLUS_MASK,
+                     GRF_SOC_CON13_GPIO2A2_SEL_SRC_CTRL_MASK | (3 << GRF_SOC_CON13_GPIO2A2_SEL_PLUS_SHIFT));
+
+    /* set SOC_CON13 sel plus: GPIO2_A3 IOMUX FUN3 (I2C2_SCL) */
+    WRITE_REG_MASK_WE(GRF->SOC_CON13,
+                     GRF_SOC_CON13_GPIO2A3_SEL_SRC_CTRL_MASK | GRF_SOC_CON13_GPIO2A3_SEL_PLUS_MASK,
+                     GRF_SOC_CON13_GPIO2A3_SEL_SRC_CTRL_MASK | (3 << GRF_SOC_CON13_GPIO2A3_SEL_PLUS_SHIFT));
+}
+#endif
+
+#ifdef RT_USING_SPI0
+RT_WEAK  void spi0_m0_iomux_config(void)
+{
+    /* I2C2 */
+    HAL_PINCTRL_SetIOMUX(GPIO_BANK2,
+                         GPIO_PIN_A0 |
+                         GPIO_PIN_A1 |
+                         GPIO_PIN_A2 |
+                         GPIO_PIN_A3,
+                         PIN_CONFIG_MUX_FUNC2);
 }
 #endif
 
