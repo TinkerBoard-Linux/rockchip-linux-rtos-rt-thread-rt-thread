@@ -155,7 +155,7 @@ static const struct rt_watchdog_ops dw_wdt_pos =
     .control = dw_wdt_control,
 };
 
-static void rt_wdt_irqhandler(void)
+static void rt_wdt_irqhandler(int irq, void *param)
 {
     rt_uint32_t status;
 
@@ -214,8 +214,8 @@ int wdt_dev_init(void)
 
     wdt_dev->dw_wdt.ops = &dw_wdt_pos;
 
-    HAL_NVIC_SetIRQHandler(WDT0_IRQn, rt_wdt_irqhandler);
-    HAL_NVIC_EnableIRQ(WDT0_IRQn);
+    rt_hw_interrupt_install(WDT0_IRQn, rt_wdt_irqhandler, RT_NULL, RT_NULL);
+    rt_hw_interrupt_umask(WDT0_IRQn);
 
 #if defined(RT_USING_PM)
     rt_pm_register_device(&wdt_dev->dw_wdt.parent, &rk_wdt_pm_ops);
