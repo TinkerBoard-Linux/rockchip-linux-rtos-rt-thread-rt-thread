@@ -1,0 +1,35 @@
+mainmenu "RT-Thread Configuration"
+
+config BSP_DIR
+    string
+    option env="BSP_ROOT"
+    default "."
+
+config RTT_DIR
+    string
+    option env="RTT_ROOT"
+    default "../../.."
+
+config PKGS_DIR
+    string
+    option env="PKGS_ROOT"
+    default "packages"
+
+choice
+    prompt "RK3562 MCU"
+    default RKMCU_RK3562_BUS
+
+    config RKMCU_RK3562_PMU
+        select ARCH_ARM_CORTEX_M0
+        bool "RK3562 MCU of PMU(no cache)"
+
+    config RKMCU_RK3562_BUS
+        select ARCH_ARM_CORTEX_M0
+        bool "RK3562 MCU of BUS"
+endchoice
+
+source "$RTT_DIR/Kconfig"
+source "$BSP_DIR/drivers/Kconfig"
+source "$BSP_DIR/board/Kconfig"
+#source "$PKGS_DIR/Kconfig"
+source "$BSP_DIR/../common/tests/Kconfig"
