@@ -103,7 +103,7 @@ void jtag_iomux_config(void)
 /**
  * @brief  Config iomux for rk2108 evb board
  */
-RT_WEAK void rt_hw_iomux_config(void)
+void rt_hw_iomux_config(void)
 {
     uart_iomux_config();
 }
