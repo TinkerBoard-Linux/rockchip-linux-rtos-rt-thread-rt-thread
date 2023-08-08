@@ -91,7 +91,7 @@ void timer_isr(int vector, void *param)
     if (count > fixed_spend)
         count -= fixed_spend;
     latency = count * 1000000000.0 / 24000000;
-    sprintf(szBuf, "latency=%fns(count=%d)\n", latency, count);
+    sprintf(szBuf, "latency=%fns(count=%ld)\n", latency, count);
     rt_kprintf("%s", szBuf);
     timer_int_count++;
     latency_sum += latency;
