@@ -139,7 +139,7 @@ rt_isr_handler_t rt_hw_interrupt_install(int              vector,
 #ifdef HAL_INTMUX_MODULE_ENABLED
     if (vector >= NUM_INTERRUPTS) {
         HAL_INTMUX_SetIRQHandler(vector, (HAL_INTMUX_HANDLER)handler, param);
-        return;
+        return handler;
     }
 #endif
     HAL_NVIC_SetIRQHandler(vector, (NVIC_IRQHandler)handler);
