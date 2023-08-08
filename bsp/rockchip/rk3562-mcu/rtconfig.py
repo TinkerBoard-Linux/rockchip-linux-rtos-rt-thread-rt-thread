@@ -34,7 +34,7 @@ if PLATFORM == 'gcc':
     OBJCPY = PREFIX + 'objcopy'
 
     DEVICE = ' -mcpu=cortex-m0 -mthumb -mlong-calls -ffunction-sections -fdata-sections'
-    CFLAGS = DEVICE + ' -g -Dgcc -D__RT_THREAD__'
+    CFLAGS = DEVICE + ' -Werror -Wall -Wno-stringop-truncation -g -Dgcc -D__RT_THREAD__'
     AFLAGS = ' -c' + DEVICE + ' -x assembler-with-cpp -Wa,-mimplicit-it=thumb -D__ASSEMBLY__'
     LFLAGS = DEVICE + ' -nostartfiles -Wl,--gc-sections,-Map=rtthread.map,-cref,-u,Reset_Handler '
 
