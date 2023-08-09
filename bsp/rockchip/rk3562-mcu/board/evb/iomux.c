@@ -77,6 +77,20 @@
  */
 void uart_iomux_config(void)
 {
+#ifdef RT_USING_UART5
+    /* uart5_m0 */
+    HAL_PINCTRL_SetIOMUX(GPIO_BANK1,
+                         GPIO_PIN_B7 |
+                         GPIO_PIN_C0,
+                         PIN_CONFIG_MUX_FUNC3);
+#endif
+#ifdef RT_USING_UART7
+    /* uart7_m1 */
+    HAL_PINCTRL_SetIOMUX(GPIO_BANK1,
+                         GPIO_PIN_B3 |
+                         GPIO_PIN_B4,
+                         PIN_CONFIG_MUX_FUNC3);
+#endif
 }
 
 /**
