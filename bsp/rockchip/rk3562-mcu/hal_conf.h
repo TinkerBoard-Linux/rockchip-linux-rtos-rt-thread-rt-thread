@@ -13,6 +13,7 @@
 #include "rtconfig.h"
 
 #define HAL_MCU_CORE
+#define SOC_RK3562
 
 /* Cache maintain need the decoded addr, it must be matched with pre-loader */
 #if defined(RKMCU_RK3562_BUS)
@@ -37,6 +38,15 @@
 #ifdef RT_USING_WDT
 #define HAL_WDT_MODULE_ENABLED
 #define HAL_WDT_DYNFREQ_FEATURE_ENABLED
+#endif
+
+#ifdef RT_USING_PIN
+#define HAL_PINCTRL_MODULE_ENABLED
+#define HAL_GPIO_MODULE_ENABLED
+#endif
+
+#ifdef HAL_GPIO_MODULE_ENABLED
+#define HAL_GPIO_VIRTUAL_MODEL_FEATURE_ENABLED
 #endif
 
 #define HAL_INTMUX_MODULE_ENABLED
