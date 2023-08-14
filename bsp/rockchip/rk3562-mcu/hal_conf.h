@@ -31,8 +31,21 @@
 #define HAL_ICACHE_MODULE_ENABLED
 #endif
 
+#ifdef RT_USING_CRU
+#define HAL_CRU_MODULE_ENABLED
+#endif
+
 #ifdef RT_USING_I2C
 #define HAL_I2C_MODULE_ENABLED
+#endif
+
+#ifdef RT_USING_PIN
+#define HAL_GPIO_MODULE_ENABLED
+#define HAL_PINCTRL_MODULE_ENABLED
+#endif
+
+#ifdef RT_USING_PWM
+#define HAL_PWM_MODULE_ENABLED
 #endif
 
 #ifdef RT_USING_SPI
