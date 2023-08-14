@@ -100,6 +100,59 @@ void jtag_iomux_config(void)
 {
 }
 
+#ifdef RT_USING_PWM
+#ifdef RT_USING_PWM0
+/**
+ * @brief  Config iomux for PWM Controller0
+ */
+void pwm0_m0_iomux_config(void)
+{
+    /* PWM0 M0 */
+    HAL_PINCTRL_SetIOMUX(GPIO_BANK0,
+                         GPIO_PIN_C3,
+                         PIN_CONFIG_MUX_FUNC2);
+    /* PWM1 M0 */
+    HAL_PINCTRL_SetIOMUX(GPIO_BANK0,
+                         GPIO_PIN_C4,
+                         PIN_CONFIG_MUX_FUNC2);
+    /* PWM2 M0 */
+    HAL_PINCTRL_SetIOMUX(GPIO_BANK0,
+                         GPIO_PIN_C5,
+                         PIN_CONFIG_MUX_FUNC2);
+    /* PWM3 M0 */
+    HAL_PINCTRL_SetIOMUX(GPIO_BANK0,
+                         GPIO_PIN_A7,
+                         PIN_CONFIG_MUX_FUNC1);
+}
+#endif
+
+#ifdef RT_USING_PWM1
+/**
+ * @brief  Config iomux for PWM Controller1
+ */
+void pwm1_m0_iomux_config(void)
+{
+    /* PWM4 M0 */
+    HAL_PINCTRL_SetIOMUX(GPIO_BANK0,
+                         GPIO_PIN_B7,
+                         PIN_CONFIG_MUX_FUNC2);
+    /* PWM5 M0 */
+    HAL_PINCTRL_SetIOMUX(GPIO_BANK0,
+                         GPIO_PIN_C2,
+                         PIN_CONFIG_MUX_FUNC2);
+    /* PWM6 M0 */
+    HAL_PINCTRL_SetIOMUX(GPIO_BANK0,
+                         GPIO_PIN_C1,
+                         PIN_CONFIG_MUX_FUNC2);
+    /* PWM7 M0 */
+    HAL_PINCTRL_SetIOMUX(GPIO_BANK0,
+                         GPIO_PIN_C0,
+                         PIN_CONFIG_MUX_FUNC2);
+}
+#endif
+#endif
+
+
 /**
  * @brief  Config iomux for rk2108 evb board
  */
@@ -112,6 +165,15 @@ void rt_hw_iomux_config(void)
     spi0_m1_iomux_config();
 #endif
     uart_iomux_config();
+
+#ifdef RT_USING_PWM
+#ifdef RT_USING_PWM0
+    pwm0_m0_iomux_config();
+#endif
+#ifdef RT_USING_PWM1
+    pwm1_m0_iomux_config();
+#endif
+#endif
 }
 
 /** @} */  // IOMUX_Public_Functions
