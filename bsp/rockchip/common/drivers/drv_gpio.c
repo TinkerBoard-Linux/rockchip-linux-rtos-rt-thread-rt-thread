@@ -351,16 +351,17 @@ static void pin_irq_hdr(uint32_t pin)
 {
     RT_ASSERT(pin >= 0);
     RT_ASSERT(pin < HAL_ARRAY_SIZE(pin_irq_hdr_tab));
-    RT_ASSERT(pin_irq_hdr_tab[pin].hdr != RT_NULL);
 
     pin_irq_hdr_tab[pin].hdr(pin_irq_hdr_tab[pin].args);
 }
 
 void HAL_GPIO_IRQDispatch(eGPIO_bankId bank, uint32_t pin)
 {
+    uint32_t pin_num = BANK_PIN(bank, pin);
     RT_ASSERT(bank < GPIO_BANK_NUM);
 
-    pin_irq_hdr(BANK_PIN(bank, pin));
+    if (pin_irq_hdr_tab[pin_num].hdr != RT_NULL)
+        pin_irq_hdr(pin_num);
 }
 
 #endif
