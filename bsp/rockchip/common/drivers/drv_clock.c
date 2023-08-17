@@ -431,16 +431,7 @@ void clk_disable_unused(const struct clk_unused *clks_unused)
 
     while (clks->gate_val)
     {
-        if (clks->is_pmucru)
-        {
-#if defined(CRU_PMU_CLKGATE_CON0_OFFSET)
-            CRU->PMU_CLKGATE_CON[clks->gate_con] = clks->gate_val;
-#endif
-        }
-        else
-        {
-            CRU->CRU_CLKGATE_CON[clks->gate_con] = clks->gate_val;
-        }
+        HAL_CRU_ClkDisableUnused(clks->bank, clks->gate_con, clks->gate_val);
         clks++;
     }
 }

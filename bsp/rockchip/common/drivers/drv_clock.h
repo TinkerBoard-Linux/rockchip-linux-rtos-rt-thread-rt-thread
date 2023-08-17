@@ -46,8 +46,8 @@ struct clk_init
 
 struct clk_unused
 {
-    uint32_t is_pmucru : 1;
-    uint32_t gate_con : 31;
+    uint32_t bank;
+    uint32_t gate_con;
     uint32_t gate_val;
 };
 
