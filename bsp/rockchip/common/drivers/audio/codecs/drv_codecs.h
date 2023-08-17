@@ -53,6 +53,7 @@ struct codec_desc
     uint8_t i2c_addr;
     uint32_t mclk_gate;
     bool mclk_always_on;
+    void *private;
 };
 
 #endif /* __DRV_CODECS_H__ */

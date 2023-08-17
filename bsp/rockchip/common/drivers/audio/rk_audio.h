@@ -205,6 +205,7 @@ struct audio_codec
 {
     rt_list_t list; /**< list node */
     uint32_t id; /**< assign from codee base as the unique id. */
+    void *private; /**< codec device private config */
     struct audio_card *card; /**< parent card */
     const struct audio_codec_ops *ops; /**< audio ops function */
     struct clk_gate *mclk_gate;
