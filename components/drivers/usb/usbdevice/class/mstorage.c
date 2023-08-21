@@ -1028,15 +1028,25 @@ static rt_err_t _interface_handler(ufunction_t func, ureq_t setup)
 static rt_err_t _function_enable(ufunction_t func)
 {
     struct mstorage *data;
+    rt_uint32_t timeout = 50;
     RT_ASSERT(func != RT_NULL);
     RT_DEBUG_LOG(RT_DEBUG_USB, ("Mass storage function enabled\n"));
     data = (struct mstorage*)func->user_data;
 
-    data->disk = rt_device_find(RT_USB_MSTORAGE_DISK_NAME);
-    if(data->disk == RT_NULL)
+    while (1)
     {
-        rt_kprintf("no data->disk named %s\n", RT_USB_MSTORAGE_DISK_NAME);
-        return -RT_ERROR;
+        data->disk = rt_device_find(RT_USB_MSTORAGE_DISK_NAME);
+
+        if (data->disk != RT_NULL)
+                break;
+
+        if(--timeout == 0)
+        {
+            rt_kprintf("no data->disk named %s\n", RT_USB_MSTORAGE_DISK_NAME);
+            return -RT_ERROR;
+        }
+
+        rt_thread_mdelay(100);
     }
 
 #ifdef RT_USING_DFS_MNTTABLE
