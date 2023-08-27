@@ -40,6 +40,7 @@
 #include "board.h"
 #include "hal_bsp.h"
 #include "drv_clock.h"
+#include "drv_fspi.h"
 #include "hal_base.h"
 #include "mini_ftl.h"
 
@@ -48,6 +49,7 @@
 /** @defgroup SPINAND_Private_Macro Private Macro
  *  @{
  */
+// #define SPINAND_DEBUG
 #ifdef SPINAND_DEBUG
 #define spinand_dbg(...)     rt_kprintf(__VA_ARGS__)
 #else
@@ -138,21 +140,109 @@ static const struct mtd_ops ops =
 };
 
 #if defined(RT_USING_SPINAND_FSPI_HOST)
-static HAL_Status SPI_Xfer(struct SPI_NAND_HOST *spi, struct HAL_SPI_MEM_OP *op)
+static HAL_Status fspi_xfer(struct SPI_NAND_HOST *spi, struct HAL_SPI_MEM_OP *op)
 {
-    struct HAL_FSPI_HOST *host = (struct HAL_FSPI_HOST *)spi->userdata;
+    struct rt_fspi_device *fspi_device = (struct rt_fspi_device *)spi->userdata;
 
-    host->mode = spi->mode;
-    host->cs = 0;
-    return HAL_FSPI_SpiXfer(host, op);
+    return rt_fspi_xfer(fspi_device, op);
 }
+
+static int rockchip_sfc_delay_lines_tuning(struct SPI_NAND *spinand, struct rt_fspi_device *fspi_device)
+{
+    uint8_t id_temp[SPINAND_MAX_ID_LEN];
+    uint16_t cell_max = (uint16_t)rt_fspi_get_max_dll_cells(fspi_device);
+    uint16_t right, left = 0;
+    uint16_t step = HAL_FSPI_DLL_TRANING_STEP;
+    bool dll_valid = false;
+    uint32_t final;
+
+    HAL_SPINAND_Init(spinand);
+    for (right = 0; right <= cell_max; right += step)
+    {
+        int ret;
+
+        ret = rt_fspi_set_delay_lines(fspi_device, right);
+        if (ret)
+        {
+            dll_valid = false;
+            break;
+        }
+        ret = HAL_SPINAND_ReadID(spinand, id_temp);
+        if (ret)
+        {
+            dll_valid = false;
+            break;
+        }
+
+        spinand_dbg("dll read flash id:%x %x %x\n",
+                    id_temp[0], id_temp[1], id_temp[2]);
+
+        ret = HAL_SPINAND_IsFlashSupported(id_temp);
+        if (dll_valid && !ret)
+        {
+            right -= step;
+
+            break;
+        }
+        if (!dll_valid && ret)
+            left = right;
+
+        if (ret)
+            dll_valid = true;
+
+        /* Add cell_max to loop */
+        if (right == cell_max)
+            break;
+        if (right + step > cell_max)
+            right = cell_max - step;
+    }
+
+    if (dll_valid && (right - left) >= HAL_FSPI_DLL_TRANING_VALID_WINDOW)
+    {
+        if (left == 0 && right < cell_max)
+            final = left + (right - left) * 2 / 5;
+        else
+            final = left + (right - left) / 2;
+    }
+    else
+    {
+        final = 0;
+    }
+
+    if (final)
+    {
+        spinand_dbg("spinand %d %d %d dll training success in %dMHz max_cells=%u\n",
+                    left, right, final, spinand->spi->speed, cell_max);
+        return rt_fspi_set_delay_lines(fspi_device, final);
+    }
+    else
+    {
+        rt_kprintf("spinor %d %d dll training failed in %dMHz, reduce the frequency\n",
+                   left, right, spinand->spi->speed);
+        rt_fspi_dll_disable(fspi_device);
+        return -1;
+    }
+}
+
+RT_WEAK struct rt_fspi_device g_fspi_spinand =
+{
+    .host_id = 0,
+    .dev_type = DEV_SPINAND,
+    .chip_select = 0,
+};
 
 static uint32_t spinand_adapt(struct SPI_NAND *spinand)
 {
-    struct HAL_FSPI_HOST *host = &g_fspi1Dev;
+    struct rt_fspi_device *fspi_device = &g_fspi_spinand;
     uint32_t ret;
+    int dll_result = 0;
 
-    RT_ASSERT(host);
+    spinand_dbg("spinand_adapt in\n");
+    ret = rt_hw_fspi_device_register(fspi_device);
+    if (ret)
+    {
+        return ret;
+    }
 
     /* Designated host to SPI_NAND */
     if (RT_SPINAND_SPEED > 0 && RT_SPINAND_SPEED <= SPINAND_SPEED_MAX)
@@ -163,21 +253,46 @@ static uint32_t spinand_adapt(struct SPI_NAND *spinand)
     {
         spinand->spi->speed = SPINAND_SPEED_DEFAULT;
     }
-    clk_enable_by_id(host->sclkGate);
-    clk_enable_by_id(host->hclkGate);
-    clk_set_rate(host->sclkID, spinand->spi->speed);
+    spinand->spi->speed = rt_fspi_set_speed(fspi_device, spinand->spi->speed);
 
-    HAL_FSPI_Init(host);
-    spinand->spi->userdata = (void *)host;
-    spinand->spi->mode = HAL_SPI_MODE_3 | HAL_SPI_TX_QUAD | HAL_SPI_RX_QUAD;
-    spinand->spi->xfer = SPI_Xfer;
+#ifdef RT_USING_SPINAND_FSPI_HOST_CS1_GPIO
+    if (!fspi_device->cs_gpio.gpio)
+    {
+        rt_kprintf("it's needed to redefine g_fspi_spinand with cs_gpio in iomux.c!\n");
+        return -RT_ERROR;
+    }
+#endif
+
+    spinand->spi->userdata = (void *)fspi_device;
+    spinand->spi->mode = HAL_SPI_MODE_3 | HAL_SPI_RX_QUAD;
+    spinand->spi->xfer = fspi_xfer;
+    spinand_dbg("%s fspi initial\n", __func__);
+    rt_fspi_controller_init(fspi_device);
+
+    if (spinand->spi->speed > HAL_FSPI_SPEED_THRESHOLD)
+    {
+        dll_result = rockchip_sfc_delay_lines_tuning(spinand, fspi_device);
+    }
+    else
+    {
+        rt_fspi_dll_disable(fspi_device);
+    }
 
     /* Init SPI_NAND abstract */
+    spinand_dbg("%s spinand initial\n", __func__);
     ret = HAL_SPINAND_Init(spinand);
     if (ret)
     {
-        clk_disable_by_id(host->sclkGate);
-        clk_disable_by_id(host->hclkGate);
+        uint8_t idByte[5];
+
+        HAL_SPINAND_ReadID(spinand, idByte);
+        rt_kprintf("SPI Nand ID: %x %x %x\n", idByte[0], idByte[1], idByte[2]);
+    }
+
+    if (dll_result)
+    {
+        rt_fspi_set_speed(fspi_device, HAL_FSPI_SPEED_THRESHOLD);
+        rt_kprintf("%s dll turning failed %d\n", __func__, dll_result);
     }
 
     return ret;
@@ -357,7 +472,6 @@ int rt_hw_spinand_init(void)
     spinand_dbg("size %lx\n", mtd_dev->size);
 
     spinand_parts[0].size   = (uint32_t)mtd_dev->size;
-
 
     ret = rt_mtd_register(mtd_dev, (const struct mtd_part *)spinand_parts, HAL_ARRAY_SIZE(spinand_parts));
     ret = mini_ftl_register(mtd_dev);

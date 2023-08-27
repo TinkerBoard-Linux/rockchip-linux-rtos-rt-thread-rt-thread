@@ -57,6 +57,7 @@ SECTIONS
         *hal_fspi.o(.text .text.* .rodata .rodata*)
         *hal_systick.o(.text .text.* .rodata .rodata*)
         *hal_timer.o(.text .text.* .rodata .rodata*)
+        *drv_fspi.o(.text .text.* .rodata .rodata*)
         *drv_snor.o(.text .text.* .rodata .rodata*)
         *drv_dsp.o(.text .text.* .rodata .rodata*)
         *drv_pm.o(.text .text.* .rodata .rodata*)

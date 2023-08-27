@@ -67,6 +67,7 @@ SECTIONS
         *hal_base.o(.text .text.* .rodata .rodata*)
         *hal_snor.o(.text .text.* .rodata .rodata*)
         *hal_fspi.o(.text .text.* .rodata .rodata*)
+        *drv_fspi.o(.text .text.* .rodata .rodata*)
         *drv_snor.o(.text .text.* .rodata .rodata*)
         . = ALIGN(32);
     }

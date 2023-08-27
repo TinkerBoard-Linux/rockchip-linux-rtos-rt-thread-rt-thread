@@ -48,6 +48,7 @@
 #include "board.h"
 #include "hal_bsp.h"
 #include "drv_clock.h"
+#include "drv_fspi.h"
 #include "drv_snor.h"
 #include "drv_flash_partition.h"
 #include "hal_base.h"
@@ -60,9 +61,20 @@
  */
 
 #ifdef SNOR_DEBUG
-#define SNOR_DBG(...)     rt_kprintf(__VA_ARGS__)
+#define snor_dbg(...)     rt_kprintf(__VA_ARGS__)
 #else
-#define SNOR_DBG(...)
+#define snor_dbg(...)
+#endif
+
+// #define XIP_DEBUG
+#ifdef XIP_DEBUG
+void xip_dbg(uint8_t c)
+{
+    UART1->THR = c;
+    HAL_DelayMs(30);
+}
+#else
+#define xip_dbg(...)
 #endif
 
 #define SPIFLASH_MTD_DEV_NAME_MAX 8
@@ -92,42 +104,37 @@ static const struct rt_mtd_nor_driver_ops snor_mtd_ops;
 #ifdef RT_USING_SNOR_FSPI_HOST
 static HAL_Status fspi_xfer(struct SNOR_HOST *spi, struct HAL_SPI_MEM_OP *op)
 {
-    struct HAL_FSPI_HOST *host = (struct HAL_FSPI_HOST *)spi->userdata;
+    struct rt_fspi_device *fspi_device = (struct rt_fspi_device *)spi->userdata;
 
-    host->mode = spi->mode;
-    host->cs = 0;
-    return HAL_FSPI_SpiXfer(host, op);
+    xip_dbg('T');
+    return rt_fspi_xfer(fspi_device, op);
 }
 
 #ifdef HAL_FSPI_XIP_ENABLE
 static HAL_Status fspi_xip_config(struct SNOR_HOST *spi, struct HAL_SPI_MEM_OP *op, uint32_t on)
 {
-    struct HAL_FSPI_HOST *host = (struct HAL_FSPI_HOST *)spi->userdata;
+    struct rt_fspi_device *fspi_device = (struct rt_fspi_device *)spi->userdata;
 
-    host->cs = 0;
-    if (op)
-    {
-        HAL_FSPI_XmmcSetting(host, op);
-    }
-
-    return HAL_FSPI_XmmcRequest(host, on);
+    xip_dbg('X');
+    return rt_fspi_xip_config(fspi_device, op, on);
 }
 #endif
 
-static int rockchip_sfc_delay_lines_tuning(struct SPI_NOR *nor, struct HAL_FSPI_HOST *host)
+static int rockchip_sfc_delay_lines_tuning(struct SPI_NOR *nor, struct rt_fspi_device *fspi_device)
 {
     uint8_t id_temp[SPINOR_ID_MAX_LENGTH];
-    uint16_t cell_max = (uint16_t)HAL_FSPI_GetMaxDllCells(host);
-    uint16_t right, left = 0;
+    uint16_t cell_max = (uint16_t)rt_fspi_get_max_dll_cells(fspi_device);
+    uint16_t right, left = 0, final;
     uint16_t step = HAL_FSPI_DLL_TRANING_STEP;
     bool dll_valid = false;
 
+    xip_dbg('a');
     HAL_SNOR_Init(nor);
     for (right = 0; right <= cell_max; right += step)
     {
         int ret;
 
-        ret = HAL_FSPI_SetDelayLines(host, right);
+        ret = rt_fspi_set_delay_lines(fspi_device, right);
         if (ret)
         {
             dll_valid = false;
@@ -140,7 +147,8 @@ static int rockchip_sfc_delay_lines_tuning(struct SPI_NOR *nor, struct HAL_FSPI_
             break;
         }
 
-        SNOR_DBG("dll read flash id:%x %x %x\n",
+        xip_dbg('b');
+        snor_dbg("dll read flash id:%x %x %x\n",
                  id_temp[0], id_temp[1], id_temp[2]);
 
         ret = HAL_SNOR_IsFlashSupported(id_temp);
@@ -165,42 +173,54 @@ static int rockchip_sfc_delay_lines_tuning(struct SPI_NOR *nor, struct HAL_FSPI_
     if (dll_valid && (right - left) >= HAL_FSPI_DLL_TRANING_VALID_WINDOW)
     {
         if (left == 0 && right < cell_max)
-            host->cell = left + (right - left) * 2 / 5;
+            final = left + (right - left) * 2 / 5;
         else
-            host->cell = left + (right - left) / 2;
+            final = left + (right - left) / 2;
     }
     else
     {
-        host->cell = 0;
+        final = 0;
     }
 
-    if (host->cell)
+    if (final)
     {
-        SNOR_DBG("%d %d %d dll training success in %dMHz max_cells=%u\n",
-                 left, right, host->cell, nor->spi->speed, cell_max);
-        HAL_FSPI_SetDelayLines(host, host->cell);
-        return 0;
+        xip_dbg('z');
+        snor_dbg("spinor %d %d %d dll training success in %dMHz max_cells=%u\n",
+                 left, right, final, nor->spi->speed, cell_max);
+        return rt_fspi_set_delay_lines(fspi_device, final);
     }
     else
     {
-        SNOR_DBG("%d %d dll training failed in %dMHz, reduce the frequency\n",
-                 left, right, nor->spi->speed);
-        HAL_FSPI_DLLDisable(host);
+        rt_kprintf("spinor %d %d dll training failed in %dMHz, reduce the frequency\n",
+                   left, right, nor->spi->speed);
+        rt_fspi_dll_disable(fspi_device);
         return -1;
     }
 }
 
+RT_WEAK struct rt_fspi_device g_fspi_spinor =
+{
+    .host_id = 0,
+    .dev_type = DEV_NOR,
+    .chip_select = 0,
+};
+
 static uint32_t fspi_snor_adapt(struct SPI_NOR *nor)
 {
-    struct HAL_FSPI_HOST *host = &g_fspi0Dev;
+    struct rt_fspi_device *fspi_device = &g_fspi_spinor;
     uint32_t ret;
     rt_base_t level;
     int dll_result = 0;
 
-    RT_ASSERT(host);
-
-    /* Designated host to SNOR */
+    xip_dbg('0');
+    /* Controller low layer initialed with XIP enabled */
     level = rt_hw_interrupt_disable();
+    ret = rt_hw_fspi_device_register(fspi_device);
+    if (ret)
+    {
+        return ret;
+    }
+
     if (RT_SNOR_SPEED > 0 && RT_SNOR_SPEED <= SNOR_SPEED_MAX)
     {
         nor->spi->speed = RT_SNOR_SPEED;
@@ -209,25 +229,28 @@ static uint32_t fspi_snor_adapt(struct SPI_NOR *nor)
     {
         nor->spi->speed = SNOR_SPEED_DEFAULT;
     }
-    HAL_CRU_ClkSetFreq(host->sclkID, nor->spi->speed);
-    nor->spi->speed = HAL_CRU_ClkGetFreq(host->sclkID);
-
-    host->xmmcDev[0].type = DEV_NOR;
-    /* XIP disabeld */
-    HAL_FSPI_Init(host);
-    nor->spi->userdata = (void *)host;
     nor->spi->mode = HAL_SPI_MODE_3;
     nor->spi->xfer = fspi_xfer;
+    nor->spi->userdata = (void *)fspi_device;
+    xip_dbg('1');
+    nor->spi->speed = rt_fspi_set_speed(fspi_device, nor->spi->speed);
+    rt_fspi_set_mode(fspi_device, nor->spi->mode);
+    xip_dbg('2');
+    rt_fspi_controller_init(fspi_device);
 
-    if (nor->spi->speed > HAL_FSPI_SPEED_THRESHOLD)
+    /* Controller low layer initialed with XIP disbaled */
+    if (nor->spi->speed > RT_FSPI_SPEED_THRESHOLD)
     {
-        dll_result = rockchip_sfc_delay_lines_tuning(nor, host);
+        xip_dbg('3');
+        dll_result = rockchip_sfc_delay_lines_tuning(nor, fspi_device);
     }
     else
     {
-        HAL_FSPI_DLLDisable(host);
+        rt_fspi_dll_disable(fspi_device);
     }
+    xip_dbg('4');
 
+    /* Devices initialed with XIP */
 #ifndef RT_SNOR_DUAL_IO
     nor->spi->mode |= (HAL_SPI_TX_QUAD | HAL_SPI_RX_QUAD);
 #else
@@ -236,21 +259,23 @@ static uint32_t fspi_snor_adapt(struct SPI_NOR *nor)
 #ifdef HAL_FSPI_XIP_ENABLE
     nor->spi->mode |= HAL_SPI_XIP;
     nor->spi->xipConfig = fspi_xip_config;
-    nor->spi->xipMem = host->xipMemData;
-    nor->spi->xipMemCode = host->xipMemCode;
+    nor->spi->xipMem = rt_fspi_get_xip_mem_data_phys(fspi_device);
+    nor->spi->xipMemCode = rt_fspi_get_xip_mem_code_phys(fspi_device);
 #endif
+    rt_fspi_set_mode(fspi_device, nor->spi->mode);
 
     /* Init spi nor abstract */
     ret = HAL_SNOR_Init(nor);
     if ((ret == HAL_OK) && (nor->spi->mode & HAL_SPI_XIP))
     {
+        xip_dbg('5');
         HAL_SNOR_XIPEnable(nor);
     }
+    xip_dbg('6');
 
     if (dll_result)
     {
-        HAL_CRU_ClkSetFreq(host->sclkID, HAL_FSPI_SPEED_THRESHOLD);
-        nor->spi->speed = HAL_CRU_ClkGetFreq(host->sclkID);
+        rt_fspi_set_speed(fspi_device, HAL_FSPI_SPEED_THRESHOLD);
         rt_kprintf("%s dll turning failed %d\n", __func__, dll_result);
     }
 
@@ -308,7 +333,7 @@ HAL_Status spi_xfer(struct SNOR_HOST *spi, struct HAL_SPI_MEM_OP *op)
             tx_buf = op->data.buf.out;
     }
 
-    SNOR_DBG("%s %x %lx\n", __func__, op->cmd.opcode, op->data.nbytes);
+    snor_dbg("%s %x %lx\n", __func__, op->cmd.opcode, op->data.nbytes);
     op_len = sizeof(op->cmd.opcode) + op->addr.nbytes + op->dummy.nbytes;
     op_buf[pos++] = op->cmd.opcode;
 
@@ -349,7 +374,7 @@ HAL_Status spi_xfer(struct SNOR_HOST *spi, struct HAL_SPI_MEM_OP *op)
 
     }
 
-    SNOR_DBG("%s finished %d\n", __func__, ret);
+    snor_dbg("%s finished %d\n", __func__, ret);
 
     return ret;
 }
@@ -513,13 +538,7 @@ rt_err_t rk_snor_resume(void)
 
     if (spiflash->type == SPIFLASH_FSPI_HOST)
     {
-        struct HAL_FSPI_HOST *host = (struct HAL_FSPI_HOST *)spiflash->host.userdata;
-
-        HAL_FSPI_Init(host);
-        if (spiflash->nor.spi->speed > HAL_FSPI_SPEED_THRESHOLD)
-        {
-            HAL_FSPI_SetDelayLines(host, host->cell);
-        }
+        rt_fspi_resume((struct rt_fspi_device *)spiflash->nor.spi->userdata);
     }
 #endif
 
@@ -563,7 +582,7 @@ static rt_size_t snor_mtd_write(struct rt_mtd_nor_device *dev, rt_off_t pos, con
     struct SPI_NOR *nor = &spiflash->nor;
     int ret;
 
-    SNOR_DBG("%s pos = %08x,size = %08x\n", __func__, pos, size);
+    snor_dbg("%s pos = %08x,size = %08x\n", __func__, pos, size);
 
     RT_ASSERT(dev != RT_NULL);
     RT_ASSERT(size != 0);
@@ -594,7 +613,7 @@ static rt_size_t snor_mtd_read(struct rt_mtd_nor_device *dev, rt_off_t pos, rt_u
     struct SPI_NOR *nor = &spiflash->nor;
     int ret;
 
-    SNOR_DBG("%s pos = %08x,size = %08x\n", __func__, pos, size);
+    snor_dbg("%s pos = %08x,size = %08x\n", __func__, pos, size);
 
     RT_ASSERT(dev != RT_NULL);
     RT_ASSERT(size != 0);
@@ -627,7 +646,7 @@ static rt_err_t snor_mtd_erase_sector(struct rt_mtd_nor_device *dev, rt_off_t po
     int ret = RT_EOK;
     uint32_t nsec = size / nor->sectorSize;
 
-    SNOR_DBG("%s pos = %08x,size = %08x\n", __func__, pos, size);
+    snor_dbg("%s pos = %08x,size = %08x\n", __func__, pos, size);
 
     RT_ASSERT(dev != RT_NULL);
     RT_ASSERT(size != 0);
