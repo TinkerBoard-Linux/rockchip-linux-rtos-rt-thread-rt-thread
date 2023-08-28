@@ -57,6 +57,38 @@
 
 #define BANK_PIN_DEFAULT (-1)
 
+#ifdef HAL_GPIO_VIRTUAL_MODEL_FEATURE_ENABLED
+#ifdef GPIO0
+#undef GPIO0
+#define GPIO0 GPIO0_EXP
+#undef GPIO0_IRQn
+#define GPIO0_IRQn GPIO0_EXP_IRQn
+#endif
+#ifdef GPIO1
+#undef GPIO1
+#define GPIO1 GPIO1_EXP
+#undef GPIO1_IRQn
+#define GPIO1_IRQn GPIO1_EXP_IRQn
+#endif
+#ifdef GPIO2
+#undef GPIO2
+#define GPIO2 GPIO2_EXP
+#undef GPIO2_IRQn
+#define GPIO2_IRQn GPIO2_EXP_IRQn
+#endif
+#ifdef GPIO3
+#undef GPIO3
+#define GPIO3 GPIO3_EXP
+#undef GPIO3_IRQn
+#define GPIO3_IRQn GPIO3_EXP_IRQn
+#endif
+#ifdef GPIO4
+#undef GPIO4
+#define GPIO4 GPIO4_EXP
+#undef GPIO4_IRQn
+#define GPIO4_IRQn GPIO4_EXP_IRQn
+#endif
+#endif
 /********************* Private Structure Definition **************************/
 
 static struct GPIO_REG *GPIO_GROUP[] =
