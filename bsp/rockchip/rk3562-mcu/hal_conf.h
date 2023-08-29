@@ -35,6 +35,10 @@
 #define HAL_I2C_MODULE_ENABLED
 #endif
 
+#ifdef RT_USING_SPI
+#define HAL_SPI_MODULE_ENABLED
+#endif
+
 #ifdef RT_USING_UART
 #define HAL_UART_MODULE_ENABLED
 #endif

@@ -108,6 +108,9 @@ void rt_hw_iomux_config(void)
 #ifdef RT_USING_I2C0
     i2c0_m0_iomux_config();
 #endif
+#ifdef RT_USING_SPI0
+    spi0_m1_iomux_config();
+#endif
     uart_iomux_config();
 }
 

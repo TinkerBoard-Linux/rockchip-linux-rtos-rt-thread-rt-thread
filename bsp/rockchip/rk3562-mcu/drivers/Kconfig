@@ -32,5 +32,13 @@ config RT_USING_I2C0
     select RT_USING_I2C
     default n
 
+if RT_USING_SPI
+menu "Enable SPI"
+    config RT_USING_SPI0
+        bool "Enable SPI0"
+        default n
+endmenu
+endif
+
 endmenu
 

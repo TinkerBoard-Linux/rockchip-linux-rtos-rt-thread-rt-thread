@@ -24,6 +24,21 @@ RT_WEAK void i2c0_m0_iomux_config(void)
 }
 #endif
 
+#ifdef RT_USING_SPI0
+RT_WEAK  void spi0_m1_iomux_config(void)
+{
+    /* SPI0 */
+    HAL_PINCTRL_SetIOMUX(GPIO_BANK3,
+                         GPIO_PIN_B4,
+                         GPIO_PIN_B5 |
+                         GPIO_PIN_B7,
+                         PIN_CONFIG_MUX_FUNC4);
+    HAL_PINCTRL_SetIOMUX(GPIO_BANK3,
+                         GPIO_PIN_C0,
+                         PIN_CONFIG_MUX_FUNC4);
+}
+#endif
+
 /**
  * @brief  Config iomux for RK3562
  */

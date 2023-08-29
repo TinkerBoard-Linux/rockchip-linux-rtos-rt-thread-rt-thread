@@ -12,6 +12,7 @@
 #define __IOMUX_BASE_H__
 
 void i2c0_m0_iomux_config(void);
+void spi0_m0_iomux_config(void);
 void rt_hw_iomux_config(void);
 
 #endif
