@@ -31,6 +31,10 @@
 #define HAL_ICACHE_MODULE_ENABLED
 #endif
 
+#ifdef RT_USING_I2C
+#define HAL_I2C_MODULE_ENABLED
+#endif
+
 #ifdef RT_USING_UART
 #define HAL_UART_MODULE_ENABLED
 #endif

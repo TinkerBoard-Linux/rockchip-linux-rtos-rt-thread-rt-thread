@@ -105,6 +105,9 @@ void jtag_iomux_config(void)
  */
 void rt_hw_iomux_config(void)
 {
+#ifdef RT_USING_I2C0
+    i2c0_m0_iomux_config();
+#endif
     uart_iomux_config();
 }
 

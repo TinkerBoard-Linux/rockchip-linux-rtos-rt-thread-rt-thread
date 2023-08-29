@@ -27,5 +27,10 @@ menu "Enable UART"
     endif
 endmenu
 
+config RT_USING_I2C0
+    bool "Enable I2C0"
+    select RT_USING_I2C
+    default n
+
 endmenu
 
