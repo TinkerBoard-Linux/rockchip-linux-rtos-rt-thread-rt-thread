@@ -20,7 +20,7 @@
 #define HAL_CACHE_DECODED_ADDR_BASE          0x08200000  /* Not really necessary */
 #endif
 
-#define SYS_TIMER TIMER0 /* System timer designation (RK TIMER) */
+#define SYS_TIMER TIMER5 /* System timer designation (RK TIMER) */
 
 #if defined(RKMCU_RK3562_PMU) && defined(RT_USING_CACHE)
 #error "there is no cache in rk3562 pmu mcu!"
