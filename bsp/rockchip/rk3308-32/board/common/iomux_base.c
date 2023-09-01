@@ -67,13 +67,13 @@ RT_WEAK  void i2c2_m0_iomux_config(void)
 
     /* set SOC_CON13 sel plus: GPIO2_A2 IOMUX FUN3 (I2C2_SDA) */
     WRITE_REG_MASK_WE(GRF->SOC_CON13,
-                     GRF_SOC_CON13_GPIO2A2_SEL_SRC_CTRL_MASK | GRF_SOC_CON13_GPIO2A2_SEL_PLUS_MASK,
-                     GRF_SOC_CON13_GPIO2A2_SEL_SRC_CTRL_MASK | (3 << GRF_SOC_CON13_GPIO2A2_SEL_PLUS_SHIFT));
+                      GRF_SOC_CON13_GPIO2A2_SEL_SRC_CTRL_MASK | GRF_SOC_CON13_GPIO2A2_SEL_PLUS_MASK,
+                      GRF_SOC_CON13_GPIO2A2_SEL_SRC_CTRL_MASK | (3 << GRF_SOC_CON13_GPIO2A2_SEL_PLUS_SHIFT));
 
     /* set SOC_CON13 sel plus: GPIO2_A3 IOMUX FUN3 (I2C2_SCL) */
     WRITE_REG_MASK_WE(GRF->SOC_CON13,
-                     GRF_SOC_CON13_GPIO2A3_SEL_SRC_CTRL_MASK | GRF_SOC_CON13_GPIO2A3_SEL_PLUS_MASK,
-                     GRF_SOC_CON13_GPIO2A3_SEL_SRC_CTRL_MASK | (3 << GRF_SOC_CON13_GPIO2A3_SEL_PLUS_SHIFT));
+                      GRF_SOC_CON13_GPIO2A3_SEL_SRC_CTRL_MASK | GRF_SOC_CON13_GPIO2A3_SEL_PLUS_MASK,
+                      GRF_SOC_CON13_GPIO2A3_SEL_SRC_CTRL_MASK | (3 << GRF_SOC_CON13_GPIO2A3_SEL_PLUS_SHIFT));
 }
 #endif
 
@@ -119,6 +119,76 @@ RT_WEAK void i2s1_8ch_m0_iomux_config(void)
                          GPIO_PIN_A7 |  // I2S1_SDO0_M0(8CH)
                          GPIO_PIN_B3,   // I2S1_SDI0_M0(8CH)
                          PIN_CONFIG_MUX_FUNC2);
+}
+#endif
+
+#ifdef RT_USING_BACKLIGHT
+RT_WEAK void pwm0_ch1_iomux_config(void)
+{
+    /* I2S0 8CH */
+    HAL_PINCTRL_SetIOMUX(GPIO_BANK0,
+                         GPIO_PIN_B6,
+                         PIN_CONFIG_MUX_FUNC1);
+}
+#endif
+
+#ifdef RT_USING_VOP
+RT_WEAK void lcdc_ctrl_iomux_config(void)
+{
+    HAL_PINCTRL_SetIOMUX(GPIO_BANK1,
+                         GPIO_PIN_A0 |  // dclk
+                         GPIO_PIN_A1 |  // hysc
+                         GPIO_PIN_A2 |  // vsync
+                         GPIO_PIN_A3 |  // den
+                         GPIO_PIN_A4 |  // d0
+                         GPIO_PIN_A5 |  // d1
+                         GPIO_PIN_A6 |  // d2
+                         GPIO_PIN_A7 |  // d3
+                         GPIO_PIN_B0 |  // d4
+                         GPIO_PIN_B1 |  // d5
+                         GPIO_PIN_B2 |  // d6
+                         GPIO_PIN_B3 |  // d7
+                         GPIO_PIN_B4 |  // d8
+                         GPIO_PIN_B5 |  // d9
+                         GPIO_PIN_B6 |  // d10
+                         GPIO_PIN_B7 |  // d11
+                         GPIO_PIN_C0 |  // d12
+                         GPIO_PIN_C1 |  // d13
+                         GPIO_PIN_C2 |  // d14
+                         GPIO_PIN_C3 |  // d15
+                         GPIO_PIN_C4 |  // d16
+                         GPIO_PIN_C5,   // d17
+                         PIN_CONFIG_MUX_FUNC1);
+}
+
+RT_WEAK void lcdc_rgb888_m0_iomux_config(void)
+{
+    HAL_PINCTRL_SetIOMUX(GPIO_BANK1,
+                         GPIO_PIN_C6 |  // d18
+                         GPIO_PIN_C7,   // d19
+                         PIN_CONFIG_MUX_FUNC6);
+
+    HAL_PINCTRL_SetIOMUX(GPIO_BANK2,
+                         GPIO_PIN_B1 |  // d20
+                         GPIO_PIN_B2 |  // d21
+                         GPIO_PIN_B7 |  // d22
+                         GPIO_PIN_C0,   // d23
+                         PIN_CONFIG_MUX_FUNC3);
+}
+
+RT_WEAK void lcdc_rgb888_m1_iomux_config(void)
+{
+    HAL_PINCTRL_SetIOMUX(GPIO_BANK3,
+                         GPIO_PIN_A6 |  // d18
+                         GPIO_PIN_A7 |  // d19
+                         GPIO_PIN_B0 |  // d20
+                         GPIO_PIN_B1,   // d21
+                         PIN_CONFIG_MUX_FUNC3);
+
+    HAL_PINCTRL_SetIOMUX(GPIO_BANK3,
+                         GPIO_PIN_B2 |  // d22
+                         GPIO_PIN_B3,   // d23
+                         PIN_CONFIG_MUX_FUNC8);
 }
 #endif
 

@@ -43,6 +43,12 @@ extern uint32_t __heap_end[];
 #define ARM_GIC_MAX_NR              NUM_INTERRUPTS
 #define GIC_ACK_INTID_MASK          0x000003ff
 
+#ifdef RT_USING_BACKLIGHT
+#define LCD_BACKLIGHT_PWM           "pwm0"
+#define LCD_BACKLIGHT_PWM_CHANNEL   1
+#define LCD_BACKLIGHT_PWM_INVERT    1
+#endif
+
 rt_inline rt_uint32_t platform_get_gic_dist_base(void)
 {
     return GIC_DISTRIBUTOR_BASE;

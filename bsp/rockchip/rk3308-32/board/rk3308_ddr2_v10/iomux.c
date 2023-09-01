@@ -57,4 +57,13 @@ void rt_hw_iomux_config(void)
 #ifdef RT_USING_AUDIO_CARD_I2S0
     i2s0_8ch_m0_iomux_config();
 #endif
+
+#ifdef RT_USING_BACKLIGHT
+    pwm0_ch1_iomux_config();
+#endif
+
+#ifdef RT_USING_VOP
+    lcdc_ctrl_iomux_config();
+    lcdc_rgb888_m1_iomux_config();
+#endif
 }
