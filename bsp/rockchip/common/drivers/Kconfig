@@ -295,6 +295,14 @@ choice
 endchoice
 
 choice
+    prompt "RGB Panel Type"
+    depends on RT_USING_VOP_RGB
+
+    config RT_USING_PANEL_FX070_DHM11BOE
+        bool "FX070_DHM11BOE RGB panel, resolution is 1024x600"
+endchoice
+
+choice
     prompt "SPI Panel Type"
     depends on RT_USING_SPI_SCREEN
 

@@ -93,4 +93,31 @@ menu "Enable UART"
     endif
 endmenu
 
+config RT_USING_DISPLAY
+    bool "Enable Display"
+    default n
+
+choice
+    prompt "Display Controller"
+    depends on RT_USING_DISPLAY
+
+    config RT_USING_VOP
+        bool "Enable VOP Composite"
+        depends on RT_USING_DISPLAY
+        default y
+endchoice
+
+choice
+    prompt "Display Interface"
+    depends on RT_USING_VOP
+
+    config RT_USING_VOP_RGB
+        bool "Enable RGB Display Interface"
+        default y
+
+    config RT_USING_VOP_MCU
+        bool "Enable MCU Display Interface"
+        default n
+endchoice
+
 endmenu

@@ -10,6 +10,7 @@
   * Change Logs:
   * Date           Author          Notes
   * 2019-02-20     Huang Jiachai   first implementation
+  * 2023-09-01     Damon Ding      add panel reset control
   *
   ******************************************************************************
   */
@@ -116,7 +117,9 @@ static void rockchip_panel_init(struct display_state *state)
     panel_state->vmode.xres = RT_HW_LCD_XRES;
     panel_state->vmode.yres = RT_HW_LCD_YRES;
     panel_state->vmode.pixclock = RT_HW_LCD_PIXEL_CLOCK;
+#ifdef RT_USING_DSI
     panel_state->vmode.lanembps = RT_HW_LCD_LANE_MBPS;
+#endif
     panel_state->vmode.left_margin = RT_HW_LCD_LEFT_MARGIN;
     panel_state->vmode.right_margin = RT_HW_LCD_RIGHT_MARGIN;
     panel_state->vmode.upper_margin = RT_HW_LCD_UPPER_MARGIN;
@@ -189,10 +192,15 @@ static void rockchip_panel_disable_power(struct display_state *state)
  */
 static void rockchip_panel_reset(struct display_state *state)
 {
-    /**
-     * todo:
-     * panel reset control.
-     */
+#ifdef RT_HW_LCD_RESET_PIN
+    rt_pin_mode(RT_HW_LCD_RESET_PIN, PIN_MODE_OUTPUT);
+    rt_pin_write(RT_HW_LCD_RESET_PIN, RT_HW_LCD_RESET_FLAG);
+
+    HAL_DelayMs(RT_HW_LCD_RESET_DELAY_MS);
+
+    rt_pin_mode(RT_HW_LCD_RESET_PIN, PIN_MODE_OUTPUT);
+    rt_pin_write(RT_HW_LCD_RESET_PIN, !RT_HW_LCD_RESET_FLAG);
+#endif
 }
 
 /**

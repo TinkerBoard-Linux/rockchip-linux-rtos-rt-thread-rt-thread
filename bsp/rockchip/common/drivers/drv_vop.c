@@ -10,6 +10,7 @@
   * Change Logs:
   * Date           Author          Notes
   * 2019-02-20     Huang Jiachai   first implementation
+  * 2023-09-01     Damon Ding      add support for rk3308
   *
   ******************************************************************************
   */
@@ -285,6 +286,8 @@ static void rockchip_vop_disable_lut(struct display_state *state, uint8_t winId)
 static void rockchip_vop_set_scale(struct display_state *state)
 {
     struct crtc_state *crtc_state = &state->crtc_state;
+
+#if (defined(RKMCU_RK2108) || defined(RKMCU_RK2206) || defined(RKMCU_PISCES))
     struct VOP_POST_SCALE_INFO *post_scale = &crtc_state->post_scale;
 
     if (post_scale->dstX % state->panel_state.xpos_align)
@@ -372,6 +375,9 @@ static void rockchip_vop_set_scale(struct display_state *state)
 
     HAL_VOP_ModeInit(crtc_state->hw_base, &state->mode, &crtc_state->post_scale);
     HAL_VOP_PostScaleInit(crtc_state->hw_base, &state->mode, &crtc_state->post_scale);
+#else
+    HAL_VOP_ModeInit(crtc_state->hw_base, &state->mode, &crtc_state->post_scale);
+#endif
 }
 
 /**
@@ -434,9 +440,11 @@ static void rockchip_vop_enable(struct display_state *state)
 
     rockchip_vop_power_on(state);
 #ifndef IS_FPGA
+#if defined(ACLK_VOP)
     ret = HAL_CRU_ClkSetFreq(ACLK_VOP, VOP_ACLK_FREQ);
     RT_ASSERT(ret == HAL_OK);
-    ret = HAL_CRU_ClkSetFreq(DCLK_VOP_S, state->mode.crtcClock * 1000);
+#endif
+    ret = HAL_CRU_ClkSetFreq(DCLK_VOP, state->mode.crtcClock * 1000);
     RT_ASSERT(ret == HAL_OK);
 #endif
 
