@@ -39,6 +39,10 @@
 #define HAL_SPI_MODULE_ENABLED
 #endif
 
+#ifdef RT_USING_SARADC
+#define HAL_SARADC_MODULE_ENABLED
+#endif
+
 #ifdef RT_USING_UART
 #define HAL_UART_MODULE_ENABLED
 #endif

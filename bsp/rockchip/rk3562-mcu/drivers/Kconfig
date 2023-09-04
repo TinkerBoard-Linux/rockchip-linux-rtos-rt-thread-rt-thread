@@ -32,6 +32,11 @@ config RT_USING_I2C0
     select RT_USING_I2C
     default n
 
+config RT_USING_SARADC
+    select RT_USING_ADC
+    bool "Enable SARADC"
+    default n
+
 if RT_USING_SPI
 menu "Enable SPI"
     config RT_USING_SPI0
