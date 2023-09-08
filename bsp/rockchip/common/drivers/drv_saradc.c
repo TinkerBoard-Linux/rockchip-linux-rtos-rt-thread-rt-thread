@@ -20,6 +20,7 @@
 #include <rtdef.h>
 #include <rtthread.h>
 #include <rtdbg.h>
+#include "drv_clock.h"
 
 #define ADC_NAME "rk_adc0"
 #define TIMEOUT 10
@@ -31,6 +32,8 @@ struct rk_saradc
     rt_uint32_t mode;
     struct rt_event event;
     struct rt_adc_device rk_saradc_dev;
+    struct clk_gate *pclk_saradc;
+    struct clk_gate *clk_saradc;
 };
 
 static struct rk_saradc rk_saradc;
@@ -60,8 +63,8 @@ static rt_err_t rk_get_saradc_value(struct rt_adc_device *device, rt_uint32_t ch
     RT_ASSERT(device != RT_NULL);
     RT_ASSERT(value != RT_NULL);
 
-    HAL_CRU_ClkEnable(PCLK_SARADC_CONTROL_GATE);
-    HAL_CRU_ClkEnable(CLK_SARADC_GATE);
+    clk_enable(rk_saradc->pclk_saradc);
+    clk_enable(rk_saradc->clk_saradc);
 
     HAL_SARADC_Start(rk_saradc->reg, rk_saradc->mode, channel);
 
@@ -77,8 +80,8 @@ static rt_err_t rk_get_saradc_value(struct rt_adc_device *device, rt_uint32_t ch
 
     HAL_SARADC_Stop(rk_saradc->reg);
 
-    HAL_CRU_ClkDisable(CLK_SARADC_GATE);
-    HAL_CRU_ClkDisable(PCLK_SARADC_CONTROL_GATE);
+    clk_disable(rk_saradc->clk_saradc);
+    clk_disable(rk_saradc->pclk_saradc);
 
     return RT_EOK;
 }
@@ -105,6 +108,11 @@ static int rk_saradc_init(void)
 
     rk_saradc.mode = SARADC_INT_MOD;
     rk_saradc.reg = SARADC;
+
+#ifdef PCLK_SARADC_CONTROL_GATE
+    rk_saradc.pclk_saradc = get_clk_gate_from_id(PCLK_SARADC_CONTROL_GATE);
+#endif
+    rk_saradc.clk_saradc = get_clk_gate_from_id(CLK_SARADC_GATE);
 
     rt_event_init(&rk_saradc.event, "saradc", RT_IPC_FLAG_FIFO);
 
