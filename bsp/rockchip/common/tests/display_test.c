@@ -43,10 +43,10 @@
 #define X_ALIGNED   720
 #define Y_ALIGNED   65
 #else
-#define SRC_DATA_W  240
-#define SRC_DATA_H  320
+#define SRC_DATA_W  320
+#define SRC_DATA_H  480
 #define X_ALIGNED   1
-#define Y_ALIGNED   2
+#define Y_ALIGNED   1
 #endif
 #define SRC_DATA_ADDR   0x20080000
 #define SRC_CBCR_DATA_ADDR   0x200c0000
@@ -82,6 +82,11 @@
 #elif defined(RT_USING_PANEL_SS)
 #define SRC_DATA_W  1080
 #define SRC_DATA_H  100
+#elif defined(RT_USING_PANEL_K350C4516T)
+#define SRC_DATA_W      320
+#define SRC_DATA_H      480
+#define X_ALIGNED   1
+#define Y_ALIGNED   1
 #else
 #define SRC_DATA_W      320
 #define SRC_DATA_H      240

@@ -292,6 +292,9 @@ choice
 
     config RT_USING_PANEL_ST7789V_XF20
         bool "xh2.0TFT-22P' MCU panel, reslution is 240x320"
+
+    config RT_USING_PANEL_K350C4516T
+        bool "K350C4516T' MCU panel, reslution is 320x480"
 endchoice
 
 choice

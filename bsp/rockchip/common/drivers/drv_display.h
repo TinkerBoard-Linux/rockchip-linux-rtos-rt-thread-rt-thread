@@ -164,6 +164,7 @@ struct crtc_state
     const struct rockchip_crtc_funcs *funcs;
     struct CRTC_WIN_STATE win_state[RK_DISPLAY_MAX_CRTC_WIN_NUM];
     struct VOP_POST_SCALE_INFO post_scale;
+    struct VOP_MCU_TIMING mcu_timing;
 
     uint8_t irqno;
     rt_event_t frm_fsh_event;

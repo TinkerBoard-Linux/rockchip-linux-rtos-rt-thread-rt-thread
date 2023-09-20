@@ -427,12 +427,40 @@ static void rockchip_vop_set_plane(struct display_state *state,
 }
 
 /**
+ * @brief  Get cycles per pixel from bus format.
+ * @param  bus_format: hardware bus format.
+ */
+static uint8_t rockchip_vop_get_cycles_per_pixel(uint32_t bus_format)
+{
+    switch (bus_format)
+    {
+    case MEDIA_BUS_FMT_RGB565_1X16:
+    case MEDIA_BUS_FMT_RGB666_1X18:
+    case MEDIA_BUS_FMT_RGB888_1X24:
+    case MEDIA_BUS_FMT_RGB666_1X24_CPADHI:
+        return 1;
+    case MEDIA_BUS_FMT_RGB565_2X8_LE:
+    case MEDIA_BUS_FMT_BGR565_2X8_LE:
+        return 2;
+    case MEDIA_BUS_FMT_SRGB888_3X8:
+    case MEDIA_BUS_FMT_SBGR888_3X8:
+        return 3;
+    case MEDIA_BUS_FMT_SRGB888_DUMMY_4X8:
+    case MEDIA_BUS_FMT_SBGR888_DUMMY_4X8:
+        return 4;
+    default:
+        return 1;
+    }
+}
+
+/**
  * @brief  Enable VOP power.
  * @param  state: display state.
  */
 static void rockchip_vop_enable(struct display_state *state)
 {
     struct crtc_state *crtc_state = &state->crtc_state;
+    uint32_t dclk_rate = state->mode.crtcClock;
 
 #ifndef IS_FPGA
     int ret = 0;
@@ -444,14 +472,17 @@ static void rockchip_vop_enable(struct display_state *state)
     ret = HAL_CRU_ClkSetFreq(ACLK_VOP, VOP_ACLK_FREQ);
     RT_ASSERT(ret == HAL_OK);
 #endif
-    ret = HAL_CRU_ClkSetFreq(DCLK_VOP, state->mode.crtcClock * 1000);
+    if (state->panel_state.cmd_type == CMD_TYPE_MCU)
+        dclk_rate *= rockchip_vop_get_cycles_per_pixel(state->panel_state.bus_format) *
+                     (crtc_state->mcu_timing.mcuPixelTotal + 1);
+    ret = HAL_CRU_ClkSetFreq(DCLK_VOP, dclk_rate * 1000);
     RT_ASSERT(ret == HAL_OK);
 #endif
 
     HAL_VOP_Init(crtc_state->hw_base, &state->mode);
     HAL_VOP_ModeInit(crtc_state->hw_base, &state->mode, &crtc_state->post_scale);
     if (state->panel_state.cmd_type == CMD_TYPE_MCU)
-        HAL_VOP_McuModeInit(crtc_state->hw_base);
+        HAL_VOP_McuModeInit(crtc_state->hw_base, &crtc_state->mcu_timing);
     HAL_VOP_PostScaleInit(crtc_state->hw_base, &state->mode, &crtc_state->post_scale);
     HAL_VOP_PolarityInit(crtc_state->hw_base, &state->mode,
                          state->panel_state.conn_type);
