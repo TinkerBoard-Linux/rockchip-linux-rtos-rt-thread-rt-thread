@@ -77,3 +77,32 @@ RT_WEAK void rt_hw_iomux_config(void)
 {
     uart2_m0_iomux_config();
 }
+
+#ifdef RT_USING_BACKLIGHT
+RT_WEAK void pwm7_ch1_iomux_config(void)
+{
+    HAL_PINCTRL_SetIOMUX(GPIO_BANK1,
+                         GPIO_PIN_B1,
+                         PIN_CONFIG_MUX_FUNC2);
+}
+#endif
+
+#ifdef RT_USING_VOP
+RT_WEAK void lcdc_rgb3x8_iomux_config(void)
+{
+    HAL_PINCTRL_SetIOMUX(GPIO_BANK1,
+                         GPIO_PIN_D3 |  // dclk
+                         GPIO_PIN_D1 |  // hysc
+                         GPIO_PIN_D2 |  // vsync
+                         GPIO_PIN_D0 |  // den
+                         GPIO_PIN_C7 |  // d0
+                         GPIO_PIN_C6 |  // d1
+                         GPIO_PIN_C5 |  // d2
+                         GPIO_PIN_C4 |  // d3
+                         GPIO_PIN_C3 |  // d4
+                         GPIO_PIN_C2 |  // d5
+                         GPIO_PIN_C1 |  // d6
+                         GPIO_PIN_C0,   // d7
+                         PIN_CONFIG_MUX_FUNC1);
+}
+#endif

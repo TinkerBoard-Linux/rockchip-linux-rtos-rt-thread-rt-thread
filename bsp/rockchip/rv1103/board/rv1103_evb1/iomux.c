@@ -30,4 +30,12 @@ void rt_hw_iomux_config(void)
 #ifdef RT_USING_UART2
     uart2_m0_iomux_config();
 #endif
+
+#ifdef RT_USING_BACKLIGHT
+    pwm7_ch1_iomux_config();
+#endif
+
+#ifdef RT_USING_VOP
+    lcdc_rgb3x8_iomux_config();
+#endif
 }

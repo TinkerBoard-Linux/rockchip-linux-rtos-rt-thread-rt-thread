@@ -17,5 +17,7 @@ void pwm11_m1_iomux_config(void);
 void uart0_m1_iomux_config(void);
 void uart2_m0_iomux_config(void);
 void rt_hw_iomux_config(void);
+void pwm7_ch1_iomux_config(void);
+void lcdc_rgb3x8_iomux_config(void);
 
 #endif
