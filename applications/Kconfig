@@ -7,6 +7,29 @@ config RT_USING_DLMODULE_APP_EXAMPLE
     help
         "Examples for how to use dlmodule"
 
+config RT_USING_LVGL_DEMO
+    bool "LVGL Demo enable"
+    depends on RT_USING_LVGL
+    help
+        "LVGL Demo"
+
+choice
+    prompt "Display demo select"
+    depends on RT_USING_LVGL_DEMO
+
+    config RT_LV_DEMO_MUSIC
+        bool "Music demo enable"
+        select RT_LV_USE_DEMO_MUSIC
+        help
+            "LVGL Music demo"
+
+    config RT_LV_DEMO_BENCHMARK
+        bool "benchmark demo enable"
+        select RT_LV_USE_DEMO_BENCHMARK
+        help
+            "LVGL Benchmark demo"
+endchoice
+
 config RT_USING_LVGL_APP_DEMO
     bool
     default n

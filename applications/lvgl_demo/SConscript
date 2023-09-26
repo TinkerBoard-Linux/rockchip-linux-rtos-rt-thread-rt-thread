@@ -2,17 +2,26 @@ Import('RTT_ROOT')
 Import('rtconfig')
 from building import *
 
-cwd     = GetCurrentDir()
-src  = Glob('*.c')
-src += Glob('resource/*.c')
+cwd = GetCurrentDir()
+src = Glob('*.c') \
+
+# benchmark demo.
+src += Glob('benchmark/*.c') \
+        + Glob('benchmark/assets/*.c')
+
+# music demo
+src += Glob('music/*.c') \
+        + Glob('music/assets/*.c')
+
 CPPPATH = [cwd]
 
-group = DefineGroup('Applications', src, depend = ['RT_USING_LVGL_APP_DEMO'], CPPPATH = CPPPATH)
+# benchmark demo.
+CPPPATH += [cwd + '/benchmark']
 
-list = os.listdir(cwd)
-for d in list:
-    path = os.path.join(cwd, d)
-    if os.path.isfile(os.path.join(path, 'SConscript')):
-        group = group + SConscript(os.path.join(d, 'SConscript'))
+# music demo.
+CPPPATH += [cwd + '/music']
+
+group = DefineGroup('Applications', src, depend = ['RT_USING_LVGL_DEMO'], CPPPATH = CPPPATH)
 
 Return('group')
+
