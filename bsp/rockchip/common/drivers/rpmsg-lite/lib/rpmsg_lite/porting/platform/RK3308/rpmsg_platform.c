@@ -164,6 +164,11 @@ void platform_notify(uint32_t vector_id)
     cpu_id = HAL_CPU_TOPOLOGY_GetCurrentCpuId();
     env_lock_mutex(platform_lock);
 
+//TODO temporary use only when enable Linux rpmsg
+#ifdef RL_LINUX_RPMSG_USE_DELAY
+    HAL_DelayUs(500);
+#endif
+
     if (cpu_id == RL_GET_M_CPU_ID(vector_id))
         rt_hw_interrupt_set_pending(rl_set_irq_mr(vector_id));
     else

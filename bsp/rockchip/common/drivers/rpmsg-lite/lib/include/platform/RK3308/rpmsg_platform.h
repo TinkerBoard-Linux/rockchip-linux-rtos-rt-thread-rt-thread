@@ -19,6 +19,10 @@
 #define VRING_SIZE (0x8000UL)
 #endif
 
+#ifndef RL_NS_NAME_SIZE
+#define RL_NS_NAME_SIZE (32)
+#endif
+
 /* size of shared memory + 2*VRING size */
 #define RL_VRING_OVERHEAD (2UL * VRING_SIZE)
 
@@ -29,6 +33,8 @@
 #define RL_GET_R_CPU_ID(id)             (RL_GET_LINK_ID(id) & 0xFU)
 #define RL_GET_M_CPU_ID(id)             ((RL_GET_LINK_ID(id) & 0xF0U) >> 4U)
 #define RL_PLATFORM_SET_LINK_ID(_M, _R) (((_M << 4U) & 0xF0U) | (_R & 0xFU))
+/* TODO: This delay is required only when Linux rpmsg is enabled */
+#define RL_LINUX_RPMSG_USE_DELAY
 
 /* platform interrupt related functions */
 int32_t platform_init_interrupt(uint32_t vector_id, void *isr_data);

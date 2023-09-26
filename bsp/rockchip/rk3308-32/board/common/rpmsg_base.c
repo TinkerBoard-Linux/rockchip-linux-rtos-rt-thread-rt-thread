@@ -14,6 +14,7 @@
 #include "rpmsg_queue.h"
 #include "rpmsg_base.h"
 
+#ifndef RT_USING_LINUX_RPMSG
 #define MAX_REMOTE_CNT (3)
 static uint32_t remote_table[MAX_REMOTE_CNT] = {REMOTE_ID_2, REMOTE_ID_3, REMOTE_ID_0};
 
@@ -144,7 +145,7 @@ struct rpmsg_lite_instance *rpmsg_remote_get_instance(uint32_t master_id, uint32
 }
 
 INIT_APP_EXPORT(rpmsg_remote_init);
-
+#endif
 #endif
 
 #endif
