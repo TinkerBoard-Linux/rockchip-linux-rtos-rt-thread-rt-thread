@@ -114,7 +114,6 @@ static void rockchip_panel_cmd_init(struct display_state *state)
 static void rockchip_panel_init(struct display_state *state)
 {
     struct panel_state *panel_state = &state->panel_state;
-    struct crtc_state *crtc_state = &state->crtc_state;
 
     panel_state->vmode.xres = RT_HW_LCD_XRES;
     panel_state->vmode.yres = RT_HW_LCD_YRES;
@@ -132,14 +131,13 @@ static void rockchip_panel_init(struct display_state *state)
     panel_state->bus_format = RT_HW_LCD_BUS_FORMAT;
     panel_state->conn_type = RT_HW_LCD_CONN_TYPE;
     panel_state->cmd_type = RT_HW_LCD_INIT_CMD_TYPE;
-    if (panel_state->cmd_type == CMD_TYPE_MCU)
-    {
-        crtc_state->mcu_timing.mcuPixelTotal = MCU_TOTAL;
-        crtc_state->mcu_timing.mcuCsPst = MCU_CS_STR;
-        crtc_state->mcu_timing.mcuCsPend = MCU_CS_END;
-        crtc_state->mcu_timing.mcuRwPst = MCU_WR_STR;
-        crtc_state->mcu_timing.mcuRwPend = MCU_WR_END;
-    }
+#ifdef RT_USING_VOP_MCU
+    state->crtc_state.mcu_timing.mcuPixelTotal = MCU_TOTAL;
+    state->crtc_state.mcu_timing.mcuCsPst = MCU_CS_STR;
+    state->crtc_state.mcu_timing.mcuCsPend = MCU_CS_END;
+    state->crtc_state.mcu_timing.mcuRwPst = MCU_WR_STR;
+    state->crtc_state.mcu_timing.mcuRwPend = MCU_WR_END;
+#endif
     panel_state->display_mode = RT_HW_LCD_DISPLAY_MODE;
     panel_state->area_display = RT_HW_LCD_AREA_DISPLAY;
 #ifdef RT_HW_LCD_MAX_BRIGHTNESS
