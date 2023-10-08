@@ -132,6 +132,6 @@ static int rk_saradc_init(void)
     return result;
 }
 
-INIT_BOARD_EXPORT(rk_saradc_init);
+INIT_DEVICE_EXPORT(rk_saradc_init);
 
 #endif
