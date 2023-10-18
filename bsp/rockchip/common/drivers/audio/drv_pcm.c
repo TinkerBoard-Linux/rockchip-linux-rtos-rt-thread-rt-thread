@@ -42,57 +42,28 @@ static void rk_pcm_complete(void *arg)
     rk_audio_stream_update(pcm->as);
 }
 
-static rt_err_t rk_pcm_init(struct audio_pcm *pcm,
-                            eAUDIO_streamType stream,
-                            struct audio_buf *buf)
-{
-    struct rk_pcm *rkpcm = to_rkpcm(pcm);
-    const struct AUDIO_DMA_DATA *dmaData = pcm->card->dai->dmaData[stream];
-    struct rt_dma_transfer *dx = &rkpcm->dma_xfer;
-    rt_err_t ret;
-
-    rkpcm->pcm.abuf = *buf;
-    pcm->boundary = pcm->abuf.buf_size;
-
-    while (pcm->boundary << 1 <= PCM_BOUNDARY_MAX - pcm->abuf.buf_size)
-        pcm->boundary <<= 1;
-
-    rkpcm->dma = rt_dma_get((uint32_t)dmaData->dmac);
-    RT_ASSERT(rkpcm->dma);
-    dx->dma_req_num = dmaData->dmaReqCh;
-
-    ret = rt_device_control(rkpcm->dma, RT_DEVICE_CTRL_DMA_REQUEST_CHANNEL, dx);
-    RT_ASSERT(ret == RT_EOK);
-
-    return ret;
-}
-
-static rt_err_t rk_pcm_deinit(struct audio_pcm *pcm)
-{
-    struct rk_pcm *rkpcm = to_rkpcm(pcm);
-    struct rt_dma_transfer *dx = &rkpcm->dma_xfer;
-    rt_err_t ret;
-
-    ret = rt_device_control(rkpcm->dma, RT_DEVICE_CTRL_DMA_RELEASE_CHANNEL, dx);
-
-    return ret;
-}
-
-static rt_err_t rk_pcm_config(struct audio_pcm *pcm, eAUDIO_streamType stream,
-                              struct AUDIO_PARAMS *params)
+static rt_err_t rk_pcm_prepare(struct audio_pcm *pcm, eAUDIO_streamType stream)
 {
     struct rk_pcm *rkpcm = to_rkpcm(pcm);
     const struct AUDIO_DMA_DATA *dmaData = pcm->card->dai->dmaData[stream];
     struct rt_dma_transfer *dx = &rkpcm->dma_xfer;
     struct audio_buf *buf = &rkpcm->pcm.abuf;
-    rt_err_t ret;
+    rt_err_t ret = -RT_ERROR;
 
-    RT_ASSERT(buf->buf_size);
-    RT_ASSERT(buf->period_size);
+    if (!buf->buf_size || !buf->period_size)
+    {
+        rt_kprintf("%s %d: invalid audio buffer\n", __func__, __LINE__);
+        return ret;
+    }
 
-    rkpcm->pcm.params = *params;
     dx->len = frames_to_bytes(pcm, buf->buf_size);
     dx->period_len = frames_to_bytes(pcm, buf->period_size);
+    if (!dx->len || !dx->period_len)
+    {
+        rt_kprintf("Invalid params, should do HW_PARAMS before PCM_PREPARE\n");
+        return ret;
+    }
+
     if (stream == AUDIO_STREAM_PLAYBACK)
     {
         dx->direction = RT_DMA_MEM_TO_DEV;
@@ -117,6 +88,58 @@ static rt_err_t rk_pcm_config(struct audio_pcm *pcm, eAUDIO_streamType stream,
     RT_ASSERT(ret == RT_EOK);
 
     return ret;
+}
+
+static rt_err_t rk_pcm_init(struct audio_pcm *pcm,
+                            eAUDIO_streamType stream,
+                            struct audio_buf *buf)
+{
+    struct rk_pcm *rkpcm = to_rkpcm(pcm);
+    const struct AUDIO_DMA_DATA *dmaData = pcm->card->dai->dmaData[stream];
+    struct rt_dma_transfer *dx = &rkpcm->dma_xfer;
+    rt_err_t ret;
+
+    rkpcm->pcm.abuf = *buf;
+    pcm->boundary = pcm->abuf.buf_size;
+
+    while (pcm->boundary << 1 <= PCM_BOUNDARY_MAX - pcm->abuf.buf_size)
+        pcm->boundary <<= 1;
+
+    rkpcm->dma = rt_dma_get((uint32_t)dmaData->dmac);
+    RT_ASSERT(rkpcm->dma);
+    dx->dma_req_num = dmaData->dmaReqCh;
+
+    ret = rt_device_control(rkpcm->dma, RT_DEVICE_CTRL_DMA_REQUEST_CHANNEL, dx);
+    RT_ASSERT(ret == RT_EOK);
+
+    ret = rk_pcm_prepare(pcm, stream);
+    RT_ASSERT(ret == RT_EOK);
+
+    return ret;
+}
+
+static rt_err_t rk_pcm_deinit(struct audio_pcm *pcm)
+{
+    struct rk_pcm *rkpcm = to_rkpcm(pcm);
+    struct rt_dma_transfer *dx = &rkpcm->dma_xfer;
+    rt_err_t ret;
+
+    ret = rt_device_control(rkpcm->dma, RT_DEVICE_CTRL_DMA_RELEASE_CHANNEL, dx);
+    RT_ASSERT(ret == RT_EOK);
+
+    rt_memset(&rkpcm->pcm.params, 0, sizeof(rkpcm->pcm.params));
+
+    return ret;
+}
+
+static rt_err_t rk_pcm_config(struct audio_pcm *pcm, eAUDIO_streamType stream,
+                              struct AUDIO_PARAMS *params)
+{
+    struct rk_pcm *rkpcm = to_rkpcm(pcm);
+
+    rkpcm->pcm.params = *params;
+
+    return RT_EOK;
 }
 
 static rt_err_t rk_pcm_start(struct audio_pcm *pcm)
