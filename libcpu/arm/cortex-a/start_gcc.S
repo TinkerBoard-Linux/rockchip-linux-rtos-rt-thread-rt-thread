@@ -96,6 +96,7 @@ continue:
     bic r1, #(3<<19)            /* bit[20:19] must be zero */
     mcr p15, 0, r1, c1, c0, 0
 
+#ifdef RT_USING_SMP
     @ get cpu id, and subtract the offset from the stacks base address
     bl rt_hw_cpu_id
     mov r5, r0
@@ -120,6 +121,7 @@ secondary_loop:
     blxne r0 /* if(secondary_cpu_entry) secondary_cpu_entry(); */
 #endif /* RT_SMP_AUTO_BOOT */
     b secondary_loop
+#endif /* RT_USING_SMP */
 
 normal_setup:
     /* setup stack */
