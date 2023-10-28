@@ -171,9 +171,6 @@ void audio_playback()
     ret = rt_device_control(audio_dev, RK_AUDIO_CTL_PCM_PREPARE, &abuf);
     RT_ASSERT(ret == RT_EOK);
 
-    ret = rt_device_control(audio_dev, RK_AUDIO_CTL_PCM_START, NULL);
-    RT_ASSERT(ret == RT_EOK);
-
     ret = rt_device_control(audio_dev, RK_AUDIO_CTL_START, NULL);
     RT_ASSERT(ret == RT_EOK);
 }
