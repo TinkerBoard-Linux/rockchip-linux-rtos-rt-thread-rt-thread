@@ -22,10 +22,13 @@ config RT_USING_COMMON_TEST
     config RT_USING_COMMON_TEST_SUSPEND
         bool "Enable BSP Common Timer and GPIO Suspend/Resume TEST"
         default n
+
     config RT_USING_COMMON_TEST_AUDIO
         bool "Enable BSP Common AUDIO TEST"
-        depends on RT_USING_AUDIO && RT_USING_LARGE_HEAP && RT_USING_UNCACHE_HEAP
+        depends on RT_USING_AUDIO
+        depends on RT_USING_UNCACHE_HEAP
         default n
+
     config RT_USING_COMMON_TEST_CODEC_ES8388
         bool "Enable BSP Common CODEC ES8388 TEST"
         depends on RT_USING_CODEC
