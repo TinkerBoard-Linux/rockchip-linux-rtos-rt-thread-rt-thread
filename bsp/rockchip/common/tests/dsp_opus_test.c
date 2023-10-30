@@ -142,9 +142,9 @@ static void *card_open(char *name)
     param.sampleRate = g_rate;
     param.sampleBits = OPUS_BITS;
 
-    ret = rt_device_control(card, RK_AUDIO_CTL_PCM_PREPARE, &abuf);
-    RT_ASSERT(ret == RT_EOK);
     ret = rt_device_control(card, RK_AUDIO_CTL_HW_PARAMS, &param);
+    RT_ASSERT(ret == RT_EOK);
+    ret = rt_device_control(card, RK_AUDIO_CTL_PCM_PREPARE, &abuf);
     RT_ASSERT(ret == RT_EOK);
 
     return card;

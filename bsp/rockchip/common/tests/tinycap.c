@@ -99,9 +99,6 @@ static uint32_t capture_sample(FILE *file, struct rt_device *card,
     param.sampleRate = rate;
     param.sampleBits = bits;
 
-    ret = rt_device_control(card, RK_AUDIO_CTL_PCM_PREPARE, &abuf);
-    RT_ASSERT(ret == RT_EOK);
-
 #ifdef RT_USING_DRIVER_AUDIO_PCM_PLUGIN_SOFTVOL
     ret = rt_device_control(card, RK_AUDIO_CTL_PLUGIN_PREPARE, (void *)type);
     RT_ASSERT(ret == RT_EOK);
@@ -118,6 +115,9 @@ static uint32_t capture_sample(FILE *file, struct rt_device *card,
 #endif
 
     ret = rt_device_control(card, RK_AUDIO_CTL_HW_PARAMS, &param);
+    RT_ASSERT(ret == RT_EOK);
+
+    ret = rt_device_control(card, RK_AUDIO_CTL_PCM_PREPARE, &abuf);
     RT_ASSERT(ret == RT_EOK);
 
     size = abuf.period_size * channels * (bits >> 3);

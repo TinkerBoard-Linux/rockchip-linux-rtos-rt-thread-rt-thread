@@ -144,15 +144,6 @@ void audio_playback()
 
     rt_device_open(audio_dev, RT_DEVICE_OFLAG_WRONLY);
 
-    /* config stream */
-    rt_memset(&aparams, 0x0, sizeof(aparams));
-    aparams.channels = 2;
-    aparams.sampleRate = AUDIO_SAMPLERATE_16000;
-    aparams.sampleBits = AUDIO_SAMPLEBITS_16;
-
-    ret = rt_device_control(audio_dev, RK_AUDIO_CTL_HW_PARAMS, &aparams);
-    RT_ASSERT(ret == RT_EOK);
-
     rt_memset(&abuf, 0x0, sizeof(abuf));
     abuf.buf = capturebuf;//(uint8_t *)rt_malloc_large(AUDIO_SRAM_BUFFER_SIZE);
     if (!abuf.buf)
@@ -167,6 +158,15 @@ void audio_playback()
     abuf.period_size = AUDIO_SRAM_PERIOD_SIZE;
     rt_kprintf("pcm buf: 0x%x, size: 0x%x bytes\n", abuf.buf, abuf.buf_size);
     rt_kprintf("pcm periodsize: 0x%x kbytes\n", AUDIO_SRAM_PERIOD_SIZE);
+
+    /* config stream */
+    rt_memset(&aparams, 0x0, sizeof(aparams));
+    aparams.channels = AUDIO_CHANNELS_2;
+    aparams.sampleRate = AUDIO_SAMPLERATE_16000;
+    aparams.sampleBits = AUDIO_SAMPLEBITS_16;
+
+    ret = rt_device_control(audio_dev, RK_AUDIO_CTL_HW_PARAMS, &aparams);
+    RT_ASSERT(ret == RT_EOK);
 
     ret = rt_device_control(audio_dev, RK_AUDIO_CTL_PCM_PREPARE, &abuf);
     RT_ASSERT(ret == RT_EOK);
