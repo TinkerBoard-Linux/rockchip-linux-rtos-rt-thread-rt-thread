@@ -61,10 +61,18 @@ struct color_yuv
 
 static const struct util_format_info format_info[] =
 {
-    { RTGRAPHIC_PIXEL_FORMAT_YUV420, "YU12", MAKE_YUV_INFO(YUV_YCbCr, 2, 2, 1) },
+    /* Indexed */
+    /* YUV semi-planar */
+    { RTGRAPHIC_PIXEL_FORMAT_YUV420, "NV12", MAKE_YUV_INFO(YUV_YCbCr, 2, 2, 2) },
+    { RTGRAPHIC_PIXEL_FORMAT_YUV422, "NV16", MAKE_YUV_INFO(YUV_YCbCr, 2, 1, 2) },
+    /* YUV planar */
+    { RTGRAPHIC_PIXEL_FORMAT_YUV420_4, "YU12", MAKE_YUV_INFO(YUV_YCbCr, 2, 2, 1) },
+    /* RGB16 */
+    { RTGRAPHIC_PIXEL_FORMAT_RGB565, "RG16", MAKE_RGB_INFO(5, 11, 6, 5, 5, 0, 0, 0) },
     { RTGRAPHIC_PIXEL_FORMAT_BGR565, "BG16", MAKE_RGB_INFO(5, 0, 6, 5, 5, 11, 0, 0) },
-    { RTGRAPHIC_PIXEL_FORMAT_RGB565, "RG16", MAKE_RGB_INFO(5, 0, 6, 5, 5, 11, 0, 0) },
+    /* RGB24 */
     { RTGRAPHIC_PIXEL_FORMAT_RGB888, "RG24", MAKE_RGB_INFO(8, 16, 8, 8, 8, 0, 0, 0) },
+    /* RGB32 */
     { RTGRAPHIC_PIXEL_FORMAT_ARGB888, "AR24", MAKE_RGB_INFO(8, 16, 8, 8, 8, 0, 8, 24) },
     { RTGRAPHIC_PIXEL_FORMAT_ABGR888, "AB24", MAKE_RGB_INFO(8, 0, 8, 8, 8, 16, 8, 24) },
 };
@@ -423,8 +431,10 @@ static void fill_smpte(const struct util_format_info *info, void *planes[3],
     switch (info->format)
     {
     case RTGRAPHIC_PIXEL_FORMAT_YUV420:
-        v = info->yuv.order & YUV_YCbCr ? planes[1] : planes[1] + 1;
-        u = info->yuv.order & YUV_YCrCb ? planes[1] : planes[1] + 1;
+    case RTGRAPHIC_PIXEL_FORMAT_YUV422:
+    case RTGRAPHIC_PIXEL_FORMAT_YUV444:
+        u = info->yuv.order & YUV_YCbCr ? planes[1] : planes[1] + 1;
+        v = info->yuv.order & YUV_YCrCb ? planes[1] : planes[1] + 1;
         return fill_smpte_yuv_planar(&info->yuv, planes[0], u, v,
                                      width, height, stride);
     case RTGRAPHIC_PIXEL_FORMAT_BGR565:
