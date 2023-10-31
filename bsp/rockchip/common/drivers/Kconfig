@@ -761,4 +761,8 @@ config RT_USING_RPMSG_LITE
     endif
 
 endmenu
+
+config RT_USING_DHARA
+    bool
+    default n
 endmenu
