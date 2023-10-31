@@ -29,6 +29,8 @@
 #define PWM_CMD_INT_ENABLE  (RT_DEVICE_CTRL_BASE(PWM) + 13)
 #define PWM_CMD_INT_DISABLE (RT_DEVICE_CTRL_BASE(PWM) + 14)
 
+#define rt_pwm_set(device, channel, period, pulse) rt_pwm_set_internal(device, channel, period, pulse, 0, PWM_UNALIGNED)
+
 enum rt_pwm_aligned_mode
 {
     PWM_LEFT_ALIGNED = 1,
@@ -71,7 +73,7 @@ rt_err_t rt_device_pwm_register(struct rt_device_pwm *device, const char *name, 
 
 rt_err_t rt_pwm_enable(struct rt_device_pwm *device, int channel);
 rt_err_t rt_pwm_disable(struct rt_device_pwm *device, int channel);
-rt_err_t rt_pwm_set(struct rt_device_pwm *device, int channel, rt_uint32_t period, rt_uint32_t pulse, rt_uint32_t polarity, enum rt_pwm_aligned_mode aligned);
+rt_err_t rt_pwm_set_internal(struct rt_device_pwm *device, int channel, rt_uint32_t period, rt_uint32_t pulse, rt_uint32_t polarity, enum rt_pwm_aligned_mode aligned);
 rt_err_t rt_pwm_set_period(struct rt_device_pwm *device, int channel, rt_uint32_t period);
 rt_err_t rt_pwm_set_pulse(struct rt_device_pwm *device, int channel, rt_uint32_t pulse);
 rt_err_t rt_pwm_set_offset(struct rt_device_pwm *device, int channel, rt_uint32_t offset);

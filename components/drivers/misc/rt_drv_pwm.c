@@ -160,7 +160,7 @@ rt_err_t rt_pwm_disable(struct rt_device_pwm *device, int channel)
     return result;
 }
 
-rt_err_t rt_pwm_set(struct rt_device_pwm *device, int channel, rt_uint32_t period, rt_uint32_t pulse, rt_uint32_t polarity, enum rt_pwm_aligned_mode aligned)
+rt_err_t rt_pwm_set_internal(struct rt_device_pwm *device, int channel, rt_uint32_t period, rt_uint32_t pulse, rt_uint32_t polarity, enum rt_pwm_aligned_mode aligned)
 {
     rt_err_t result = RT_EOK;
     struct rt_pwm_configuration configuration = {0};
@@ -420,7 +420,7 @@ static int pwm(int argc, char **argv)
             {
                 if(argc == 7)
                 {
-                    result = rt_pwm_set(pwm_device, atoi(argv[2]), atoi(argv[3]), atoi(argv[4]), atoi(argv[5]), atoi(argv[6]));
+                    result = rt_pwm_set_internal(pwm_device, atoi(argv[2]), atoi(argv[3]), atoi(argv[4]), atoi(argv[5]), atoi(argv[6]));
                     rt_kprintf("pwm info set on %s at channel %d\n", pwm_device, atoi(argv[2]));
                 }
                 else
