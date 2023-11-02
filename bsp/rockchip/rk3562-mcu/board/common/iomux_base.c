@@ -29,7 +29,7 @@ RT_WEAK  void spi0_m1_iomux_config(void)
 {
     /* SPI0 */
     HAL_PINCTRL_SetIOMUX(GPIO_BANK3,
-                         GPIO_PIN_B4,
+                         GPIO_PIN_B4 |
                          GPIO_PIN_B5 |
                          GPIO_PIN_B7,
                          PIN_CONFIG_MUX_FUNC4);
