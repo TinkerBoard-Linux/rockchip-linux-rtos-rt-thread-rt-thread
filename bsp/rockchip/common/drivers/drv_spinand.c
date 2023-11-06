@@ -1,15 +1,16 @@
 /**
-  * Copyright (c) 2020 Fuzhou Rockchip Electronics Co., Ltd
+  * Copyright (c) 2020-2023 Rockchip Electronics Co., Ltd
   *
   * SPDX-License-Identifier: Apache-2.0
   ******************************************************************************
   * @file    drv_spinand.c
-  * @version V1.0
+  * @version V2.0
   * @brief   spi nand interface
   *
   * Change Logs:
   * Date           Author          Notes
   * 2020-06-16     Dingqiang Lin   the first version
+  * 2023-11-06     Dingqiang Lin   Support Dhara
   *
   ******************************************************************************
   */
@@ -43,6 +44,11 @@
 #include "drv_fspi.h"
 #include "hal_base.h"
 #include "mini_ftl.h"
+#include "drv_flash_partition.h"
+
+#ifdef RT_USING_DHARA
+#include "map.h"
+#endif
 
 
 /********************* Private MACRO Definition ******************************/
@@ -55,6 +61,17 @@
 #else
 #define spinand_dbg(...)
 #endif
+
+// #define DHARA_DEBUG
+#ifdef DHARA_DEBUG
+#define dhara_dbg(...)       rt_kprintf(__VA_ARGS__)
+#define dhara_abort(...)     abort(__VA_ARGS__)
+#else
+#define dhara_dbg(...)
+#define dhara_abort(...)
+#endif
+
+// #define DHARA_RANDOM_TEST
 
 #define MTD_TO_SPINAND(mtd) ((struct SPI_NAND *)mtd->priv)
 
@@ -71,7 +88,7 @@ int spinand_read(rt_mtd_t *mtd, loff_t from, struct mtd_io_desc *ops)
 {
     int ret;
 
-    spinand_dbg("%s addr= %lx len= %x\n", __func__, (uint32_t)from, (uint32_t)ops->datlen);
+    spinand_dbg("%s addr= %lx len= %x %p\n", __func__, (uint32_t)from, (uint32_t)ops->datlen, ops->datbuf);
 
     rt_mutex_take(&spinand_lock, RT_WAITING_FOREVER);
     ret = mftl_mtd_read(mtd, from, ops);
@@ -407,6 +424,626 @@ static uint32_t spinand_adapt(struct SPI_NAND *spinandF)
  *  @{
  */
 
+#ifdef RT_USING_DHARA
+static int p_count;
+static int e_count;
+static int r_count;
+
+int dhara_nand_is_bad(const struct dhara_nand *n, dhara_block_t bno)
+{
+    struct SPI_NAND *spinand = (struct SPI_NAND *)n->priv_data;
+    int ret;
+
+    dhara_dbg("NAND_is_bad blk=0x%x\n", bno);
+
+    if (bno >= n->num_blocks)
+    {
+        rt_kprintf("NAND_is_bad called on invalid block: %ld\n", bno);
+    }
+
+    if (n->blocks[bno].bbm == NAND_BBT_BLOCK_STATUS_UNKNOWN)
+    {
+        ret = HAL_SPINAND_IsBad(spinand, bno);
+        if (ret)
+        {
+            dhara_dbg("NAND_is_bad blk 0x%x is bad block, ret=%d\n", bno, ret);
+            n->blocks[bno].bbm = NAND_BBT_BLOCK_WORN;
+        }
+        else
+        {
+            n->blocks[bno].bbm = NAND_BBT_BLOCK_GOOD;
+        }
+    }
+
+    return n->blocks[bno].bbm == NAND_BBT_BLOCK_GOOD ? false : true;
+}
+
+void dhara_nand_mark_bad(const struct dhara_nand *n, dhara_block_t bno)
+{
+    struct SPI_NAND *spinand = (struct SPI_NAND *)n->priv_data;
+    int ret;
+
+    dhara_dbg("NAND_mark_bad blk=0x%x\n", bno);
+
+    if (bno >= n->num_blocks)
+    {
+        rt_kprintf("NAND_mark_bad called on invalid block: %ld\n", bno);
+    }
+
+    n->blocks[bno].bbm = NAND_BBT_BLOCK_WORN;
+
+    ret = HAL_SPINAND_MarkBad(spinand, bno);
+    if (ret)
+    {
+        rt_kprintf("NAND_mark_bad blk 0x%x failed, ret=%d\n", bno, ret);
+    }
+}
+
+int dhara_nand_erase(const struct dhara_nand *n, dhara_block_t bno, dhara_error_t *err)
+{
+    struct SPI_NAND *spinand = (struct SPI_NAND *)n->priv_data;
+    int ret;
+
+    dhara_dbg("NAND_erase blk=0x%x\n", bno);
+
+    if (bno >= n->num_blocks)
+    {
+        rt_kprintf("NAND_erase called on invalid block: %ld\n", bno);
+        dhara_abort();
+
+        return -RT_EINVAL;
+    }
+
+    if (n->blocks[bno].bbm == NAND_BBT_BLOCK_WORN)
+    {
+        rt_kprintf("NAND_erase called on block which is marked bad: %ld\n", bno);
+        dhara_abort();
+
+        return -RT_EINVAL;
+    }
+
+    n->blocks[bno].next_page = 0;
+
+    ret = HAL_SPINAND_EraseBlock(spinand, bno << n->log2_ppb);
+    if (ret)
+    {
+        rt_kprintf("NAND_erase blk 0x%x failed, ret=%d\n", bno, ret);
+    }
+    e_count++;
+
+    return ret;
+}
+
+int dhara_nand_prog(const struct dhara_nand *n, dhara_page_t p,
+                    const uint8_t *data, dhara_error_t *err)
+{
+    struct SPI_NAND *spinand = (struct SPI_NAND *)n->priv_data;
+    const int bno = p >> n->log2_ppb;
+    const uint16_t pno = p & ((n->page_per_block) - 1);
+    uint32_t meta[SPINAND_META_WORDS_MAX] = { DHARA_NAND_META_MAGIC, 0, 0, 0 };
+    int ret;
+
+    dhara_dbg("NAND_prog page=0x%x\n", p);
+
+    if ((bno < 0) || (bno >= n->num_blocks))
+    {
+        rt_kprintf("NAND_prog called on invalid block: %ld\n", bno);
+        dhara_abort();
+
+        return -RT_EINVAL;
+    }
+
+    if (n->blocks[bno].bbm == NAND_BBT_BLOCK_WORN)
+    {
+        rt_kprintf("NAND_prog called on block which is marked bad: %d\n", bno);
+        dhara_abort();
+
+        return -RT_EINVAL;
+    }
+
+    if (pno < n->blocks[bno].next_page)
+    {
+        rt_kprintf("NAND_prog out-of-order page programming. Block %d, page %d (expected %d)\n",
+                   bno, pno, n->blocks[bno].next_page);
+        dhara_abort();
+
+        return -RT_EINVAL;
+    }
+
+    n->blocks[bno].next_page = pno + 1;
+
+    ret = HAL_SPINAND_ProgPage(spinand, p, data, meta);
+    if (ret != HAL_OK)
+    {
+        rt_kprintf("NAND_prog page 0x%x failed, ret=%d\n", p, ret);
+        dhara_set_error(err, DHARA_E_BAD_BLOCK);
+    }
+    p_count++;
+
+    return ret;
+}
+
+int dhara_nand_is_free(const struct dhara_nand *n, dhara_page_t p)
+{
+    struct SPI_NAND *spinand = (struct SPI_NAND *)n->priv_data;
+    const int bno = p >> n->log2_ppb;
+    const uint16_t pno = p & ((n->page_per_block) - 1);
+    uint32_t meta[SPINAND_META_WORDS_MAX] = { 0 };
+    int ret;
+
+    if ((bno < 0) || (bno >= n->num_blocks))
+    {
+        rt_kprintf("NAND_is_free called on invalid block: %d\n", bno);
+        dhara_abort();
+
+        return -RT_EINVAL;
+    }
+
+    if (n->blocks[bno].next_page == 0)
+    {
+        ret = HAL_SPINAND_ReadPageMeta(spinand, p, meta);
+        if (ret != SPINAND_ECC_ERROR && meta[0] == 0xFFFFFFFF)
+            return true;
+        else
+            return false;
+    }
+
+    return (int)(n->blocks[bno].next_page <= pno);
+}
+
+int dhara_nand_read(const struct dhara_nand *n, dhara_page_t p,
+                    size_t offset, size_t length,
+                    uint8_t *data, dhara_error_t *err)
+{
+    struct SPI_NAND *spinand = (struct SPI_NAND *)n->priv_data;
+    const int bno = p >> n->log2_ppb;
+    int ret;
+
+    dhara_dbg("NAND_read page=0x%x offset=0x%x length=%x\n", p, offset, length);
+
+    if ((bno < 0) || (bno >= n->num_blocks))
+    {
+        rt_kprintf("NAND_read called on invalid block: %d\n", bno);
+        dhara_abort();
+
+        return -RT_EINVAL;
+    }
+
+    if (offset + length > n->page_size)
+    {
+        rt_kprintf("NAND_read called on invalid range: offset = %ld, length = %ld\n", offset, length);
+        dhara_abort();
+
+        return -RT_EINVAL;
+    }
+
+    ret = HAL_SPINAND_ReadPageAnyWhere(spinand, p, data, offset, length);
+    if (ret == SPINAND_ECC_ERROR)
+    {
+        rt_kprintf("NAND_read page 0x%x failed, ret=%d\n", p, ret);
+        dhara_set_error(err, DHARA_E_ECC);
+    }
+    *err = DHARA_E_NONE;
+    r_count++;
+
+    return ret;
+}
+
+int dhara_nand_copy(const struct dhara_nand *n,
+                    dhara_page_t src, dhara_page_t dst,
+                    dhara_error_t *err)
+{
+    if ((dhara_nand_read(n, src, 0, n->page_size, n->copy_buf, err) < 0) ||
+            (dhara_nand_prog(n, dst, n->copy_buf, err) < 0))
+        return -1;
+
+    return 0;
+}
+
+static rt_err_t part_blk_init(rt_device_t dev)
+{
+    return RT_EOK;
+}
+
+static rt_err_t part_blk_open(rt_device_t dev, rt_uint16_t oflag)
+{
+    return RT_EOK;
+}
+
+static rt_err_t part_blk_close(rt_device_t dev)
+{
+    return RT_EOK;
+}
+
+static rt_err_t part_blk_control(rt_device_t dev, int cmd, void *args)
+{
+    struct rt_flash_partition *blk_part = DEV_2_PART(dev);
+    struct dhara_device *dhara_dev = (struct dhara_device *)dev->user_data;
+
+    dhara_dbg("%s %ld\n", __func__, blk_part->size);
+
+    RT_ASSERT(dev != RT_NULL);
+    switch (cmd)
+    {
+    case RT_DEVICE_CTRL_BLK_GETGEOME:
+    {
+        struct rt_device_blk_geometry *geometry;
+
+        geometry = (struct rt_device_blk_geometry *)args;
+        if (geometry == RT_NULL)
+            return -RT_ERROR;
+        geometry->bytes_per_sector  = dhara_dev->sector_size;
+        geometry->sector_count      = blk_part->size / geometry->bytes_per_sector;
+        geometry->block_size        = geometry->bytes_per_sector;
+        break;
+    }
+    default:
+        break;
+    }
+
+    return RT_EOK;
+}
+
+static rt_size_t part_blk_read(rt_device_t dev, rt_off_t sec, void *buffer, rt_size_t nsec)
+{
+    struct rt_flash_partition *blk_part = DEV_2_PART(dev);
+    struct dhara_device *dhara_dev = (struct dhara_device *)dev->user_data;
+    rt_size_t   read_count = 0;
+    rt_uint8_t *ptr = (rt_uint8_t *)buffer;
+    rt_size_t ret;
+    dhara_error_t err;
+
+    RT_ASSERT(dev != RT_NULL);
+    RT_ASSERT(nsec != 0);
+
+    dhara_dbg("%s sec = %08x,nsec = %08x %lx %lx\n", __func__, sec, nsec, blk_part->offset, blk_part->size);
+    if (!(blk_part->mask_flags & PART_FLAG_RDONLY))
+    {
+        rt_kprintf("ERROR: partition %s is unreadable, mask_flags = %04x\n", blk_part->name, blk_part->mask_flags);
+        return 0;
+    }
+
+    while (read_count < nsec)
+    {
+        if (((sec + 1) * dhara_dev->sector_size) > (blk_part->offset + blk_part->size))
+        {
+            rt_kprintf("ERROR: read overrun!\n");
+            return read_count;
+        }
+
+        /* It'a BLOCK device */
+        rt_mutex_take(&spinand_lock, RT_WAITING_FOREVER);
+        ret = dhara_map_read(&dhara_dev->map, sec, ptr, &err);
+        rt_mutex_release(&spinand_lock);
+        if (ret)
+            return read_count;
+        sec++;
+        ptr += dhara_dev->sector_size;
+        read_count++;
+    }
+
+    return nsec;
+}
+
+static rt_size_t part_blk_write(rt_device_t dev, rt_off_t sec, const void *buffer, rt_size_t nsec)
+{
+    struct rt_flash_partition *blk_part = DEV_2_PART(dev);
+    struct dhara_device *dhara_dev = (struct dhara_device *)dev->user_data;
+    rt_size_t   write_count = 0;
+    rt_uint8_t *ptr = (rt_uint8_t *)buffer;
+    rt_size_t ret;
+    dhara_error_t err;
+
+    RT_ASSERT(dev != RT_NULL);
+    RT_ASSERT(nsec != 0);
+
+    dhara_dbg("%s sec = %08x,nsec = %08x %lx %lx\n", __func__, sec, nsec, blk_part->offset, blk_part->size);
+
+    if (!(blk_part->mask_flags & PART_FLAG_WRONLY))
+    {
+        rt_kprintf("ERROR: partition %s is unwriteable, mask_flags = %04x\n", blk_part->name, blk_part->mask_flags);
+        return 0;
+    }
+
+    while (write_count < nsec)
+    {
+        if (((sec + 1) * dhara_dev->sector_size) > (blk_part->offset + blk_part->size))
+        {
+            rt_kprintf("ERROR: write overrun!\n");
+            return write_count;
+        }
+        /* It'a BLOCK device */
+        rt_mutex_take(&spinand_lock, RT_WAITING_FOREVER);
+        ret = dhara_map_write(&dhara_dev->map, sec, ptr, &err);
+        if (ret)
+        {
+            rt_mutex_release(&spinand_lock);
+            return write_count;
+        }
+        ret = dhara_map_sync(&dhara_dev->map, NULL);
+        rt_mutex_release(&spinand_lock);
+        if (ret)
+            return write_count;
+        sec++;
+        ptr += dhara_dev->sector_size;
+        write_count++;
+    }
+
+    return write_count;
+}
+
+#ifdef RT_USING_DEVICE_OPS
+const static struct rt_device_ops part_blk_ops =
+{
+    part_blk_init,
+    part_blk_open,
+    part_blk_close,
+    part_blk_read,
+    part_blk_write,
+    part_blk_control,
+};
+#endif
+
+/* Register a partition as block partition */
+static rt_err_t spinand_blk_init_partition(struct dhara_device *dev, struct rt_flash_partition *blk_part)
+{
+    if (dev == RT_NULL)
+        return -RT_EIO;
+
+    if (blk_part == RT_NULL)
+        return -RT_EINVAL;
+
+    dhara_dbg("blk part name: %s\n", blk_part->name);
+    /* blk dev setting */
+    blk_part->blk.type      = RT_Device_Class_Block;
+#ifdef RT_USING_DEVICE_OPS
+    blk_part->blk.ops       = &part_blk_ops;
+#else
+    blk_part->blk.init      = part_blk_init;
+    blk_part->blk.open      = part_blk_open;
+    blk_part->blk.read      = part_blk_read;
+    blk_part->blk.write     = part_blk_write;
+    blk_part->blk.close     = part_blk_close;
+    blk_part->blk.control   = part_blk_control;
+#endif
+    blk_part->blk.user_data = dev;  /* snor blk dev for operation */
+    /* register device */
+    return rt_device_register(&blk_part->blk, blk_part->name, blk_part->mask_flags | RT_DEVICE_FLAG_STANDALONE);
+}
+
+static struct rt_flash_partition default_part[] =
+{
+    {
+        .name = "part0",
+        .offset = 0,
+        .size = 48400 * 2048, /* 128MB maximum */
+        .type = 0x8,
+        .mask_flags = PART_FLAG_BLK | PART_FLAG_RDWR,
+    },
+};
+
+#ifdef DHARA_RANDOM_TEST
+static uint8_t buf[2048];
+static int recheck = 0;
+#define NUM_SECTORS     8192
+#define MAX_SECTORS     48400
+static dhara_sector_t sector_list[NUM_SECTORS];
+
+void seq_gen(unsigned int seed, uint8_t *buf, size_t length)
+{
+    size_t i;
+
+    srandom(seed);
+    for (i = 0; i < length; i++)
+        buf[i] = random();
+}
+
+void seq_assert(unsigned int seed, const uint8_t *buf, size_t length)
+{
+    size_t i;
+
+    srandom(seed);
+    for (i = 0; i < length; i++)
+    {
+        const uint8_t expect = random();
+
+        if (buf[i] != expect)
+        {
+            rt_kprintf("seq_assert: mismatch at %ld in sequence %d: 0x%02x (expected 0x%02x)\n", i, seed, buf[i], expect);
+            abort();
+        }
+    }
+}
+
+static void mt_write(struct dhara_map *m, dhara_sector_t s, int seed)
+{
+    dhara_error_t err;
+
+    seq_gen(seed, buf, sizeof(buf));
+    if (dhara_map_write(m, s, buf, &err) < 0)
+    {
+        rt_kprintf("map_write %d\n", err);
+        abort();
+    }
+}
+
+static void mt_assert(struct dhara_map *m, dhara_sector_t s, int seed, bool unknown)
+{
+    dhara_error_t err = DHARA_E_NOT_FOUND;
+
+    if (dhara_map_read(m, s, buf, &err) < 0)
+    {
+        rt_kprintf("map_read %d\n", err);
+        abort();
+    }
+
+    if (err != DHARA_E_NOT_FOUND)
+    {
+        seq_assert(seed, buf, sizeof(buf));
+        if (unknown)
+            recheck++;
+    }
+}
+
+static void shuffle(int seed)
+{
+    int i;
+
+    srandom(seed);
+    for (i = 0; i < NUM_SECTORS; i++)
+        sector_list[i] = random() % MAX_SECTORS;
+
+    for (i = NUM_SECTORS - 1; i > 0; i--)
+    {
+        const int j = random() % i;
+        const int tmp = sector_list[i];
+
+        sector_list[i] = sector_list[j];
+        sector_list[j] = tmp;
+    }
+}
+
+static int dhara_random_test(struct dhara_map *m, int seed)
+{
+    int i, loop = 0;
+    int a, b, c, d;
+    int gap = 0x200;
+    int i_cur = 0;
+    uint32_t start_time, end_time, cost_time, size;
+
+    shuffle(seed);
+    while (1)
+    {
+        loop++;
+        for (i_cur = 0; i_cur < NUM_SECTORS; i_cur += gap)
+        {
+            for (i = i_cur; i < i_cur + gap; i++)
+            {
+                const dhara_sector_t s = sector_list[i];
+
+                mt_assert(m, s, s, true);
+                mt_write(m, s, s);
+                mt_assert(m, s, s, false);
+                if (!(i & 0x2FF))
+                {
+                    rt_kprintf("%s loop=%d s=%d recheck=%d p=%d r=%d\n", __func__, loop, s, recheck, m->prog_total, m->read_total);
+                }
+            }
+
+            a = m->prog_total;
+            b = p_count;
+            c = e_count;
+            d = r_count;
+            start_time = HAL_GetTick();
+            for (i = i_cur; i < i_cur + gap; i++)
+            {
+                const dhara_sector_t s = sector_list[i];
+
+                mt_write(m, s, s);
+            }
+            end_time = HAL_GetTick();
+            cost_time = (end_time - start_time);
+            size = 2048 * gap;
+
+            a = m->prog_total - a;
+            b = p_count - b;
+            c = e_count - c;
+            d = r_count - d;
+            rt_kprintf("======= prog: p-P/E/R = %d-%d/%d/%d, speed %dKB/s\n", a, b, c, d, size / cost_time);
+
+            a = m->read_total;
+            b = p_count;
+            c = e_count;
+            d = r_count;
+            start_time = HAL_GetTick();
+            for (i = i_cur; i < i_cur + gap; i++)
+            {
+                const dhara_sector_t s = sector_list[i];
+
+                mt_assert(m, s, s, false);
+            }
+            end_time = HAL_GetTick();
+            cost_time = (end_time - start_time);
+            size = 2048 * gap;
+
+            a = m->read_total - a;
+            b = p_count - b;
+            c = e_count - c;
+            d = r_count - d;
+            rt_kprintf("======= read: r-P/E/R = %d-%d/%d/%d, speed %dKB/s\n", a, b, c, d, size / cost_time);
+        }
+    }
+
+    return 0;
+}
+#endif
+
+static int dhara_register(struct dhara_device *dhara_dev)
+{
+    const size_t page_size = dhara_dev->nand.page_size;
+    uint8_t *page_buf;
+    struct dhara_map *map;
+    int ret, i, part_num;
+
+    dhara_dev->nand.copy_buf = rt_calloc(1, dhara_dev->nand.page_size);
+    RT_ASSERT(dhara_dev->nand.copy_buf);
+    dhara_dev->nand.blocks = rt_calloc(dhara_dev->nand.num_blocks, sizeof(struct block_status));
+    RT_ASSERT(dhara_dev->nand.blocks);
+    page_buf = rt_malloc(page_size);
+    RT_ASSERT(page_buf);
+
+    map = &dhara_dev->map;
+
+    dhara_map_init(map, &dhara_dev->nand, page_buf, GC_RATIO);
+    dhara_map_resume(map, NULL);
+
+    ret = dhara_map_sync(map, NULL);
+    if (ret)
+    {
+        rt_kprintf("dhara sync failed, ret=%d\n", ret);
+        goto exit;
+    }
+    dhara_dev->sector_size = dhara_dev->nand.page_size;
+    dhara_dev->capacity = dhara_map_capacity(map);
+    rt_kprintf("  num_blocks: %d\n", dhara_dev->nand.num_blocks);
+    rt_kprintf("  sector_size: %d\n", dhara_dev->sector_size);
+    rt_kprintf("  capacity(sec): %d\n", dhara_dev->capacity);
+    rt_kprintf("  capacity(MB): %d\n", dhara_dev->capacity * dhara_dev->sector_size / 1024 / 1024);
+    rt_kprintf("  use count: %d\n", dhara_map_size(map));
+#ifdef DHARA_RANDOM_TEST
+    dhara_random_test(map, dhara_map_size(map));
+#endif
+
+    part_num = HAL_ARRAY_SIZE(default_part);
+    /* Register partitions */
+    for (i = 0; i < part_num; i++)
+    {
+        dhara_dbg("spinand_flash_partition flags=%08x type= %08x off=%08x size=%08x %s\n",
+                  default_part[i].mask_flags,
+                  default_part[i].type,
+                  default_part[i].offset,
+                  default_part[i].size,
+                  default_part[i].name);
+        if (default_part[i].mask_flags & PART_FLAG_RDWR)
+        {
+            ret = spinand_blk_init_partition(dhara_dev, &default_part[i]);
+            if (ret)
+                goto exit;
+        }
+    }
+
+exit:
+    if (ret)
+    {
+        rt_free(dhara_dev->nand.copy_buf);
+        rt_free(dhara_dev->nand.blocks);
+        rt_free(page_buf);
+    }
+
+    return ret;
+}
+#endif /* #ifdef RT_USING_DHARA */
+
 /* define partitions to it, mtd_spinand reserved for spi nand dev */
 struct mtd_part spinand_parts[1] =
 {
@@ -424,6 +1061,9 @@ int rt_hw_spinand_init(void)
     struct SPI_NAND *spinand;
     struct SPI_NAND_HOST *spi;
     int32_t ret;
+#ifdef RT_USING_DHARA
+    struct dhara_device *dhara_dev;
+#endif
 
     mtd_dev = (struct mtd_info *)rt_calloc(1, sizeof(*mtd_dev));
     RT_ASSERT(mtd_dev);
@@ -474,12 +1114,39 @@ int rt_hw_spinand_init(void)
     spinand_parts[0].size   = (uint32_t)mtd_dev->size;
 
     ret = rt_mtd_register(mtd_dev, (const struct mtd_part *)spinand_parts, HAL_ARRAY_SIZE(spinand_parts));
+    if (ret < 0)
+    {
+        rt_kprintf("rt_mtd_register register fail %d\n", ret);
+        goto exit;
+    }
+
     ret = mini_ftl_register(mtd_dev);
     if (ret < 0)
     {
         rt_kprintf("mini_ftl_register register fail %d\n", ret);
         goto exit;
     }
+
+#ifdef RT_USING_DHARA
+    spinand->pageBuf = rt_calloc(1, spinand->secPerPage * SPINAND_SECTOR_FULL_SIZE);
+    RT_ASSERT(spinand->pageBuf);
+
+    dhara_dev = (struct dhara_device *)rt_calloc(1, sizeof(*dhara_dev));
+    RT_ASSERT(dhara_dev);
+    dhara_dev->nand.log2_page_size = log(spinand->secPerPage) + 9;
+    dhara_dev->nand.log2_ppb = log(spinand->pagePerBlk);
+    dhara_dev->nand.num_blocks = spinand->blkPerPlane * spinand->planePerDie;
+    dhara_dev->nand.page_size = 1 << dhara_dev->nand.log2_page_size;
+    dhara_dev->nand.page_per_block = spinand->pagePerBlk;
+    dhara_dev->nand.priv_data = spinand;
+    ret = dhara_register(dhara_dev);
+    if (ret < 0)
+    {
+        rt_free(spinand->pageBuf);
+        rt_free(dhara_dev);
+    }
+#endif
+
 exit:
     if (ret < 0)
     {

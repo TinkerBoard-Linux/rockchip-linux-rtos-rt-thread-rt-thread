@@ -33,7 +33,19 @@ struct dhara_map
 
     uint8_t         gc_ratio;
     dhara_sector_t      count;
+    uint32_t                prog_total;
+    uint32_t                read_total;
 };
+
+struct dhara_device
+{
+    struct dhara_nand   nand;
+    struct dhara_map    map;
+    uint32_t                capacity;
+    uint32_t                sector_size;
+};
+
+#define DEV_2_DHARA(dev) (struct dhara_device *)dev;
 
 /* Initialize a map. You need to supply a buffer for page metadata, and
  * a garbage collection ratio. This is the ratio of garbage collection

@@ -762,7 +762,22 @@ config RT_USING_RPMSG_LITE
 
 endmenu
 
-config RT_USING_DHARA
+config RT_LWIP_USING_HW_CHECKSUM
     bool
     default n
+
+menu "Enable FTL"
+    config RT_USING_FTL
+        bool "Enable Flash FTL"
+        default n
+choice
+    prompt "Choose Flash FTL for RK SPINAND driver"
+    default RT_USING_DHARA
+
+    config RT_USING_DHARA
+        bool "Enable DHARA FTL"
+        depends on RT_USING_SPINAND
+        default n
+endchoice
+endmenu
 endmenu

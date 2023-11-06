@@ -17,6 +17,8 @@
 #ifndef DHARA_NAND_H_
 #define DHARA_NAND_H_
 
+#include <rtthread.h>
+
 #include <stdint.h>
 #include <stddef.h>
 #include "error.h"
@@ -30,6 +32,25 @@ typedef uint32_t dhara_page_t;
 
 /* Blocks are also indexed, starting at 0. */
 typedef uint32_t dhara_block_t;
+
+struct block_status
+{
+    uint8_t bbm;
+#define NAND_BBT_BLOCK_STATUS_UNKNOWN 0
+#define NAND_BBT_BLOCK_GOOD           1
+#define NAND_BBT_BLOCK_WORN           2
+#define NAND_BBT_BLOCK_RESERVED       3
+#define NAND_BBT_BLOCK_FACTORY_BAD    4
+#define NAND_BBT_BLOCK_NUM_STATUS     5
+    uint8_t reserved[1];
+    /* Index of the next unprogrammed page. 0 means a fully erased
+     * block, and PAGES_PER_BLOCK is a fully programmed block.
+     */
+    uint16_t next_page;
+};
+
+#define DHARA_NAND_META_MAGIC   0x52414844
+#define GC_RATIO        4
 
 /* Each NAND chip must be represented by one of these structures. It's
  * intended that this structure be embedded in a larger structure for
@@ -52,6 +73,13 @@ struct dhara_nand
 
     /* Total number of eraseblocks */
     unsigned int    num_blocks;
+
+    /* Variables required during RK migration process */
+    uint32_t        page_size;
+    uint32_t        page_per_block;
+    struct block_status *blocks;
+    void            *priv_data;
+    void            *copy_buf;
 };
 
 /* Is the given block bad? */

@@ -211,6 +211,7 @@ int dhara_map_read(struct dhara_map *m, dhara_sector_t s,
         dhara_set_error(err, my_err);
         return -1;
     }
+    m->read_total++;
 
     return dhara_nand_read(n, p, 0, 1 << n->log2_page_size, data, err);
 }
@@ -384,6 +385,7 @@ int dhara_map_write(struct dhara_map *m, dhara_sector_t dst,
         if (try_recover(m, my_err, err) < 0)
             return -1;
     }
+    m->prog_total++;
 
     return 0;
 }

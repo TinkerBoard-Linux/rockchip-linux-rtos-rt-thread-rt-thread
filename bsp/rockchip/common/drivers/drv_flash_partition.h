@@ -146,6 +146,8 @@ struct rt_flash_partition
     void *user_data;
 };
 
+#define DEV_2_PART(dev) (struct rt_flash_partition *)dev;
+
 rt_err_t mtd_nor_init_partition(struct rt_mtd_nor_device *mtd_nor, struct rt_flash_partition *parts);
 rt_err_t blk_init_partition(struct rt_mtd_nor_device *mtd_nor, struct rt_flash_partition *parts);
 uint32_t rk_partition_init(struct rt_mtd_nor_device *mtd);

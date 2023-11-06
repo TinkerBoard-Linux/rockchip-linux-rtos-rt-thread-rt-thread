@@ -32,7 +32,6 @@
 
 static struct rt_flash_partition *nor_parts;
 static int32_t part_num = 0;
-#define DEV_2_PART(dev) (struct rt_flash_partition *)dev;
 
 static rt_err_t part_blk_init(rt_device_t dev)
 {
