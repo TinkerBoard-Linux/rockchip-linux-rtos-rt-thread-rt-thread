@@ -48,6 +48,10 @@ RT_WEAK const struct clk_unused clks_unused[] =
 #include "rk_audio.h"
 #endif
 
+#ifdef RT_USING_USB_DEVICE
+#include "drv_usbd.h"
+#endif
+
 #ifdef RT_USING_SYSTICK
 #define TICK_IRQn CNTPNS_IRQn
 static uint32_t g_tick_load;
@@ -198,6 +202,20 @@ RT_WEAK const struct audio_card_desc rk_board_audio_cards[] =
     { /* sentinel */ }
 };
 
+#endif
+
+#ifdef RT_USING_USB_DEVICE
+RT_WEAK struct ep_id g_usb_ep_pool[] =
+{
+    { 0x0,  USB_EP_ATTR_CONTROL,    USB_DIR_INOUT,  64,   ID_ASSIGNED   },
+    { 0x1,  USB_EP_ATTR_BULK,       USB_DIR_IN,     1024, ID_UNASSIGNED },
+    { 0x2,  USB_EP_ATTR_BULK,       USB_DIR_OUT,    512,  ID_UNASSIGNED },
+    { 0x3,  USB_EP_ATTR_ISOC,       USB_DIR_IN,     1024, ID_UNASSIGNED },
+    { 0x4,  USB_EP_ATTR_ISOC,       USB_DIR_OUT,    512,  ID_UNASSIGNED },
+    { 0x5,  USB_EP_ATTR_INT,        USB_DIR_IN,     64,   ID_UNASSIGNED },
+    { 0x6,  USB_EP_ATTR_INT,        USB_DIR_OUT,    64,   ID_UNASSIGNED },
+    { 0xFF, USB_EP_ATTR_TYPE_MASK,  USB_DIR_MASK,   0,    ID_ASSIGNED   },
+};
 #endif
 
 /**
