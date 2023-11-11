@@ -85,6 +85,13 @@ void timer_isr6(void)
 }
 #endif
 
+#ifdef TIMER7
+void timer_isr7(void)
+{
+    timer_isr_helper(7);
+}
+#endif
+
 typedef struct _TIMER_DEV
 {
     const uint32_t irqNum;
@@ -122,6 +129,9 @@ static TIMER_DEV s_timer[TIMER_CHAN_CNT] =
 #endif
 #ifdef TIMER6
     DEFINE_TIMER_DEV(6),
+#endif
+#ifdef TIMER7
+    DEFINE_TIMER_DEV(7),
 #endif
 };
 
@@ -220,9 +230,11 @@ int32_t timer_start_stop(struct TIMER_REG *timer_dev)
 {
     uint64_t count, count1;
 
+#ifndef IS_FPGA
     timer_gating_disable();
     timer_gating_all_disable();
     timer_cru_softrst_remove();
+#endif
 
     /* test timer_dev stop in normalc mode */
     isr_active = 0;
@@ -273,6 +285,7 @@ int32_t timer_start_stop(struct TIMER_REG *timer_dev)
 
 int32_t timer_cru_test(struct TIMER_REG *timer_dev)
 {
+#ifndef IS_FPGA
     uint64_t count;
 
     timer_gating_disable();
@@ -312,6 +325,126 @@ int32_t timer_cru_test(struct TIMER_REG *timer_dev)
     HAL_TIMER_SysTimerInit(SYS_TIMER);
 #endif
 
+#endif
+
+    return 0;
+}
+
+int32_t timer_precision_test(struct TIMER_REG *timer_dev)
+{
+    uint64_t timer_start, timer_end;
+    uint32_t systick_start, systick_end;
+    int32_t timer_count, systick_count, ideal_count;
+    double precision;
+    uint32_t systick_clk_source;
+    bool dec_timer = false;
+    char szBuf[64];
+    rt_base_t level;
+
+    /* disable irq */
+    level = rt_hw_interrupt_disable();
+
+    /* change systick rate, save clk source, change to processor clock */
+    HAL_SYSTICK_Config(SysTick_LOAD_RELOAD_Msk);
+    systick_clk_source = SysTick->CTRL & SysTick_CTRL_CLKSOURCE_Msk;
+    SysTick->CTRL |= SysTick_CTRL_CLKSOURCE_Msk;
+
+    /* test timer_dev stop in normalc mode */
+    HAL_TIMER_Init(timer_dev, TIMER_FREE_RUNNING);
+    HAL_TIMER_SetCount(timer_dev, (uint64_t)PLL_INPUT_OSC_RATE); /* Ms count */
+    HAL_TIMER_Start(timer_dev);
+
+    /* Identify whether the timer is increased or decreased.*/
+    timer_start = HAL_TIMER_GetCount(timer_dev);
+    if (timer_start < HAL_TIMER_GetCount(timer_dev))
+        dec_timer = false;
+    else
+        dec_timer = true;
+
+    /* test 1ms precision */
+    systick_start = SysTick->VAL;
+    timer_start = HAL_TIMER_GetCount(timer_dev);
+    HAL_DelayMs(1);
+    systick_end = SysTick->VAL;
+    timer_end = HAL_TIMER_GetCount(timer_dev);
+    systick_count = systick_start - systick_end;     /* systick is decreased */
+    if (systick_count < 0)                           /* systick overflow */
+        systick_count += SysTick->LOAD;
+    if (dec_timer)
+    {
+        timer_count = timer_start - timer_end;
+    }
+    else
+    {
+        timer_count = timer_end - timer_start;
+    }
+    if (timer_count < 0)                            /* timer overflow */
+        timer_count += PLL_INPUT_OSC_RATE;
+    ideal_count = systick_count / ((SystemCoreClock * 1.0) / PLL_INPUT_OSC_RATE);
+    precision = 100.0 - (((timer_count - ideal_count) * 100.0) / ideal_count);
+    snprintf(szBuf, sizeof(szBuf), "1ms precision: %f(100 is ideal)", precision);
+    //rt_kprintf("systick: %d, %d; timer: %lld, %lld;\n", systick_start, systick_end, timer_start, timer_end);
+    rt_kprintf("%s\n", szBuf);
+
+    /* test 10ms precision */
+    systick_start = SysTick->VAL;
+    timer_start = HAL_TIMER_GetCount(timer_dev);
+    HAL_DelayMs(10);
+    systick_end = SysTick->VAL;
+    timer_end = HAL_TIMER_GetCount(timer_dev);
+    systick_count = systick_start - systick_end;     /* systick is decreased */
+    if (systick_count < 0)                           /* systick overflow */
+        systick_count += SysTick->LOAD;
+    if (dec_timer)
+    {
+        timer_count = timer_start - timer_end;
+    }
+    else
+    {
+        timer_count = timer_end - timer_start;
+    }
+    if (timer_count < 0)                            /* timer overflow */
+        timer_count += PLL_INPUT_OSC_RATE;
+    ideal_count = systick_count / ((SystemCoreClock * 1.0) / PLL_INPUT_OSC_RATE);
+    precision = 100.0 - (((timer_count - ideal_count) * 100.0) / ideal_count);
+    snprintf(szBuf, sizeof(szBuf), "10ms precision: %f(100 is ideal)", precision);
+    //rt_kprintf("systick: %d, %d; timer: %lld, %lld;\n", systick_start, systick_end, timer_start, timer_end);
+    rt_kprintf("%s\n", szBuf);
+
+    /* test 100ms precision */
+    systick_start = SysTick->VAL;
+    timer_start = HAL_TIMER_GetCount(timer_dev);
+    HAL_DelayMs(100);
+    systick_end = SysTick->VAL;
+    timer_end = HAL_TIMER_GetCount(timer_dev);
+    systick_count = systick_start - systick_end;     /* systick is decreased */
+    if (systick_count < 0)                           /* systick overflow */
+        systick_count += SysTick->LOAD;
+    if (dec_timer)
+    {
+        timer_count = timer_start - timer_end;
+    }
+    else
+    {
+        timer_count = timer_end - timer_start;
+    }
+    if (timer_count < 0)                             /* timer overflow */
+        timer_count += PLL_INPUT_OSC_RATE;
+    ideal_count = systick_count / ((SystemCoreClock * 1.0) / PLL_INPUT_OSC_RATE);
+    precision = 100.0 - (((timer_count - ideal_count) * 100.0) / ideal_count);
+    snprintf(szBuf, sizeof(szBuf), "100ms precision: %f(100 is ideal)", precision);
+    //rt_kprintf("systick: %d, %d; timer: %lld, %lld;\n", systick_start, systick_end, timer_start, timer_end);
+    rt_kprintf("%s\n", szBuf);
+
+    HAL_TIMER_Stop(timer_dev);
+
+    /* resume systick rate & clk source */
+    HAL_SYSTICK_Config(SystemCoreClock / RT_TICK_PER_SECOND);
+    SysTick->CTRL |= systick_clk_source;
+
+    /* resume irq */
+    rt_hw_interrupt_enable(level);
+
     return 0;
 }
 
@@ -338,6 +471,9 @@ static void timer_test_loop(int32_t num)
 
     if (timer_cru_test(s_timer[num].pReg) == 0)
         rt_kprintf("TIMER%ld: cru pass\n\n", num);
+
+    if (timer_precision_test(s_timer[num].pReg) == 0)
+        rt_kprintf("TIMER%ld: precision pass\n\n", num);
 }
 
 void hw_timer_test(int32_t argc, char **argv)
