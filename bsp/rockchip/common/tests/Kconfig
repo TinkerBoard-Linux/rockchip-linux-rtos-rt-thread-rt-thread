@@ -100,6 +100,10 @@ config RT_USING_COMMON_TEST
         bool "Enable BSP Common MPU TEST"
         default n
 
+    config RT_USING_COMMON_TEST_NVIC
+        bool "Enable BSP Common NVIC TEST"
+        default n
+
     config RT_USING_COMMON_TEST_PM
         bool "Enable BSP Common PM TEST"
         select RT_USING_CRU
