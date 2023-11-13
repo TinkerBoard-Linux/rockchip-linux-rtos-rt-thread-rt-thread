@@ -271,7 +271,7 @@ int rt_usbh_register(void)
     g_hcd.pData = uhcd;
 
     rt_device_register((rt_device_t)uhcd, "usbh", 0);
-    rt_usb_host_init();
+    rt_usb_host_init("usbh");
 
     return RT_EOK;
 }
