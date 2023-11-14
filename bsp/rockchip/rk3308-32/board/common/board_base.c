@@ -280,7 +280,7 @@ void rt_hw_board_init(void)
 }
 
 #if defined(RT_USING_SMP)
-#define PSCI_CPU_ON_AARCH32		0x84000003U
+#define PSCI_CPU_ON_AARCH32     0x84000003U
 
 __attribute__((noinline)) void arm_psci_cpu_on(rt_ubase_t funcid, rt_ubase_t cpuid, rt_ubase_t entry)
 {
@@ -305,7 +305,7 @@ void secondary_cpu_c_start(void)
     uint32_t id;
 
     id = rt_hw_cpu_id();
-    rt_kprintf("cpu %d startup.\n",id);
+    rt_kprintf("cpu %d startup.\n", id);
     rt_hw_vector_init();
     rt_hw_spin_lock(&_cpus_lock);
     arm_gic_cpu_init(0, GIC_CPU_INTERFACE_BASE);
