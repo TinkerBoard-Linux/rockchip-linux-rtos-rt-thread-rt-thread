@@ -57,12 +57,23 @@ __UNCACHE_HEAP_BASE = __SRAM_BASE + __SRAM_SIZE;
    to use ARMv8-M stack sealing set __STACKSEAL_SIZE to 8 otherwise keep 0
  */
 __STACKSEAL_SIZE = 0;
+__SRAM_I_BASE = __SRAM_BASE;
+__SRAM_I_SIZE = 0x20000;
+__SRAM_D_BASE = __SRAM_BASE + __SRAM_I_SIZE + 0x20000000;
+__SRAM_D_SIZE = 0x20000;
+
+__DRAM_I_BASE = __DRAM_BASE;
+__DRAM_I_SIZE = 0x20000;
+__DRAM_D_BASE = __DRAM_BASE + __DRAM_I_SIZE + 0x20000000;
+__DRAM_D_SIZE = 0x20000;
 
 MEMORY
 {
   FLASH  (rx)  : ORIGIN = __FLASH_BASE, LENGTH = __FLASH_SIZE
-  SRAM   (rwx) : ORIGIN = __SRAM_BASE,  LENGTH = __SRAM_SIZE
-  DRAM   (rwx) : ORIGIN = __DRAM_BASE,  LENGTH = __DRAM_SIZE
+  SRAM_I (rx) : ORIGIN = __SRAM_I_BASE,  LENGTH = __SRAM_I_SIZE
+  SRAM_D (rw) : ORIGIN = __SRAM_D_BASE,  LENGTH = __SRAM_D_SIZE
+  DRAM_I (rx) : ORIGIN = __DRAM_I_BASE,  LENGTH = __DRAM_I_SIZE
+  DRAM_D (rx) : ORIGIN = __DRAM_D_BASE,  LENGTH = __DRAM_D_SIZE
   SRAM_U (rw)  : ORIGIN = __UNCACHE_HEAP_BASE, LENGTH = __UNCACHE_HEAP_SIZE
 }
 
@@ -104,20 +115,20 @@ SECTIONS
 
         . = ALIGN(32);
         PROVIDE(_etext = .);
-    } > SRAM
+    } > SRAM_I
 
     __exidx_start = .;
     .ARM.exidx   :
     {
         *(.ARM.exidx* .gnu.linkonce.armexidx.*)
-    } > SRAM
+    } > SRAM_I
     __exidx_end = .;
 
     __rodata_start = .;
     .rodata   :
     {
         *(.rodata) *(.rodata.*)
-    } > SRAM
+    } > SRAM_I
     __rodata_end = .;
 
     .zero.table :
@@ -127,14 +138,14 @@ SECTIONS
         LONG (ADDR(.bss))
         LONG (SIZEOF(.bss) / 4)
         __zero_table_end__ = .;
-    } > SRAM
+    } > SRAM_I
 
     .copy.table :
     {
         . = ALIGN(4);
         __copy_table_start__ = .;
         __copy_table_end__ = .;
-    } > SRAM
+    } > SRAM_I
 
     . = ALIGN(16);
 
@@ -144,7 +155,7 @@ SECTIONS
         *(.data.*)
 
         . = ALIGN(16);
-    } > SRAM
+    } > SRAM_D
 
     . = ALIGN(16);
 
@@ -154,7 +165,7 @@ SECTIONS
         KEEP(*(SORT(.ctors.*)))
         KEEP(*(.ctors))
         PROVIDE(__ctors_end__ = .);
-    } > SRAM
+    } > SRAM_D
 
     .dtors :
     {
@@ -162,7 +173,7 @@ SECTIONS
         KEEP(*(SORT(.dtors.*)))
         KEEP(*(.dtors))
         PROVIDE(__dtors_end__ = .);
-    } > SRAM
+    } > SRAM_D
 
     . = ALIGN(16);
     .bss (NOLOAD) :
@@ -174,18 +185,18 @@ SECTIONS
         *(COMMON)
         . = ALIGN(16);
         PROVIDE(__bss_end__ = .);
-    } > SRAM
+    } > SRAM_D
 
     .heap :
     {
         . = ALIGN(32);
         PROVIDE(__heap_begin__ = .);
-        . = ORIGIN(SRAM) + LENGTH(SRAM) - __STACK_SIZE - __STACKSEAL_SIZE;
+        . = ORIGIN(SRAM_D) + LENGTH(SRAM_D) - __STACK_SIZE - __STACKSEAL_SIZE;
         PROVIDE(__heap_end__ = .);
         . = ALIGN(32);
-    } > SRAM
+    } > SRAM_D
 
-   .stack (ORIGIN(SRAM) + LENGTH(SRAM) - __STACK_SIZE - __STACKSEAL_SIZE) (COPY) :
+   .stack (ORIGIN(SRAM_D) + LENGTH(SRAM_D) - __STACK_SIZE - __STACKSEAL_SIZE) (COPY) :
    {
         . = ALIGN(32);
         __StackLimit = .;
@@ -195,7 +206,7 @@ SECTIONS
         PROVIDE(__stack = __StackTop);
         PROVIDE(_sstack = __StackLimit);
         PROVIDE(_estack = __StackTop);
-    } > SRAM
+    } > SRAM_D
 
 #ifdef RT_USING_UNCACHE_HEAP
     .uncache.heap (NOLOAD) :
