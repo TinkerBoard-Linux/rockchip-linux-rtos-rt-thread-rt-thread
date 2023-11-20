@@ -32,7 +32,7 @@ config RT_USING_I2C0
     select RT_USING_I2C
     default n
 
-config RT_USING_SARADC
+config RT_USING_MULTI_SARADC
     select RT_USING_ADC
     bool "Enable SARADC"
     default n

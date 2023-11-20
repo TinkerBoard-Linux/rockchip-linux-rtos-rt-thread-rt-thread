@@ -70,7 +70,7 @@
 #define HAL_PWM_MODULE_ENABLED
 #endif
 
-#ifdef RT_USING_SARADC
+#ifdef RT_USING_MULTI_SARADC
 #define HAL_SARADC_MODULE_ENABLED
 #endif
 
