@@ -125,8 +125,6 @@
 /* RT-Thread rockchip common drivers */
 
 #define RT_USING_CACHE
-#define RT_USING_UNCACHE_HEAP
-#define RT_UNCACHE_HEAP_ORDER 0x0E
 
 /* Enable Fault Dump Hook */
 
