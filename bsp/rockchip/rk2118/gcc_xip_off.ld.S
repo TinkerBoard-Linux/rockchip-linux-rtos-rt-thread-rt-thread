@@ -11,7 +11,7 @@
     <o1> Flash Size (in Bytes) <0x0-0xFFFFFFFF:8>
   </h>
   -----------------------------------------------------------------------------*/
-__FLASH_BASE = 0x01000000;
+__FLASH_BASE = 0x11000000;
 __FLASH_SIZE = 0x00800000;
 
 /*--------------------- Embedded RAM Configuration ----------------------------
@@ -20,7 +20,7 @@ __FLASH_SIZE = 0x00800000;
     <o1> RAM Size (in Bytes) <0x0-0xFFFFFFFF:8>
   </h>
  -----------------------------------------------------------------------------*/
-__SRAM_BASE = 0x00200000;
+__SRAM_BASE = 0x10200000;
 __SRAM_SIZE = 0x00100000;
 
 /*--------------------- External DRAM Configuration ----------------------------
@@ -29,7 +29,7 @@ __SRAM_SIZE = 0x00100000;
     <o1> Hyper RAM Size (in Bytes) <0x0-0xFFFFFFFF:8>
   </h>
  -----------------------------------------------------------------------------*/
-__DRAM_BASE = 0x60000000;
+__DRAM_BASE = 0xa0000000;
 __DRAM_SIZE = 0x04000000;
 
 /*--------------------- Stack / Heap Configuration ----------------------------
@@ -58,12 +58,15 @@ __UNCACHE_HEAP_BASE = __SRAM_BASE + __SRAM_SIZE;
  */
 __STACKSEAL_SIZE = 0;
 
-__SRAM_I_BASE = __SRAM_BASE;
+/* UNSECURE_OFFSET: For cpu running in unsecure state
+*/
+__UNSECURE_OFFSET = 0x60000;
+__SRAM_I_BASE = __SRAM_BASE + __UNSECURE_OFFSET;
 __SRAM_I_SIZE = 0x20000;
 __SRAM_D_BASE = __SRAM_I_BASE + __SRAM_I_SIZE + 0x20000000;
 __SRAM_D_SIZE = 0x20000;
 
-__DRAM_I_BASE = __DRAM_BASE;
+__DRAM_I_BASE = __DRAM_BASE + __UNSECURE_OFFSET;
 __DRAM_I_SIZE = 0x20000;
 __DRAM_D_BASE = __DRAM_I_BASE + __DRAM_I_SIZE + 0x20000000;
 __DRAM_D_SIZE = 0x20000;
@@ -144,18 +147,11 @@ SECTIONS
     {
         . = ALIGN(4);
         __copy_table_start__ = .;
+        LONG (LOADADDR(.data))
+        LONG (ADDR(.data))
+        LONG (SIZEOF(.data) / 4)
         __copy_table_end__ = .;
     } > CODE
-
-    . = ALIGN(16);
-
-    .data :
-    {
-        *(.data)
-        *(.data.*)
-
-        . = ALIGN(16);
-    } > DATA
 
     . = ALIGN(16);
 
@@ -165,7 +161,7 @@ SECTIONS
         KEEP(*(SORT(.ctors.*)))
         KEEP(*(.ctors))
         PROVIDE(__ctors_end__ = .);
-    } > DATA
+    } > CODE
 
     .dtors :
     {
@@ -173,9 +169,20 @@ SECTIONS
         KEEP(*(SORT(.dtors.*)))
         KEEP(*(.dtors))
         PROVIDE(__dtors_end__ = .);
-    } > DATA
+    } > CODE
+
+    . = ALIGN(32);
+
+    .data :
+    {
+        *(.data)
+        *(.data.*)
+
+        . = ALIGN(16);
+    } > DATA AT > CODE
 
     . = ALIGN(16);
+
     .bss (NOLOAD) :
     {
         PROVIDE(__bss_start__ = .);

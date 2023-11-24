@@ -6,10 +6,13 @@ cwd = os.path.join(str(Dir('#')), 'secure_fw')
 
 # add the general drvers.
 src = Glob("*.c")
+src += ['src/tfm_tz_psa_ns_api.c']
+src += ['src/os_wrapper/tfm_ns_interface_rtos.c']
+src += ['src/os_wrapper/mutex.c']
 LIBS    = ['libtfm_s_veneers.a']
-LIBPATH = [cwd]
+LIBPATH = [cwd + '/lib']
 
-CPPPATH = [cwd]
+CPPPATH = [cwd + '/include']
 
 group = DefineGroup('Drivers', src, depend = [''], CPPPATH = CPPPATH, LIBS = LIBS, LIBPATH = LIBPATH)
 

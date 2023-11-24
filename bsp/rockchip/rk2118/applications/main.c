@@ -14,24 +14,46 @@
   ******************************************************************************
   */
 #include <rtthread.h>
+#include "hal_base.h"
+#include "tfm_ns_interface.h"
 
-extern rt_err_t rt_trustzone_enter(rt_ubase_t module);
-extern rt_err_t rt_trustzone_exit(void);
+extern uint32_t psa_framework_version(void);
 
+void test_reg_read(void)
+{
+    uint32_t value0, value1, value2;
+    uint32_t start, time0, time1, time2;
+
+    for (int i = 0; i < 100; i++)
+    {
+        start = SysTick->VAL;
+        value0 = INTMUX0->IRQ_FINALSTATUS_L_CH0;
+        time0 = start - SysTick->VAL;
+
+        start = SysTick->VAL;
+        value1 = SAI0->VERSION;
+        time1 = start - SysTick->VAL;
+
+        start = SysTick->VAL;
+        value2 = TIMER0->CURRENT_VALUE[0];
+        time2 = start - SysTick->VAL;
+
+        rt_kprintf("read register latency: %d(value=0x%x), %d(value=0x%x), %d(value=0x%x)\n",
+                   time0, value0, time1, value1, time2, value2);
+    }
+}
+
+static double g_double = 3.14;
 int main(void)
 {
-#ifdef ARM_CM33_ENABLE_TRUSTZONE
-    rt_ubase_t stack_size = 0x400;
-#endif
+    rt_kprintf("delay 1s test start\n");
+    rt_thread_delay(1 * RT_TICK_PER_SECOND);
+    rt_kprintf("delay 1s test end\n");
 
-    rt_kprintf("delay 10s test start\n");
-    rt_thread_delay(10 * RT_TICK_PER_SECOND);
-    rt_kprintf("delay 10s test end\n");
+    //test_reg_read();
 
-#ifdef ARM_CM33_ENABLE_TRUSTZONE
-    rt_trustzone_enter(stack_size);
-    /* Call NSCFunction */
-    rt_trustzone_exit();
-#endif
+    __asm volatile("vldr d7, %0" : : "m"(g_double) :);
+    tfm_ns_interface_init();
+    psa_framework_version();
     return 0;
 }

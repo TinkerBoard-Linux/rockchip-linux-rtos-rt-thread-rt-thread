@@ -26,7 +26,6 @@ config ARM_CM33_ENABLE_TRUSTZONE
 config RKMCU_RK2118
     bool
     select ARCH_ARM_CORTEX_M33
-    select ARCH_ARM_CORTEX_SECURE
     default y
 
 choice
