@@ -28,6 +28,8 @@ struct rk_acodec_dev
 {
     struct audio_codec codec;
     struct HAL_ACODEC_DEV *hAcodec;
+    struct clk_gate *mclk_tx_out_gate;
+    struct clk_gate *mclk_rx_out_gate;
 };
 
 static inline struct rk_acodec_dev *to_acodec(struct audio_codec *codec)
@@ -42,12 +44,18 @@ static rt_err_t rk_acodec_init(struct audio_codec *codec,
 
     HAL_ACODEC_Init(acodec->hAcodec, config);
 
+    clk_enable(acodec->mclk_tx_out_gate);
+    clk_enable(acodec->mclk_rx_out_gate);
+
     return RT_EOK;
 }
 
 static rt_err_t rk_acodec_deinit(struct audio_codec *codec)
 {
     struct rk_acodec_dev *acodec = to_acodec(codec);
+
+    clk_disable(acodec->mclk_tx_out_gate);
+    clk_disable(acodec->mclk_rx_out_gate);
 
     HAL_ACODEC_DeInit(acodec->hAcodec);
 
@@ -116,6 +124,12 @@ static struct audio_codec *rk_acodec_init_codec(struct HAL_ACODEC_DEV *hAcodec)
 
     acodec = rt_calloc(1, sizeof(*acodec));
     RT_ASSERT(acodec);
+
+    if (hAcodec->mclkTxOutGate)
+        acodec->mclk_tx_out_gate = get_clk_gate_from_id(hAcodec->mclkTxOutGate);
+
+    if (hAcodec->mclkRxOutGate)
+        acodec->mclk_rx_out_gate = get_clk_gate_from_id(hAcodec->mclkRxOutGate);
 
     acodec->codec.ops = &rk_acodec_ops;
     acodec->codec.id = (uint32_t)hAcodec->pReg;
