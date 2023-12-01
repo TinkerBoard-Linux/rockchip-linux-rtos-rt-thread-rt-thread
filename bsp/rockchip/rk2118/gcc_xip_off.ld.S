@@ -68,7 +68,7 @@ __SRAM_D_SIZE = 0x20000;
 
 __DRAM_I_BASE = __DRAM_BASE + __UNSECURE_OFFSET;
 __DRAM_I_SIZE = 0x20000;
-__DRAM_D_BASE = __DRAM_I_BASE + __DRAM_I_SIZE + 0x20000000;
+__DRAM_D_BASE = __DRAM_I_BASE + __DRAM_I_SIZE;
 __DRAM_D_SIZE = 0x20000;
 
 MEMORY
@@ -227,9 +227,9 @@ SECTIONS
 #endif
 
    PROVIDE(__code_start__ = ORIGIN(CODE));
-   PROVIDE(__code_end__ = ORIGIN(CODE) + LENGTH(CODE));
+   PROVIDE(__code_end__ = ORIGIN(CODE) + LENGTH(CODE) - 1);
    PROVIDE(__data_start__ = ORIGIN(DATA));
-   PROVIDE(__data_end__ = ORIGIN(DATA) + LENGTH(DATA));
-   PROVIDE(__device_start__ = 0x40000000);
-   PROVIDE(__device_end__ = 0x40E00000);
+   PROVIDE(__data_end__ = ORIGIN(DATA) + LENGTH(DATA) - 1);
+   PROVIDE(__device_start__ = 0x50000000);
+   PROVIDE(__device_end__ = 0x50E00000 - 1);
 }
