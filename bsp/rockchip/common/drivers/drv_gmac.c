@@ -260,6 +260,8 @@ static rt_err_t rt_rockchip_eth_init(rt_device_t dev)
     rt_memset(eth->rx_buff, 0, HAL_GMAC_MAX_PACKET_SIZE * ETH_RXBUFNB);
     rt_memset(eth->tx_buff, 0, HAL_GMAC_MAX_PACKET_SIZE * ETH_TXBUFNB);
 
+    rt_hw_cpu_dcache_invalidate(eth->rx_buff, HAL_GMAC_MAX_PACKET_SIZE * ETH_RXBUFNB);
+
     /* Initialize Rx Descriptors list */
     HAL_GMAC_DMARxDescInit(pGMAC, eth->rx_desc, eth->rx_buff, ETH_RXBUFNB);
     /* Initialize Tx Descriptors list */
@@ -552,6 +554,7 @@ struct pbuf *rt_rockchip_eth_rx(rt_device_t dev)
         }
         rt_rockchip_dump_hex(p->payload, p->tot_len);
         HAL_GMAC_CleanRX(pGMAC);
+        rt_hw_cpu_dcache_invalidate(ptr, HAL_GMAC_MAX_PACKET_SIZE);
     }
     else
     {
