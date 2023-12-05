@@ -20,10 +20,6 @@ config RT_USING_DMA_PL330
 config RT_USING_DMA0
     bool "Enable PL330 DMA0 Controller"
     default n
-
-config RT_USING_DMA1
-    bool "Enable PL330 DMA1 Controller"
-    default n
 endif
 
 if RT_USING_I2C

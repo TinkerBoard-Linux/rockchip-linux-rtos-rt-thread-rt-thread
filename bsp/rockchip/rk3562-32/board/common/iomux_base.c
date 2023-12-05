@@ -80,6 +80,26 @@ RT_WEAK  void fspi_iomux_config(void)
 }
 #endif
 
+#ifdef RT_USING_SAI0
+RT_WEAK  void sai0_m0_iomux_config(void)
+{
+    HAL_PINCTRL_SetIOMUX(GPIO_BANK3,
+                         GPIO_PIN_A4 | // i2s0_lrck_m0
+                         GPIO_PIN_A2 | // i2s0_mclk_m0
+                         GPIO_PIN_A3 | // i2s0_sclk_m0
+                         GPIO_PIN_B1 | // i2s0_sdi0_m0
+                         GPIO_PIN_A5 | // i2s0_sdo0_m0
+                         GPIO_PIN_A6 | // i2s0_sdo1_m0
+                         GPIO_PIN_A7 | // i2s0_sdo2_m0
+                         GPIO_PIN_B0,  // i2s0_sdo3_m0
+                         PIN_CONFIG_MUX_FUNC1);
+
+    WRITE_REG_MASK_WE(PERI_GRF->AUDIO_CON,
+                      PERI_GRF_AUDIO_CON_SAI0_MCLK_OE_MASK,
+                      (1 << PERI_GRF_AUDIO_CON_SAI0_MCLK_OE_SHIFT));
+}
+#endif
+
 /**
  * @brief  Config iomux for RK3562
  */

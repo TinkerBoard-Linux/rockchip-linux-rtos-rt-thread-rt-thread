@@ -55,14 +55,6 @@
 #define HAL_ACODEC_MODULE_ENABLED
 #endif
 
-#ifdef RT_USING_I2S
-#define HAL_I2S_MODULE_ENABLED
-#endif
-
-#ifdef RT_USING_I2STDM
-#define HAL_I2STDM_MODULE_ENABLED
-#endif
-
 #ifdef RT_USING_DMA_PL330
 #define g_pl330Dev0 g_pl330Dev
 #define HAL_PL330_MODULE_ENABLED
@@ -74,6 +66,10 @@
 
 #ifdef RT_USING_MULTI_SARADC
 #define HAL_SARADC_MODULE_ENABLED
+#endif
+
+#ifdef RT_USING_SAI
+#define HAL_SAI_MODULE_ENABLED
 #endif
 
 #ifdef RT_USING_SNOR

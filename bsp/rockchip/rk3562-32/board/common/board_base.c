@@ -165,31 +165,43 @@ static void generic_timer_config(void)
 #ifdef RT_USING_AUDIO
 RT_WEAK const struct audio_card_desc rk_board_audio_cards[] =
 {
-#ifdef RT_USING_AUDIO_CARD_I2S0
+#ifdef RT_USING_AUDIO_CARD_SAI0
     {
-        .name = "i2s0",
-        .dai =  I2STDM0,
+        .name = "sai0",
+        .dai =  SAI0,
         .codec = NULL,
-        .codec_master = HAL_FALSE,
-        .clk_invert = HAL_FALSE,
-        .playback = HAL_FALSE,
-        .capture = HAL_TRUE,
-        .format = AUDIO_FMT_I2S,
-        .mclkfs = 256,
-    },
-#endif
-#ifdef RT_USING_AUDIO_CARD_ACODEC
-    {
-        .name = "acodec",
-        .dai =  I2STDM2,
-        .codec = ACODEC,
         .codec_master = HAL_FALSE,
         .clk_invert = HAL_FALSE,
         .playback = HAL_TRUE,
         .capture = HAL_TRUE,
         .format = AUDIO_FMT_I2S,
         .mclkfs = 256,
-        .rxMap = 0x0321,
+    },
+#endif
+#ifdef RT_USING_AUDIO_CARD_SAI1
+    {
+        .name = "sai1",
+        .dai =  SAI1,
+        .codec = NULL,
+        .codec_master = HAL_FALSE,
+        .clk_invert = HAL_FALSE,
+        .playback = HAL_TRUE,
+        .capture = HAL_TRUE,
+        .format = AUDIO_FMT_I2S,
+        .mclkfs = 256,
+    },
+#endif
+#ifdef RT_USING_AUDIO_CARD_SAI2
+    {
+        .name = "sai2",
+        .dai =  SAI2,
+        .codec = NULL,
+        .codec_master = HAL_FALSE,
+        .clk_invert = HAL_FALSE,
+        .playback = HAL_TRUE,
+        .capture = HAL_TRUE,
+        .format = AUDIO_FMT_I2S,
+        .mclkfs = 256,
     },
 #endif
 

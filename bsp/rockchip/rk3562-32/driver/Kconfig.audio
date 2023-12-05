@@ -10,32 +10,29 @@ menu "Enable Audio"
         select RT_USING_CODEC
         default n
 
-    config RT_USING_AUDIO_CARD_ACODEC
-        bool "Enable Internal acodec audio card"
+    config RT_USING_AUDIO_CARD_SAI0
+        bool "Enable SAI0 Digital audio card"
         depends on RT_USING_AUDIO_CARD
-        select RT_USING_ACODEC
-        select RT_USING_I2STDM2
+        select RT_USING_SAI0
         default n
         help
-          Say Y if you want to use internal acodec card
-          which support 8ch differential analog mics
-          and stereo analog output.
+          Say Y if you want to use sai0 digital audio card.
 
-    config RT_USING_AUDIO_CARD_I2S0
-        bool "Enable I2S0 Digital audio card"
+    config RT_USING_AUDIO_CARD_SAI1
+        bool "Enable SAI1 Digital audio card"
         depends on RT_USING_AUDIO_CARD
-        select RT_USING_I2STDM0
+        select RT_USING_SAI1
         default n
         help
-          Say Y if you want to use i2s0 digital audio card.
+          Say Y if you want to use sai1 digital audio card.
 
-    config RT_USING_AUDIO_CARD_I2S1
-        bool "Enable I2S1 Digital audio card"
+    config RT_USING_AUDIO_CARD_SAI2
+        bool "Enable SAI2 Digital audio card"
         depends on RT_USING_AUDIO_CARD
-        select RT_USING_I2STDM1
+        select RT_USING_SAI2
         default n
         help
-          Say Y if you want to use i2s1 digital audio card.
+          Say Y if you want to use sai2 digital audio card.
 
     endmenu
 
@@ -52,20 +49,20 @@ menu "Enable Audio"
     config RT_USING_MULTI_PCM
         bool
 
-    config RT_USING_I2STDM
+    config RT_USING_SAI
         bool
 
-    config RT_USING_I2STDM0
+    config RT_USING_SAI0
         bool
-        select RT_USING_I2STDM
+        select RT_USING_SAI
 
-    config RT_USING_I2STDM1
+    config RT_USING_SAI1
         bool
-        select RT_USING_I2STDM
+        select RT_USING_SAI
 
-    config RT_USING_I2STDM2
+    config RT_USING_SAI2
         bool
-        select RT_USING_I2STDM
+        select RT_USING_SAI
 
     config RT_USING_PDM
         bool
@@ -73,10 +70,6 @@ menu "Enable Audio"
     config RT_USING_PDM0
         bool
         select RT_USING_PDM
-
-    config RT_USING_VAD
-        bool "Enable VAD"
-        default n
 
     endmenu
 
