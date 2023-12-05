@@ -49,8 +49,8 @@
 #define RK_GMAC_DEBUG 0
 
 #define MAX_ADDR_LEN 6
-#define ETH_RXBUFNB 4
-#define ETH_TXBUFNB 4
+#define ETH_RXBUFNB 32
+#define ETH_TXBUFNB 32
 
 #if RK_GMAC_DEBUG
 #define rk_gmac_dbg(dev, fmt, ...) \
