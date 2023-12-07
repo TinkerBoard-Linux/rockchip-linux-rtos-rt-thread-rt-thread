@@ -748,4 +748,17 @@ if RT_USING_PSTORE
 endif
 endmenu
 
+menu "RT-Thread rockchip RPMSG driver"
+config RT_USING_RPMSG_LITE
+    bool "Enable RPMSG LITE"
+    depends on BSP_RK3308 || BSP_RK3568 || BSP_RK3562
+    default n
+
+    if RT_USING_RPMSG_LITE
+    config RT_USING_LINUX_RPMSG
+        bool "Enable Linux RPMSG Support"
+        default n
+    endif
+
+endmenu
 endmenu
