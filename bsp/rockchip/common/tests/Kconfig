@@ -186,4 +186,13 @@ config RT_USING_COMMON_TEST
         default n
     endif
 
+    config RT_USING_COMMON_TEST_LINUX_RPMSG_LITE
+        bool "Enable linux rpmsg lite test"
+        depends on RT_USING_LINUX_RPMSG
+        default n
+
+    config RT_USING_COMMON_TEST_RPMSG_LITE
+        bool "Enable rpmsg lite test"
+        depends on RT_USING_RPMSG_LITE
+        default n
 endmenu
