@@ -88,6 +88,10 @@
 #define HAL_PMU_MODULE_ENABLED
 #endif
 
+#ifdef RT_USING_PWM
+#define HAL_PWM_MODULE_ENABLED
+#endif
+
 #ifdef RT_USING_SDIO
 #define HAL_SDIO_MODULE_ENABLED
 #endif
