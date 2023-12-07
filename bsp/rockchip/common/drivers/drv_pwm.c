@@ -9,6 +9,11 @@
   * @date    26-Apri-2019
   * @brief   PWM Driver
   *
+  * Change Logs:
+  * Date           Author          Notes
+  * 2019-02-20     David Wu        first implementation
+  * 2023-12-25     Damon Ding      add support pwm v2
+  *
   ******************************************************************************
   */
 
@@ -114,6 +119,7 @@ static struct rockchip_pwm *const rockchip_pwm_table[] =
     RT_NULL
 };
 
+#if defined(RT_USING_PWM0) || defined(RT_USING_PWM1) || defined(RT_USING_PWM2) || defined(RT_USING_PWM3)
 static void rockchip_pwm_irq(struct rockchip_pwm *pwm)
 {
     struct PWM_HANDLE *pPWM = RT_NULL;
@@ -124,6 +130,15 @@ static void rockchip_pwm_irq(struct rockchip_pwm *pwm)
 
     rt_interrupt_enter();
 
+#if (PWM_MAIN_VERSION(PWM_VERSION_ID) >= 4)
+    for (i = 0; i < pPWM->channelNum; i++)
+    {
+        HAL_PWM_ChannelIRQHandler(pPWM, i);
+        if (pPWM->pChHandle[i].mode == HAL_PWM_CAPTURE)
+            rk_pwm_dbg(&pwm->dev, "%s chanel%d pos cycles = %ld and neg cycles = %ld\n", pwm->name, i,
+                       pPWM->pChHandle[i].result.posCycles, pPWM->pChHandle[i].result.negCycles);
+    }
+#else
     HAL_PWM_IRQHandler(pPWM);
 
     for (i = 0; i < HAL_PWM_NUM_CHANNELS; i++)
@@ -131,9 +146,11 @@ static void rockchip_pwm_irq(struct rockchip_pwm *pwm)
         if (pPWM->mode[i] == HAL_PWM_CAPTURE)
             rk_pwm_dbg(&pwm->dev, "%s chanel%d period cycles = %ld\n", pwm->name, i, pPWM->result[i].period);
     }
+#endif
 
     rt_interrupt_leave();
 }
+#endif
 
 rt_err_t rockchip_pwm_control(struct rt_device_pwm *device, int cmd, void *arg)
 {
@@ -179,18 +196,38 @@ rt_err_t rockchip_pwm_control(struct rt_device_pwm *device, int cmd, void *arg)
         ret = HAL_PWM_Enable(pPWM, config->channel, HAL_PWM_CAPTURE);
         break;
     case PWM_CMD_LOCK:
+#if (PWM_MAIN_VERSION(PWM_VERSION_ID) >= 4)
+        HAL_PWM_GlobalUnlock(pPWM, config->mask);
         ret = HAL_PWM_GlobalLock(pPWM, config->mask);
+        HAL_PWM_GlobalDisable(pPWM);
+#else
+        ret = HAL_PWM_GlobalLock(pPWM, config->mask);
+#endif
         break;
     case PWM_CMD_UNLOCK:
+#if (PWM_MAIN_VERSION(PWM_VERSION_ID) >= 4)
+        ret = HAL_PWM_GlobalUpdate(pPWM);
+        HAL_PWM_GlobalEnable(pPWM);
+#else
         ret = HAL_PWM_GlobalUnlock(pPWM, config->mask);
+#endif
         break;
     case PWM_CMD_INT_ENABLE:
-        rt_hw_interrupt_install(pwm->hal_dev->irqNum, pwm->irq_handler, NULL, NULL);
-        rt_hw_interrupt_umask(pwm->hal_dev->irqNum);
+#if (PWM_MAIN_VERSION(PWM_VERSION_ID) >= 4)
+        rt_hw_interrupt_install(pwm->hal_dev->irqNum[config->channel], pwm->irq_handler, NULL, "0" + config->channel);
+        rt_hw_interrupt_umask(pwm->hal_dev->irqNum[config->channel]);
+#else
+        rt_hw_interrupt_install(pwm->hal_dev->irqNum[0], pwm->irq_handler, NULL, NULL);
+        rt_hw_interrupt_umask(pwm->hal_dev->irqNum[0]);
+#endif
         pwm->is_int_enable = true;
         break;
     case PWM_CMD_INT_DISABLE:
-        rt_hw_interrupt_mask(pwm->hal_dev->irqNum);
+#if (PWM_MAIN_VERSION(PWM_VERSION_ID) >= 4)
+        rt_hw_interrupt_mask(pwm->hal_dev->irqNum[config->channel]);
+#else
+        rt_hw_interrupt_mask(pwm->hal_dev->irqNum[0]);
+#endif
         pwm->is_int_enable = false;
         break;
     default:
