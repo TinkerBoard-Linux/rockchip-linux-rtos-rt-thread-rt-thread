@@ -10,6 +10,7 @@ MEMORY
     SRAM  (rxw) : ORIGIN = 0xfe480000, LENGTH = 64K            /* SYSTEM SRAM */
     DRAM  (rxw) : ORIGIN = FIRMWARE_BASE, LENGTH = DRAM_SIZE    /* DRAM */
     SHMEM (rxw) : ORIGIN = SHMEM_BASE, LENGTH = SHMEM_SIZE      /* shared memory for all cpu */
+    LINUX_RPMSG (rxw) : ORIGIN = LINUX_RPMSG_BASE, LENGTH = LINUX_RPMSG_SIZE
 }
 
 __SPINLOCK_MEM_SIZE = 0x100;
@@ -121,6 +122,13 @@ SECTIONS
         KEEP(*(.dtors))
         PROVIDE(__dtors_end__ = .);
     } > DRAM
+
+    .linux_share_rpmsg (NOLOAD):
+    {
+        PROVIDE(__share_rpmsg_start__ = .);
+        . += LENGTH(LINUX_RPMSG);
+        PROVIDE(__share_rpmsg_end__ = .);
+    } > LINUX_RPMSG
 
     .share_lock (NOLOAD) :
     {

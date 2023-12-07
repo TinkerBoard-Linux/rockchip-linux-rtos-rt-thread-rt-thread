@@ -123,7 +123,10 @@ static struct GIC_AMP_IRQ_INIT_CFG irqsConfig[] =
 {
     /* Config the irqs here. */
     // todo...
-
+#ifdef RT_USING_RPMSG_LITE
+    GIC_AMP_IRQ_CFG_ROUTE(MBOX_AP_IRQn, 0xd0, CPU_GET_AFFINITY(0, 0)),
+    GIC_AMP_IRQ_CFG_ROUTE(MBOX_BB_IRQn, 0xd0, CPU_GET_AFFINITY(3, 0)),
+#endif
     GIC_AMP_IRQ_CFG_ROUTE(0, 0, CPU_GET_AFFINITY(1, 0)),   /* sentinel */
 };
 

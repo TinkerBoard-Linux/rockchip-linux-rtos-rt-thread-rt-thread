@@ -69,11 +69,27 @@ if PLATFORM == 'gcc':
     else:
         SHMEM_SIZE = 0x00100000
 
+    if os.getenv('LINUX_RPMSG_BASE'):
+        LINUX_RPMSG_BASE = os.getenv('LINUX_RPMSG_BASE')
+    else:
+        LINUX_RPMSG_BASE = 0x07c00000
+
+    if os.getenv('LINUX_RPMSG_SIZE'):
+        LINUX_RPMSG_SIZE = os.getenv('LINUX_RPMSG_SIZE')
+    else:
+        LINUX_RPMSG_SIZE = 0x00500000
+
     CUR_CPU = os.getenv('CUR_CPU')
     if CUR_CPU == '1':
         CFLAGS += ' -DPRIMARY_CPU'
+    elif CUR_CPU == '0':
+        CFLAGS += ' -DCPU0'
+    elif CUR_CPU == '2':
+        CFLAGS += ' -DCPU2'
+    elif CUR_CPU == '3':
+        CFLAGS += ' -DCPU3'
 
-    CFLAGS += ' -DFIRMWARE_BASE={a} -DDRAM_SIZE={b} -DSHMEM_BASE={c} -DSHMEM_SIZE={d}'.format(a=PRMEM_BASE, b=PRMEM_SIZE, c=SHMEM_BASE, d=SHMEM_SIZE)
+    CFLAGS += ' -DFIRMWARE_BASE={a} -DDRAM_SIZE={b} -DSHMEM_BASE={c} -DSHMEM_SIZE={d} -DLINUX_RPMSG_BASE={e} -DLINUX_RPMSG_SIZE={f}'.format(a=PRMEM_BASE, b=PRMEM_SIZE, c=SHMEM_BASE, d=SHMEM_SIZE, e=LINUX_RPMSG_BASE, f=LINUX_RPMSG_SIZE)
 
     CXXFLAGS = CFLAGS
 

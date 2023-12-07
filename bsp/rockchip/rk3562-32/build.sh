@@ -24,6 +24,8 @@ make_rtt() {
     export RTT_PRMEM_SIZE=$(eval echo \$CPU$1_MEM_SIZE)
     export RTT_SHMEM_BASE=0x02f00000
     export RTT_SHMEM_SIZE=0x00100000
+    export LINUX_RPMSG_BASE=0x07c00000
+    export LINUX_RPMSG_SIZE=0x00500000
     export CUR_CPU=$1
     scons -c
     rm -rf $CUR_DIR/gcc_arm.ld $IMAGE/amp.img $IMAGE/rtt$1.elf $IMAGE/rtt$1.bin
