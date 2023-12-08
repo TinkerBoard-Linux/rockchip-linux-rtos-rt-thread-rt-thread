@@ -214,7 +214,32 @@ RT_WEAK void lcdc_ctrl_iomux_config(void)
                          GPIO_PIN_C4 |  // d16
                          GPIO_PIN_C5,   // d17
                          PIN_CONFIG_MUX_FUNC1);
-}
+
+    HAL_PINCTRL_SetParam(GPIO_BANK1,
+                         GPIO_PIN_A0 |  // dclk
+                         GPIO_PIN_A1 |  // hysc
+                         GPIO_PIN_A2 |  // vsync
+                         GPIO_PIN_A3 |  // den
+                         GPIO_PIN_A4 |  // d0
+                         GPIO_PIN_A5 |  // d1
+                         GPIO_PIN_A6 |  // d2
+                         GPIO_PIN_A7 |  // d3
+                         GPIO_PIN_B0 |  // d4
+                         GPIO_PIN_B1 |  // d5
+                         GPIO_PIN_B2 |  // d6
+                         GPIO_PIN_B3 |  // d7
+                         GPIO_PIN_B4 |  // d8
+                         GPIO_PIN_B5 |  // d9
+                         GPIO_PIN_B6 |  // d10
+                         GPIO_PIN_B7 |  // d11
+                         GPIO_PIN_C0 |  // d12
+                         GPIO_PIN_C1 |  // d13
+                         GPIO_PIN_C2 |  // d14
+                         GPIO_PIN_C3 |  // d15
+                         GPIO_PIN_C4 |  // d16
+                         GPIO_PIN_C5,
+                         PIN_CONFIG_DRV_LEVEL3);
+};
 
 RT_WEAK void lcdc_rgb888_m0_iomux_config(void)
 {
