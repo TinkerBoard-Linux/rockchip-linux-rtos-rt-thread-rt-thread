@@ -50,6 +50,8 @@ struct rockchip_eth_config
     uint32_t max_speed;
     uint16_t phy_addr;
 
+    bool external_clk;
+
     /* phy reset gpio */
     struct GPIO_REG *reset_gpio_bank;
     ePINCTRL_GPIO_PINS reset_gpio_num;

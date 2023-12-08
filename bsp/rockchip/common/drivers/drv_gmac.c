@@ -270,7 +270,8 @@ static rt_err_t rt_rockchip_eth_init(rt_device_t dev)
     rt_hw_interrupt_umask(eth->dev->irqNum);
 
     clk_enable_by_id(eth->dev->pclkGateID);
-    clk_enable_by_id(eth->dev->clkGateID);
+    clk_enable_by_id(eth->dev->clkGateID125M);
+    clk_enable_by_id(eth->dev->clkGateID50M);
 
     /* Enable GMAC and DMA transmission and reception */
     ret = HAL_GMAC_Start(pGMAC, eth->dev_addr);
@@ -600,14 +601,15 @@ int rt_rockchip_hw_eth_init(void)
         interface = (*eth)->config->mode;
         if (interface == PHY_INTERFACE_MODE_RGMII)
         {
-            clk_set_rate(gmac_dev->clkID, 125000000);
+            clk_set_rate(gmac_dev->clkID125M, 125000000);
         }
         else
         {
-            clk_set_rate(gmac_dev->clkID, 50000000);
+            clk_set_rate(gmac_dev->clkID50M, 50000000);
         }
         freq = clk_get_rate(gmac_dev->pclkID);
-        HAL_GMAC_Init(&(*eth)->instance, gmac_dev->pReg, freq, interface);
+        HAL_GMAC_Init(&(*eth)->instance, gmac_dev->pReg, freq, interface,
+                      (*eth)->config->external_clk);
 
         config.speed = (*eth)->config->speed;
         config.maxSpeed = (*eth)->config->max_speed;
