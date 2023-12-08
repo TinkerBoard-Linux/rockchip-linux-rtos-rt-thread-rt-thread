@@ -81,6 +81,20 @@ menu "Enable SPI"
 endmenu
 endif
 
+menu "Enable GMAC"
+    config RT_USING_GMAC
+        bool "Enable GMAC"
+        select RT_USING_LWIP
+        select RT_LWIP_USING_HW_CHECKSUM
+        default n
+
+    if RT_USING_GMAC
+    config RT_USING_GMAC0
+        bool "Enable GMAC0"
+        default n
+    endif
+endmenu
+
 config RT_USING_SYSTICK
     bool "Enable SYSTICK"
     default y

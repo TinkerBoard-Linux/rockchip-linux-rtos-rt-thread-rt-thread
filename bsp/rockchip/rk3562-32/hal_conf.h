@@ -93,6 +93,10 @@
 #define HAL_UART_MODULE_ENABLED
 #endif
 
+#ifdef RT_USING_GMAC
+#define HAL_GMAC_MODULE_ENABLED
+#endif
+
 #ifdef RT_USING_WDT
 #define HAL_WDT_MODULE_ENABLED
 #endif
