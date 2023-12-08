@@ -12,11 +12,13 @@
 #define __IOMUX_BASE_H__
 
 void rt_hw_iodomain_config(void);
+void uart0_m0_iomux_config(void);
 void uart2_m1_iomux_config(void);
 void uart4_m0_iomux_config(void);
 void i2c1_m0_iomux_config(void);
 void i2s0_8ch_m0_iomux_config(void);
 void i2s1_8ch_m0_iomux_config(void);
+void gmac0_m0_iomux_config(void);
 void rt_hw_iomux_config(void);
 
 #endif

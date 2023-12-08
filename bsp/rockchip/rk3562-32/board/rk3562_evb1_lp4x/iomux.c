@@ -30,4 +30,10 @@ void rt_hw_iomux_config(void)
 #ifdef RT_USING_UART0
     uart0_m0_iomux_config();
 #endif
+
+#ifdef RT_USING_GMAC
+#ifdef RT_USING_GMAC0
+    gmac0_m0_iomux_config();
+#endif
+#endif
 }
