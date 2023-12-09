@@ -73,8 +73,15 @@ __DRAM_D_SIZE = 0x20000;
 
 MEMORY
 {
+#if defined(RK2118_CPU_CORE0)
   CODE (rx) : ORIGIN = __SRAM_I_BASE,  LENGTH = __SRAM_I_SIZE
   DATA (rw) : ORIGIN = __SRAM_D_BASE,  LENGTH = __SRAM_D_SIZE
+#elif defined(RK2118_CPU_CORE1)
+  CODE (rx) : ORIGIN = __DRAM_I_BASE,  LENGTH = __DRAM_I_SIZE
+  DATA (rw) : ORIGIN = __DRAM_D_BASE,  LENGTH = __DRAM_D_SIZE
+#else
+  #error "must select core0 or core1 in menuconfig"
+#endif
 #ifdef RT_USING_UNCACHE_HEAP
   SRAM_U (rw)  : ORIGIN = __UNCACHE_HEAP_BASE, LENGTH = __UNCACHE_HEAP_SIZE
 #endif
