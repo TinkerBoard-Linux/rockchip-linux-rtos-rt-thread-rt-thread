@@ -153,9 +153,6 @@ void rt_hw_board_init()
     rt_hw_interrupt_install(SysTick_IRQn, systick_isr, RT_NULL, "tick");
     HAL_SetTickFreq(1000 / RT_TICK_PER_SECOND);
     HAL_SYSTICK_Init();
-    /*  work arround: avoid ext clk source bug */
-    HAL_SYSTICK_Config(SystemCoreClock / RT_TICK_PER_SECOND);
-    HAL_SYSTICK_CLKSourceConfig(HAL_SYSTICK_CLKSRC_CORE);
 
     rt_system_heap_init((void *)HEAP_START, (void *)HEAP_END);
 #ifdef RT_USING_UNCACHE_HEAP
