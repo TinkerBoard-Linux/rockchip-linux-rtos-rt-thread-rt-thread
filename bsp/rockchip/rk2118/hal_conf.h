@@ -32,6 +32,10 @@
 #define HAL_ACDCDIG_MODULE_ENABLED
 #endif
 
+#ifdef RT_USING_CAN
+#define HAL_CANFD_MODULE_ENABLED
+#endif
+
 #ifdef RT_USING_CRU
 #define HAL_CRU_MODULE_ENABLED
 #endif
