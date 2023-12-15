@@ -60,7 +60,7 @@ static const struct clk_init clk_inits[] =
 #if defined(RT_USING_UART0)
 const struct uart_board g_uart0_board =
 {
-    .baud_rate = ROCKCHIP_UART_BAUD_RATE_DEFAULT,
+    .baud_rate = UART_BR_1500000,
     .dev_flag = ROCKCHIP_UART_SUPPORT_FLAG_DEFAULT,
     .bufer_size = RT_SERIAL_RB_BUFSZ,
     .name = "uart0",
@@ -70,7 +70,7 @@ const struct uart_board g_uart0_board =
 #if defined(RT_USING_UART1)
 const struct uart_board g_uart1_board =
 {
-    .baud_rate = ROCKCHIP_UART_BAUD_RATE_DEFAULT,
+    .baud_rate = UART_BR_1500000,
     .dev_flag = ROCKCHIP_UART_SUPPORT_FLAG_DEFAULT,
     .bufer_size = RT_SERIAL_RB_BUFSZ,
     .name = "uart1",
