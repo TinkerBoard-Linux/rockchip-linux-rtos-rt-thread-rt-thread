@@ -207,7 +207,7 @@ static rt_base_t part_mtd_nor_read_id(struct rt_mtd_nor_device *dev)
     return rt_mtd_nor_read_id(mtd_nor);
 }
 
-static rt_size_t part_mtd_nor_read(struct rt_mtd_nor_device *dev, rt_off_t offset, rt_uint8_t *buffer, rt_size_t length)
+static rt_size_t part_mtd_nor_read(struct rt_mtd_nor_device *dev, rt_off_t offset, rt_uint8_t *buffer, rt_uint32_t length)
 {
     struct rt_flash_partition *mtd_part = DEV_2_PART(dev);
     struct rt_mtd_nor_device *mtd_nor = (struct rt_mtd_nor_device *)mtd_part->user_data;
@@ -233,7 +233,7 @@ static rt_size_t part_mtd_nor_read(struct rt_mtd_nor_device *dev, rt_off_t offse
     return rt_mtd_nor_read(mtd_nor, (mtd_part->offset + offset), buffer, length);
 }
 
-static rt_size_t part_mtd_nor_write(struct rt_mtd_nor_device *dev, rt_off_t offset, const rt_uint8_t *buffer, rt_size_t length)
+static rt_size_t part_mtd_nor_write(struct rt_mtd_nor_device *dev, rt_off_t offset, const rt_uint8_t *buffer, rt_uint32_t length)
 {
     struct rt_flash_partition *mtd_part = DEV_2_PART(dev);
     struct rt_mtd_nor_device *mtd_nor = (struct rt_mtd_nor_device *)mtd_part->user_data;
