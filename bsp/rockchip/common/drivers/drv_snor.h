@@ -12,6 +12,7 @@
   * 2019-02-20     Dingqiang Lin   the first version
   * 2019-06-27     Dingqiang Lin   support FSPI
   * 2020-09-23     Dingqiang Lin   Support scan and attach two independent spi nor
+  * 2023-12-16     Dingqiang Lin   Support Octal SPI DTR Nor flash and poll status
   *
   ******************************************************************************
   */
@@ -48,6 +49,9 @@ struct spiflash_device
     struct SNOR_HOST host;
     enum spiflash_host type;
     rt_base_t level;
+    struct rt_completion done;
+    bool xip_resumed;
+    bool irq_resumed;
 };
 
 rt_err_t rk_snor_xip_suspend(void);
