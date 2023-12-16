@@ -59,7 +59,6 @@
 /* RT-Thread Components */
 
 #define RT_USING_COMPONENTS_INIT
-#define RT_USING_CRU
 #define RT_USING_USER_MAIN
 #define RT_MAIN_THREAD_STACK_SIZE 2048
 #define RT_MAIN_THREAD_PRIORITY 10
@@ -84,6 +83,7 @@
 #define RT_USING_SERIAL_V1
 #define RT_SERIAL_USING_DMA
 #define RT_SERIAL_RB_BUFSZ 64
+#define RT_USING_MTD_NOR
 
 /* Using USB */
 
@@ -128,6 +128,9 @@
 
 /* Enable Fault Dump Hook */
 
+#define RT_USING_SNOR
+#define RT_SNOR_SPEED 80000000
+#define RT_USING_SNOR_FSPI_HOST
 
 /* RT-Thread rockchip jpeg enc driver */
 
@@ -165,8 +168,11 @@
 /* Enable PSTORE */
 
 
+/* RT-Thread rockchip RPMSG driver */
+
 /* RT-Thread rockchip RK2118 drivers */
 
+#define RT_USING_CRU
 #define RT_USING_SYSTICK
 
 /* Enable UART */

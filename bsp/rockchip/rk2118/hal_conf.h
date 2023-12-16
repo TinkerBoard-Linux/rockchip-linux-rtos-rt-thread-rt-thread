@@ -89,6 +89,12 @@
 
 #ifdef RT_USING_SNOR
 #define HAL_SNOR_MODULE_ENABLED
+#define HAL_SNOR_FSPI_HOST
+#define HAL_FSPI_MODULE_ENABLED
+#define HAL_FSPI_DMA_ENABLED
+#ifdef RT_USING_XIP
+#define HAL_FSPI_XIP_ENABLE
+#endif
 #endif
 
 #ifdef RT_USING_SPI
