@@ -12,6 +12,7 @@
 
 #include "rtconfig.h"
 
+#define HAL_MCU_CORE
 #define SYS_TIMER TIMER0 /* System timer designation (RK TIMER) */
 
 #ifdef RT_USING_SYSTICK
