@@ -173,6 +173,7 @@ static HAL_Status fspi_xfer(struct SNOR_HOST *spi, struct HAL_SPI_MEM_OP *op)
     return ret;
 }
 
+#ifdef HAL_FSPI_XIP_ENABLE
 static HAL_Status fspi_xip_config(struct SNOR_HOST *spi, struct HAL_SPI_MEM_OP *op, uint32_t on)
 {
     struct HAL_FSPI_HOST *host = (struct HAL_FSPI_HOST *)spi->userdata;
@@ -186,6 +187,7 @@ static HAL_Status fspi_xip_config(struct SNOR_HOST *spi, struct HAL_SPI_MEM_OP *
 
     return HAL_FSPI_XmmcRequest(host, on);
 }
+#endif
 
 static uint32_t fspi_snor_adapt(struct SPI_NOR *nor)
 {
@@ -600,7 +602,7 @@ static rt_err_t snor_mtd_read_id(struct rt_mtd_nor_device *dev)
     return *(rt_uint32_t *)(id);
 }
 
-static rt_size_t snor_mtd_write(struct rt_mtd_nor_device *dev, rt_off_t pos, const rt_uint8_t *data, rt_size_t size)
+static rt_size_t snor_mtd_write(struct rt_mtd_nor_device *dev, rt_off_t pos, const rt_uint8_t *data, rt_uint32_t size)
 {
     struct spiflash_device *spiflash = MTD_TO_SPIFLASH(dev);
     struct SPI_NOR *nor = &spiflash->nor;
@@ -631,7 +633,7 @@ static rt_size_t snor_mtd_write(struct rt_mtd_nor_device *dev, rt_off_t pos, con
     return size;
 }
 
-static rt_size_t snor_mtd_read(struct rt_mtd_nor_device *dev, rt_off_t pos, rt_uint8_t *data, rt_size_t size)
+static rt_size_t snor_mtd_read(struct rt_mtd_nor_device *dev, rt_off_t pos, rt_uint8_t *data, rt_uint32_t size)
 {
     struct spiflash_device *spiflash = MTD_TO_SPIFLASH(dev);
     struct SPI_NOR *nor = &spiflash->nor;
