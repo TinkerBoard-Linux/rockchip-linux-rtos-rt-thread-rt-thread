@@ -11,6 +11,7 @@
 #include "rtdef.h"
 #include "iomux.h"
 #include "hal_base.h"
+#include "board.h"
 
 /**
  * @brief  Config io domian for board of rk3308_ddr2p116sd4_v10
@@ -21,6 +22,16 @@ void rt_hw_iodomain_config(void)
     /* VCC IO 2 voltage select 1v8 */
     GRF->SOC_CON0 = (1 << GRF_SOC_CON0_IO_VSEL2_SHIFT) |
                     (GRF_SOC_CON0_IO_VSEL2_MASK << 16);
+}
+
+void spkmute_iomux_config(void)
+{
+    /* PA_MUTE is GPIO0_A5 */
+    HAL_PINCTRL_SetIOMUX(PA_MUTE_GPIO_BANK,
+                         PA_MUTE_PIN,
+                         PA_MUTE_PIN_FUNC_GPIO);
+
+    HAL_GPIO_SetPinDirection(PA_MUTE_GPIO, PA_MUTE_PIN, GPIO_OUT);
 }
 
 /**
@@ -67,6 +78,8 @@ void rt_hw_iomux_config(void)
 #ifdef RT_USING_AUDIO_CARD_I2S0
     i2s0_8ch_m0_iomux_config();
 #endif
+
+    spkmute_iomux_config();
 
 #ifdef RT_USING_BACKLIGHT
     pwm0_ch1_iomux_config();

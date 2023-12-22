@@ -24,4 +24,11 @@
 #define RT_HW_LCD_RESET_GPIO            GPIO_PIN_C4
 #define RT_HW_LCD_RESET_FLAG            PIN_LOW
 
+#define PA_MUTE_GPIO_BANK        GPIO_BANK0
+#define PA_MUTE_GPIO             GPIO0
+#define PA_MUTE_PIN              GPIO_PIN_A5
+#define PA_MUTE_PIN_FUNC_GPIO    PIN_CONFIG_MUX_FUNC0
+#define PA_MUTE_SWITCH_ON        GPIO_HIGH
+#define PA_MUTE_SWITCH_OFF       GPIO_LOW
+
 #endif
