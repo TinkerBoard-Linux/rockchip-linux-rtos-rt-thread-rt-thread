@@ -27,7 +27,7 @@ void test_reg_read(void)
     for (int i = 0; i < 100; i++)
     {
         start = SysTick->VAL;
-        value0 = INTMUX0->IRQ_FINALSTATUS_L_CH0;
+        value0 = INT_MUX0->IRQ_FINALSTATUS_L;
         time0 = start - SysTick->VAL;
 
         start = SysTick->VAL;
