@@ -726,8 +726,12 @@ int rt_hw_snor_init(void)
 {
     int ret;
 
-#if defined(RT_USING_SNOR_FSPI_HOST) || defined(RT_USING_SNOR_SFC_HOST)
+#if defined(RT_USING_SNOR_FSPI_HOST)
     ret = snor_init(0, "snor", SPIFLASH_FSPI_HOST);
+#endif
+
+#if defined(RT_USING_SNOR_SFC_HOST)
+    ret = snor_init(0, "snor", SPIFLASH_SFC_HOST);
 #endif
 
 #if !defined(RT_USING_SNOR_FSPI_HOST) && defined(RT_USING_SNOR_SPI_HOST)

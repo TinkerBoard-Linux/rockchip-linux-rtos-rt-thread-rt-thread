@@ -357,6 +357,19 @@ uint32_t rk_partition_init(struct rt_mtd_nor_device *mtd)
                     nor_parts[i].mask_flags |= PART_FLAG_BLK;
             }
         }
+        else
+        {
+#if defined(RT_ROOT_PART_OFFSET) && defined(RT_ROOT_PART_SIZE)
+            nor_parts = rt_malloc(sizeof(struct rt_flash_partition));
+            part_num = 1;
+            rt_strncpy(nor_parts->name, "root", 5);
+            nor_parts->offset = RT_ROOT_PART_OFFSET * 512;
+            nor_parts->size = RT_ROOT_PART_SIZE * 512;
+            nor_parts->mask_flags = PART_FLAG_BLK | PART_FLAG_RDWR;
+            nor_parts->type = 0x8;
+            rt_kprintf("%s register root in config\n", __func__);
+#endif
+        }
     }
     rt_free(part_temp);
 
