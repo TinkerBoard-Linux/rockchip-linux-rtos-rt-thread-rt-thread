@@ -69,6 +69,12 @@ if PLATFORM == 'gcc':
     else:
         SHMEM_SIZE = 0x00100000
 
+    if os.getenv('ROOT_PART_OFFSET'):
+        CFLAGS += ' -DRT_ROOT_PART_OFFSET={a}'.format(a=os.getenv('ROOT_PART_OFFSET'))
+
+    if os.getenv('ROOT_PART_SIZE'):
+        CFLAGS += ' -DRT_ROOT_PART_SIZE={a}'.format(a=os.getenv('ROOT_PART_SIZE'))
+
     CUR_CPU = os.getenv('CUR_CPU')
     if CUR_CPU == '1':
         CFLAGS += ' -DPRIMARY_CPU'
