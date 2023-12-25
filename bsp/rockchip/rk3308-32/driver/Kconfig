@@ -69,6 +69,14 @@ menu "Enable SPI"
 endmenu
 endif
 
+if RT_USING_SDIO
+menu "Enable SDIO/SDMMC/eMMC"
+    config RT_USING_SDIO0
+        bool "Enable eMMC controller"
+        default n
+endmenu
+endif
+
 config RT_USING_SYSTICK
     bool "Enable SYSTICK"
     default y

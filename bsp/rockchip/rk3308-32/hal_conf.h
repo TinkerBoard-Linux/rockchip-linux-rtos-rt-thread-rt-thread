@@ -93,6 +93,10 @@
 #define HAL_UART_MODULE_ENABLED
 #endif
 
+#ifdef RT_USING_SDIO
+#define HAL_SDIO_MODULE_ENABLED
+#endif
+
 #ifdef RT_USING_USB_DEVICE
 #define HAL_PCD_MODULE_ENABLED
 #endif

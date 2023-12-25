@@ -122,6 +122,32 @@ RT_WEAK void i2s1_8ch_m0_iomux_config(void)
 }
 #endif
 
+#ifdef RT_USING_SDIO0
+/**
+ * @brief  Config iomux for SDIO
+ */
+RT_WEAK void emmc_iomux_config(void)
+{
+    /* EMMC D0 ~ D7*/
+    HAL_PINCTRL_SetIOMUX(GPIO_BANK3,
+                         GPIO_PIN_A0 |
+                         GPIO_PIN_A1 |
+                         GPIO_PIN_A2 |
+                         GPIO_PIN_A3 |
+                         GPIO_PIN_A4 |
+                         GPIO_PIN_A5 |
+                         GPIO_PIN_A6 |
+                         GPIO_PIN_A7,
+                         PIN_CONFIG_MUX_FUNC2);
+    /* EMMC CMD & CLK & PWR */
+    HAL_PINCTRL_SetIOMUX(GPIO_BANK3,
+                         GPIO_PIN_B0 |  /* CMD */
+                         GPIO_PIN_B1 |  /* CLK */
+                         GPIO_PIN_B3,   /* PWR */
+                         PIN_CONFIG_MUX_FUNC2);
+}
+#endif
+
 #ifdef RT_USING_BACKLIGHT
 RT_WEAK void pwm0_ch1_iomux_config(void)
 {

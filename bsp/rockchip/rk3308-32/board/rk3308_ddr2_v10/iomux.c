@@ -54,6 +54,10 @@ void rt_hw_iomux_config(void)
     spi0_m0_iomux_config();
 #endif
 
+#ifdef RT_USING_SDIO0
+    emmc_iomux_config();
+#endif
+
 #ifdef RT_USING_AUDIO_CARD_I2S0
     i2s0_8ch_m0_iomux_config();
 #endif

@@ -44,6 +44,10 @@ RT_WEAK const struct clk_unused clks_unused[] =
 };
 #endif
 
+#ifdef RT_USING_SDIO
+#include "drv_sdio.h"
+#endif
+
 #ifdef RT_USING_AUDIO
 #include "rk_audio.h"
 #endif
@@ -166,6 +170,24 @@ static void generic_timer_config(void)
     rt_hw_interrupt_umask(TICK_IRQn);
     HAL_ARCHTIMER_SetCNTPCTL(1U);
 }
+#endif
+
+#ifdef RT_USING_SDIO
+RT_WEAK struct rk_mmc_platform_data rk_mmc_table[] =
+{
+#ifdef RT_USING_SDIO0
+    {
+        .flags = MMCSD_BUSWIDTH_8 | MMCSD_MUTBLKWRITE | MMCSD_SUP_SDIO_IRQ | MMCSD_SUP_HIGHSPEED,
+        .irq = EMMC_IRQn,
+        .base = EMMC_BASE,
+        .clk_id = CLK_EMMC,
+        .freq_min = 100000,
+        .freq_max = 50000000,
+        .control_id = 0,
+    },
+#endif
+    { /* sentinel */ },
+};
 #endif
 
 #ifdef RT_USING_AUDIO
