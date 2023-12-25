@@ -81,8 +81,8 @@ rt_err_t rt_pwm_set_oneshot(struct rt_device_pwm *device, int channel, rt_uint32
 rt_err_t rt_pwm_set_capture(struct rt_device_pwm *device, int channel);
 rt_err_t rt_pwm_lock(struct rt_device_pwm *device, rt_uint32_t channel_mask);
 rt_err_t rt_pwm_unlock(struct rt_device_pwm *device, rt_uint8_t channel_mask);
-rt_err_t rt_pwm_int_enable(struct rt_device_pwm *device);
-rt_err_t rt_pwm_int_disable(struct rt_device_pwm *device);
+rt_err_t rt_pwm_int_enable(struct rt_device_pwm *device, int channel);
+rt_err_t rt_pwm_int_disable(struct rt_device_pwm *device, int channel);
 
 
 #endif /* __DRV_PWM_H_INCLUDE__ */

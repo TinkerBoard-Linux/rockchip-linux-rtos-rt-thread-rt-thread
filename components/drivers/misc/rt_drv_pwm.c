@@ -296,30 +296,34 @@ rt_err_t rt_pwm_unlock(struct rt_device_pwm *device, rt_uint8_t channel_mask)
     return result;
 }
 
-rt_err_t rt_pwm_int_enable(struct rt_device_pwm *device)
+rt_err_t rt_pwm_int_enable(struct rt_device_pwm *device, int channel)
 {
     rt_err_t result = RT_EOK;
+    struct rt_pwm_configuration configuration = {0};
 
     if (!device)
     {
         return -RT_EIO;
     }
 
-    result = rt_device_control(&device->parent, PWM_CMD_INT_ENABLE, NULL);
+    configuration.channel = channel;
+    result = rt_device_control(&device->parent, PWM_CMD_INT_ENABLE, &configuration);
 
     return result;
 }
 
-rt_err_t rt_pwm_int_disable(struct rt_device_pwm *device)
+rt_err_t rt_pwm_int_disable(struct rt_device_pwm *device, int channel)
 {
     rt_err_t result = RT_EOK;
+    struct rt_pwm_configuration configuration = {0};
 
     if (!device)
     {
         return -RT_EIO;
     }
 
-    result = rt_device_control(&device->parent, PWM_CMD_INT_DISABLE, NULL);
+    configuration.channel = channel;
+    result = rt_device_control(&device->parent, PWM_CMD_INT_DISABLE, &configuration);
 
     return result;
 }
@@ -503,9 +507,15 @@ static int pwm(int argc, char **argv)
             {
                 if(argc == 2)
                 {
-                    result = rt_pwm_int_enable(pwm_device);
+                    result = rt_pwm_int_enable(pwm_device, 0);
                     result_str = (result == RT_EOK) ? "Success" : "Fail";
                     rt_kprintf("%s to enable interrupt on %s\n", result_str, pwm_device);
+                }
+                else if(argc == 3)
+                {
+                    result = rt_pwm_int_enable(pwm_device, atoi(argv[2]));
+                    result_str = (result == RT_EOK) ? "Success" : "Fail";
+                    rt_kprintf("%s to enable interrupt on %s at channel %d\n", result_str, pwm_device, atoi(argv[2]));
                 }
                 else
                 {
@@ -517,9 +527,15 @@ static int pwm(int argc, char **argv)
             {
                 if(argc == 2)
                 {
-                    result = rt_pwm_int_disable(pwm_device);
+                    result = rt_pwm_int_disable(pwm_device, 0);
                     result_str = (result == RT_EOK) ? "Success" : "Fail";
                     rt_kprintf("%s to disable interrupt on %s\n", result_str, pwm_device);
+                }
+                else if(argc == 3)
+                {
+                    result = rt_pwm_int_disable(pwm_device, atoi(argv[2]));
+                    result_str = (result == RT_EOK) ? "Success" : "Fail";
+                    rt_kprintf("%s to enable interrupt on %s at channel %d\n", result_str, pwm_device, atoi(argv[2]));
                 }
                 else
                 {
@@ -542,8 +558,8 @@ static int pwm(int argc, char **argv)
         rt_kprintf("pwm capture <channel>                                       - set pwm capture mode\n");
         rt_kprintf("pwm lock    <channel_mask>                                  - enable pwm global lock\n");
         rt_kprintf("pwm unlock  <channel_mask>                                  - disable pwm global lock\n");
-        rt_kprintf("pwm int_enable                                              - enable pwm interrupt\n");
-        rt_kprintf("pwm int_disable                                             - disable pwm interrupt\n");
+        rt_kprintf("pwm int_enable  <channel>                                   - enable pwm interrupt\n");
+        rt_kprintf("pwm int_disable <channel>                                   - disable pwm interrupt\n");
 
         result = - RT_ERROR;
     }
