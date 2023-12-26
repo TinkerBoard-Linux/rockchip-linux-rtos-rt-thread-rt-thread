@@ -19,7 +19,7 @@
 			cpu          = <0x000>;  // mpidr
 			thumb        = <0>;      // 0: arm or thumb2; 1: thumb
 			hyp          = <0>;      // 0: el1/svc; 1: el2/hyp
-			load         = <0x02600000>;
+			load         = <0x02000000>;
 			udelay       = <10000>;
 			hash {
 				algo = "sha256";
