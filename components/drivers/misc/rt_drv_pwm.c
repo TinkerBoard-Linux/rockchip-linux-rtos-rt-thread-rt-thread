@@ -342,6 +342,76 @@ rt_err_t rt_pwm_get(struct rt_device_pwm *device, struct rt_pwm_configuration *c
     return result;
 }
 
+rt_err_t rt_pwm_counter_enable(struct rt_device_pwm *device, int channel)
+{
+    rt_err_t result = RT_EOK;
+    struct rt_pwm_configuration configuration = {0};
+
+    if (!device)
+    {
+        return -RT_EIO;
+    }
+
+    configuration.channel = channel;
+    result = rt_device_control(&device->parent, PWM_CMD_CNT_ENABLE, &configuration);
+
+    return result;
+}
+
+rt_err_t rt_pwm_counter_disable(struct rt_device_pwm *device, int channel)
+{
+    rt_err_t result = RT_EOK;
+    struct rt_pwm_configuration configuration = {0};
+
+    if (!device)
+    {
+        return -RT_EIO;
+    }
+
+    configuration.channel = channel;
+    result = rt_device_control(&device->parent, PWM_CMD_CNT_DISABLE, &configuration);
+
+    return result;
+}
+
+rt_err_t rt_pwm_counter_get_result(struct rt_device_pwm *device, int channel, rt_uint32_t *cnt_res)
+{
+    rt_err_t result = RT_EOK;
+    struct rt_pwm_configuration configuration = {0};
+
+    if (!device)
+    {
+        return -RT_EIO;
+    }
+
+    configuration.channel = channel;
+    configuration.count = 0;
+    result = rt_device_control(&device->parent, PWM_CMD_GET_CNT_RES, &configuration);
+
+    *cnt_res = configuration.count;
+
+    return result;
+}
+
+rt_err_t rt_pwm_set_freqency_meter(struct rt_device_pwm *device, int channel, rt_uint32_t delay_ms, rt_uint32_t *freq)
+{
+    rt_err_t result = RT_EOK;
+    struct rt_pwm_configuration configuration = {0};
+
+    if (!device)
+    {
+        return -RT_EIO;
+    }
+
+    configuration.channel = channel;
+    configuration.delay = delay_ms;
+    result = rt_device_control(&device->parent, PWM_CMD_SET_FREQ, &configuration);
+
+    *freq = configuration.freqency;
+
+    return result;
+}
+
 #ifdef RT_USING_FINSH
 #include <stdlib.h>
 #include <string.h>
@@ -543,6 +613,66 @@ static int pwm(int argc, char **argv)
                     rt_kprintf("Usage: pwm int_disable\n");
                 }
             }
+            else if (!strcmp(argv[1], "cnt_enable"))
+            {
+                if(argc == 3)
+                {
+                    result = rt_pwm_counter_enable(pwm_device, atoi(argv[2]));
+                    result_str = (result == RT_EOK) ? "Success" : "Fail";
+                    rt_kprintf("%s to enable counter on %s at channel %d\n", result_str, pwm_device, atoi(argv[2]));
+                }
+                else
+                {
+                    rt_kprintf("Enable counter of device: [%s] error\n", pwm_device);
+                    rt_kprintf("Usage: pwm cnt_enable <channel>\n");
+                }
+            }
+            else if (!strcmp(argv[1], "cnt_disable"))
+            {
+                if(argc == 3)
+                {
+                    result = rt_pwm_counter_disable(pwm_device, atoi(argv[2]));
+                    result_str = (result == RT_EOK) ? "Success" : "Fail";
+                    rt_kprintf("%s to disable counter on %s at channel %d\n", result_str, pwm_device, atoi(argv[2]));
+                }
+                else
+                {
+                    rt_kprintf("Set counter of device: [%s] error\n", pwm_device);
+                    rt_kprintf("Usage: pwm cnt_disable <channel>\n");
+                }
+            }
+            else if (!strcmp(argv[1], "cnt_get_res"))
+            {
+                if(argc == 3)
+                {
+                    uint32_t cnt_res;
+
+                    result = rt_pwm_counter_get_result(pwm_device, atoi(argv[2]), &cnt_res);
+                    result_str = (result == RT_EOK) ? "Success" : "Fail";
+                    rt_kprintf("%s to get counter result on %s at channel %d: %d\n", result_str, pwm_device, atoi(argv[2]), cnt_res);
+                }
+                else
+                {
+                    rt_kprintf("Get counter of device: [%s] error\n", pwm_device);
+                    rt_kprintf("Usage: pwm cnt_get_res <channel>\n");
+                }
+            }
+            else if (!strcmp(argv[1], "set_freq"))
+            {
+                if(argc == 4)
+                {
+                    uint32_t freq;
+
+                    result = rt_pwm_set_freqency_meter(pwm_device, atoi(argv[2]), atoi(argv[3]), &freq);
+                    result_str = (result == RT_EOK) ? "Success" : "Fail";
+                    rt_kprintf("%s to set freqency meter on %s at channel %d: %dHz\n", result_str, pwm_device, atoi(argv[2]), freq);
+                }
+                else
+                {
+                    rt_kprintf("Set freqency meter of device: [%s] error\n", pwm_device);
+                    rt_kprintf("Usage: pwm set_freq <channel> <mdelay>\n");
+                }
+            }
         }
     }
     else
@@ -560,6 +690,10 @@ static int pwm(int argc, char **argv)
         rt_kprintf("pwm unlock  <channel_mask>                                  - disable pwm global lock\n");
         rt_kprintf("pwm int_enable  <channel>                                   - enable pwm interrupt\n");
         rt_kprintf("pwm int_disable <channel>                                   - disable pwm interrupt\n");
+        rt_kprintf("pwm cnt_enable  <channel>                                   - enable pwm counter\n");
+        rt_kprintf("pwm cnt_disable <channel>                                   - disable pwm counter\n");
+        rt_kprintf("pwm cnt_get_res <channel>                                   - get pwm counter result\n");
+        rt_kprintf("pwm set_freq    <channel> <mdelay>                          - set pwm frequency meter\n");
 
         result = - RT_ERROR;
     }

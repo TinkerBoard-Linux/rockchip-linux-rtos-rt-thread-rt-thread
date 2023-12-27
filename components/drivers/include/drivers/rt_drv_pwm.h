@@ -28,6 +28,10 @@
 #define PWM_CMD_UNLOCK      (RT_DEVICE_CTRL_BASE(PWM) + 12)
 #define PWM_CMD_INT_ENABLE  (RT_DEVICE_CTRL_BASE(PWM) + 13)
 #define PWM_CMD_INT_DISABLE (RT_DEVICE_CTRL_BASE(PWM) + 14)
+#define PWM_CMD_CNT_ENABLE  (RT_DEVICE_CTRL_BASE(PWM) + 15)
+#define PWM_CMD_CNT_DISABLE (RT_DEVICE_CTRL_BASE(PWM) + 16)
+#define PWM_CMD_GET_CNT_RES (RT_DEVICE_CTRL_BASE(PWM) + 17)
+#define PWM_CMD_SET_FREQ    (RT_DEVICE_CTRL_BASE(PWM) + 18)
 
 #define rt_pwm_set(device, channel, period, pulse) rt_pwm_set_internal(device, channel, period, pulse, 0, PWM_UNALIGNED)
 
@@ -53,6 +57,9 @@ struct rt_pwm_configuration
      * RT_FALSE : The channel of pwm is nomal.
     */
     rt_bool_t  complementary;
+
+    rt_uint32_t delay;    /* unit:ms, which indicates timer val in freqency meter mode */
+    rt_uint32_t freqency; /* unit:hz, which indicates freqency meter result */
 
     enum rt_pwm_aligned_mode aligned; /* aligned mode */
 };
@@ -83,6 +90,9 @@ rt_err_t rt_pwm_lock(struct rt_device_pwm *device, rt_uint32_t channel_mask);
 rt_err_t rt_pwm_unlock(struct rt_device_pwm *device, rt_uint8_t channel_mask);
 rt_err_t rt_pwm_int_enable(struct rt_device_pwm *device, int channel);
 rt_err_t rt_pwm_int_disable(struct rt_device_pwm *device, int channel);
-
+rt_err_t rt_pwm_counter_enable(struct rt_device_pwm *device, int channel);
+rt_err_t rt_pwm_counter_disable(struct rt_device_pwm *device, int channel);
+rt_err_t rt_pwm_counter_get_result(struct rt_device_pwm *device, int channel, rt_uint32_t *cnt_res);
+rt_err_t rt_pwm_set_freqency_meter(struct rt_device_pwm *device, int channel, rt_uint32_t delay_ms, rt_uint32_t *freq);
 
 #endif /* __DRV_PWM_H_INCLUDE__ */
