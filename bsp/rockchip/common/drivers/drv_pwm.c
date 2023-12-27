@@ -230,6 +230,27 @@ rt_err_t rockchip_pwm_control(struct rt_device_pwm *device, int cmd, void *arg)
 #endif
         pwm->is_int_enable = false;
         break;
+#if defined(RKMCU_RK2118)
+    case PWM_CMD_CNT_ENABLE:
+        clk_enable(pwm->clk_gate);
+        ret = HAL_PWM_EnableCounter(pPWM, config->channel);
+        break;
+    case PWM_CMD_CNT_DISABLE:
+        ret = HAL_PWM_DisableCounter(pPWM, config->channel);
+        HAL_PWM_ClearCounterRes(pPWM, config->channel);
+        clk_disable(pwm->clk_gate);
+        break;
+    case PWM_CMD_GET_CNT_RES:
+        ret = HAL_PWM_GetCounterRes(pPWM, config->channel, &config->count);
+        break;
+    case PWM_CMD_SET_FREQ:
+        clk_enable(pwm->clk_gate);
+        HAL_PWM_EnableFreqMeter(pPWM, config->channel, config->delay);
+        ret = HAL_PWM_GetFreqMeterRes(pPWM, config->channel, config->delay, &config->freqency);
+        HAL_PWM_DisableFreqMeter(pPWM, config->channel);
+        clk_disable(pwm->clk_gate);
+        break;
+#endif
     default:
         break;
     }
