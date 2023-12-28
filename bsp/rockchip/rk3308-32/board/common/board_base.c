@@ -254,7 +254,7 @@ void rt_hw_board_init(void)
 
     /* initialize hardware interrupt */
 #ifndef RT_USING_SMP
-    //HAL_GIC_Init(&irqConfig);
+    HAL_GIC_Init(&irqConfig);
 #endif
     rt_hw_interrupt_init();
 

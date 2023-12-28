@@ -20,6 +20,9 @@
 			thumb        = <0>;      // 0: arm or thumb2; 1: thumb
 			hyp          = <0>;      // 0: el1/svc; 1: el2/hyp
 			load         = <0x02600000>;
+			size         = <0x00900000>;
+			srambase     = <0xfffb0000>;
+			sramsize     = <0x00010000>;
 			udelay       = <10000>;
 			hash {
 				algo = "sha256";
@@ -36,6 +39,9 @@
 			thumb        = <0>;
 			hyp          = <0>;
 			load         = <0x00800000>;
+			size         = <0x00a00000>;
+			srambase     = <0xfff88000>;
+			sramsize     = <0x00008000>;
 			udelay       = <10000>;
 			hash {
 				algo = "sha256";
@@ -52,6 +58,9 @@
 			thumb        = <0>;
 			hyp          = <0>;
 			load         = <0x01200000>;
+			size         = <0x00a00000>;
+			srambase     = <0xfff90000>;
+			sramsize     = <0x00010000>;
 			udelay       = <10000>;
 			hash {
 				algo = "sha256";
@@ -68,11 +77,19 @@
 			thumb        = <0>;
 			hyp          = <0>;
 			load         = <0x01c00000>;
+			size         = <0x00a00000>;
+			srambase     = <0xfffa0000>;
+			sramsize     = <0x00010000>;
 			udelay       = <10000>;
 			hash {
 				algo = "sha256";
 			};
 		};
+	};
+
+	share_memory {
+		base         = <0x02f00000>;
+		size         = <0x00100000>;
 	};
 
 	configurations {
