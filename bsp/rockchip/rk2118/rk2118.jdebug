@@ -203,8 +203,8 @@ void AfterTargetReset (void) {
 void AfterTargetDownload (void) {
   _SetupTarget();
   //Target.WriteU32(0xE000ED8C, 0x00000c00);
-  Target.LoadMemory("/workspace/rockchip/rtt/v4.1.x/bsp/rockchip/rk2118/rtthread.bin", 0x260000);
-  //Target.LoadMemory("/workspace/rockchip/rtt/v4.1.x/bsp/rockchip/common/hal/project/rk2118/GCC/TestDemo.bin", 0x260000);
+  Target.LoadMemory("/workspace/rockchip/rtt/v4.1.x/bsp/rockchip/rk2118/rtthread.bin", 0x220000);
+  //Target.LoadMemory("/workspace/rockchip/rtt/v4.1.x/bsp/rockchip/common/hal/project/rk2118/GCC/TestDemo.bin", 0x220000);
   Project.AddPathSubstitute("/home/rk/sdk", "/workspace/rockchip/rtt");
 }
 
