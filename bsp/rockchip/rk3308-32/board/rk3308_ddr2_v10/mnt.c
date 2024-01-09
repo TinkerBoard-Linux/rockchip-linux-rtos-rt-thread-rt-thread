@@ -56,7 +56,7 @@
 const struct dfs_mount_tbl mount_table[] =
 {
 #if defined(RT_USING_SDIO0) && defined(RT_SDCARD_MOUNT_POINT)
-    {"sd0", RT_SDCARD_MOUNT_POINT, "elm", 0, 0},
+    {"sd0p4", RT_SDCARD_MOUNT_POINT, "elm", 0, 0},
 #else
     {PARTITION_ROOT, "/", "elm", 0, 0},
 #endif
