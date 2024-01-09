@@ -459,7 +459,7 @@ rt_int32_t rt_mmcsd_blk_probe(struct rt_mmcsd_card *card)
 
         for (i = 0; i < RT_MMCSD_MAX_PARTITION; i++)
         {
-            /* get the first partition */
+            /* get the specified partition */
             status = dfs_filesystem_get_partition(&part, sector, 8, i);
             if (status == RT_EOK)
             {

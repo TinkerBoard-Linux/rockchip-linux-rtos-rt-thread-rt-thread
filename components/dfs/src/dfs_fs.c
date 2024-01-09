@@ -194,14 +194,16 @@ static int dfs_filesystem_get_gpt_partition(struct dfs_partition *part,
 
     /* check gpt main header */
     gpt_head = (gpt_header *)(&buf[512]);
-    if (gpt_head->signature != 0x4546492050415254 || gpt_head->my_lba == 1)
+    if (gpt_head->signature != 0x5452415020494645 || gpt_head->my_lba != 1) {
         return -EIO;
+    }
 
     /* get partition table LBA */
     gpt_table_begin = gpt_head->partition_entry_lba;
     index = ((gpt_table_begin + pindex / 4) * 512) + ((pindex % 4) * 128);
-    if (index >= sect_count)
+    if (index >= (sect_count * 512)) {
         return -EIO;
+    }
 
     gpt_ent = (gpt_entry *)(&buf[index]);
 
@@ -209,8 +211,12 @@ static int dfs_filesystem_get_gpt_partition(struct dfs_partition *part,
     part->type = 0x0B;
     part->offset = gpt_ent->starting_lba;
     part->size = gpt_ent->ending_lba - gpt_ent->starting_lba;
+    rt_kprintf("pindex=%d, name=%s, offset=%d, size=%d\n", pindex, gpt_ent->partition_name, part->offset, part->size);
 
-    return RT_EOK;
+    if (part->size != 0)
+        return RT_EOK;
+    else
+        return -RT_ERROR;
 }
 
 /**
@@ -237,6 +243,12 @@ int dfs_filesystem_get_partition(struct dfs_partition *part,
     RT_ASSERT(part != NULL);
     RT_ASSERT(buf != NULL);
 
+    /* check gpt partion */
+    dpt = buf + DPT_ADDRESS + 4;
+    type = *dpt;
+    if (type == 0xee)
+        return dfs_filesystem_get_gpt_partition(part, buf, sect_count, pindex);
+
     dpt = buf + DPT_ADDRESS + pindex * DPT_ITEM_SIZE;
 
     /* check if it is a valid partition table */
@@ -247,9 +259,6 @@ int dfs_filesystem_get_partition(struct dfs_partition *part,
     type = *(dpt + 4);
     if (type == 0)
         return -EIO;
-
-    if (type == 0xee)
-        return dfs_filesystem_get_gpt_partition(part, buf, sect_count, pindex);
 
     /* set partition information
      *    size is the number of 512-Byte */
