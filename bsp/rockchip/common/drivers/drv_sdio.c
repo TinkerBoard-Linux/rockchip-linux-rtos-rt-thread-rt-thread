@@ -158,6 +158,22 @@ static int rk_mmc_read_pio(struct mmc_driver *mmc_drv)
     return 0;
 }
 
+static void rk_mmc_control_power(struct mmc_driver *mmc_drv, bool on)
+{
+    struct HAL_MMC_HOST *hal_host = (struct HAL_MMC_HOST *)mmc_drv->priv;
+    struct rk_mmc_platform_data *pdata = mmc_drv->pdata;
+
+    if (!pdata->is_pwr_gpio)
+    {
+        HAL_MMC_PowerCtrl(hal_host, on);
+    }
+    else
+    {
+        HAL_GPIO_SetPinDirection(pdata->pwr_gpio, pdata->pwr_gpio_pin, GPIO_OUT);
+        HAL_GPIO_SetPinLevel(pdata->pwr_gpio, pdata->pwr_gpio_pin,
+                             on ? GPIO_HIGH : GPIO_LOW);
+    }
+}
 static void rk_mmc_set_iocfg(struct rt_mmcsd_host *host, struct rt_mmcsd_io_cfg *io_cfg)
 {
     rt_uint32_t clkdiv = 0;
@@ -208,10 +224,10 @@ static void rk_mmc_set_iocfg(struct rt_mmcsd_host *host, struct rt_mmcsd_io_cfg 
     switch (io_cfg->power_mode)
     {
     case MMCSD_POWER_OFF:
-        HAL_MMC_PowerCtrl(hal_host, false);
+        rk_mmc_control_power(mmc_drv, false);
         break;
     case MMCSD_POWER_UP:
-        HAL_MMC_PowerCtrl(hal_host, true);
+        rk_mmc_control_power(mmc_drv, true);
         break;
     case MMCSD_POWER_ON:
         break;
@@ -856,6 +872,7 @@ int rk_mmc_probe(struct rk_mmc_platform_data *pdata)
     rt_memset(mmc_drv, 0, sizeof(struct mmc_driver));
 
     mmc_drv->priv = hal_host;
+    mmc_drv->pdata = pdata;
 
     host = mmcsd_alloc_host();
     if (!host)
@@ -919,7 +936,7 @@ int rk_mmc_init(void)
 {
     int i;
     struct rk_mmc_platform_data *pdata;
-    struct clk_gate *clkgate;
+    struct clk_gate *clkgate = NULL;
 
     for (i = 0; i < MAX_ID_NUM; i++)
     {
@@ -930,10 +947,17 @@ int rk_mmc_init(void)
         rt_kprintf("base = 0x%x, irq = %d\n", pdata->base, pdata->irq);
         /* Adjust input card clock, and we have a hardware divider 2 */
         clk_set_rate(pdata->clk_id, pdata->freq_max * 2);
-        clkgate = get_clk_gate_from_id(HCLK_SDIO_GATE);
-        clk_enable(clkgate);
-        clkgate = get_clk_gate_from_id(CLK_SDIO_GATE);
-        clk_enable(clkgate);
+
+        if (pdata->hclk_gate)
+            clkgate = get_clk_gate_from_id(pdata->hclk_gate);
+        if (clkgate)
+            clk_enable(clkgate);
+
+        if (pdata->clk_gate)
+            clkgate = get_clk_gate_from_id(pdata->clk_gate);
+        if (clkgate)
+            clk_enable(clkgate);
+
         rk_mmc_probe(pdata);
     }
     return 0;
