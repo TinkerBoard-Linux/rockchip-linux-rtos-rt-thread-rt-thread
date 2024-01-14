@@ -21,17 +21,11 @@ extern uint32_t psa_framework_version(void);
 
 void test_reg_read(void)
 {
-    uint32_t value0, value1, value2;
-    uint32_t start, time0, time1, time2;
+    uint32_t value1, value2;
+    uint32_t start, time1, time2;
 
     for (int i = 0; i < 100; i++)
     {
-        start = SysTick->VAL;
-#ifdef INTMUX0
-        value0 = INTMUX0->IRQ_FINALSTATUS_L;
-#endif
-        time0 = start - SysTick->VAL;
-
         start = SysTick->VAL;
         value1 = SAI0->VERSION;
         time1 = start - SysTick->VAL;
@@ -40,8 +34,8 @@ void test_reg_read(void)
         value2 = TIMER0->CURRENT_VALUE[0];
         time2 = start - SysTick->VAL;
 
-        rt_kprintf("read register latency: %d(value=0x%x), %d(value=0x%x), %d(value=0x%x)\n",
-                   time0, value0, time1, value1, time2, value2);
+        rt_kprintf("read register latency: %d(value=0x%x), %d(value=0x%x)\n",
+                   time1, value1, time2, value2);
     }
 }
 
@@ -55,7 +49,7 @@ int main(void)
     //test_reg_read();
 
     __asm volatile("vldr d7, %0" : : "m"(g_double) :);
-    tfm_ns_interface_init();
-    psa_framework_version();
+    //tfm_ns_interface_init();
+    //psa_framework_version();
     return 0;
 }
