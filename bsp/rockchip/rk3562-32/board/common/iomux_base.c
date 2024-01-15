@@ -64,6 +64,22 @@ RT_WEAK void gmac0_m0_iomux_config(void)
 #endif
 #endif
 
+#ifdef RT_USING_SNOR_FSPI_HOST
+RT_WEAK  void fspi_iomux_config(void)
+{
+    HAL_PINCTRL_SetIOMUX(GPIO_BANK1,
+                         GPIO_PIN_A0 |
+                         GPIO_PIN_A1 |
+                         GPIO_PIN_A2 |
+                         GPIO_PIN_A3,
+                         PIN_CONFIG_MUX_FUNC2);
+    HAL_PINCTRL_SetIOMUX(GPIO_BANK1,
+                         GPIO_PIN_B0 |
+                         GPIO_PIN_B1,
+                         PIN_CONFIG_MUX_FUNC2);
+}
+#endif
+
 /**
  * @brief  Config iomux for RK3562
  */
@@ -71,5 +87,8 @@ RT_WEAK  void rt_hw_iomux_config(void)
 {
 #ifdef RT_USING_UART0
     uart0_m0_iomux_config();
+#endif
+#ifdef RT_USING_SNOR_FSPI_HOST
+    fspi_iomux_config();
 #endif
 }

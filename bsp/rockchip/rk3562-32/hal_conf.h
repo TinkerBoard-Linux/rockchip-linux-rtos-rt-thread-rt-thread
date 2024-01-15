@@ -76,9 +76,9 @@
 #endif
 
 #ifdef RT_USING_SNOR
-#define HAL_SFC_MODULE_ENABLED
 #define HAL_SNOR_MODULE_ENABLED
-#define HAL_SNOR_SFC_HOST
+#define HAL_FSPI_MODULE_ENABLED
+#define HAL_FSPI_DMA_ENABLED
 #endif
 
 #ifdef RT_USING_SPI
