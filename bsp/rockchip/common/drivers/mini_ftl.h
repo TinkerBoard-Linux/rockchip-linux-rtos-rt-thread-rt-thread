@@ -17,10 +17,17 @@
 #ifndef MINI_FTL_H__
 #define MINI_FTL_H__
 
-int mftl_mtd_read(rt_mtd_t *mtd, loff_t from, struct mtd_io_desc *ops);
-int mftl_mtd_write(rt_mtd_t *mtd, loff_t to, struct mtd_io_desc *ops);
-int mftl_mtd_erase(rt_mtd_t *mtd, loff_t addr, size_t len);
+struct mtd_part
+{
+    const char *name;           /* name of the MTD partion */
+    rt_uint32_t offset;              /* start addr of partion */
+    rt_uint32_t size;                /* size of partion */
+};
 
-int mini_ftl_register(struct mtd_info *mtd);
+int mftl_mtd_read(rt_mtd_nand_t mtd, rt_uint8_t *data_buf, rt_uint32_t from, rt_uint32_t length);
+int mftl_mtd_write(rt_mtd_nand_t mtd, rt_uint32_t to, const rt_uint8_t *data_buf, rt_uint32_t length);
+int mftl_mtd_erase(rt_mtd_nand_t mtd, rt_uint32_t addr, size_t len);
+
+int mini_ftl_register(rt_mtd_nand_t mtd);
 
 #endif

@@ -703,7 +703,7 @@ endmenu
 
 menuconfig RT_USING_SPINAND
     bool "Enable ROCKCHIP SPI Nand Flash"
-    select RT_USING_MTD
+    select RT_USING_MTD_NAND
     default n
 
 if RT_USING_SPINAND

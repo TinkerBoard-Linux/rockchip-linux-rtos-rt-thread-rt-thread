@@ -73,7 +73,7 @@
 
 // #define DHARA_RANDOM_TEST
 
-#define MTD_TO_SPINAND(mtd) ((struct SPI_NAND *)mtd->priv)
+#define MTD_TO_SPINAND(mtd) ((struct SPI_NAND *)(mtd->priv))
 
 /** @} */  // SPINAND_Private_Macro
 
@@ -84,44 +84,81 @@
 
 static struct rt_mutex spinand_lock;
 
-int spinand_read(rt_mtd_t *mtd, loff_t from, struct mtd_io_desc *ops)
+rt_err_t spinand_read(rt_mtd_nand_t mtd, rt_off_t page,
+                      rt_uint8_t *data, rt_uint32_t data_len,
+                      rt_uint8_t *spare, rt_uint32_t spare_len)
 {
+    struct SPI_NAND *spinand = MTD_TO_SPINAND(mtd);
     int ret;
 
-    spinand_dbg("%s addr= %lx len= %x %p\n", __func__, (uint32_t)from, (uint32_t)ops->datlen, ops->datbuf);
+    if (spare || spare_len)
+    {
+        rt_kprintf("%s oob is not supported\n", __func__);
+        return -RT_EINVAL;
+    }
 
+    if (!data || data_len != mtd->page_size)
+    {
+        rt_kprintf("%s data param input invalid, %p %d\n", __func__, data, data_len);
+        return -RT_EINVAL;
+    }
+
+    spinand_dbg("%s addr= %lx len= %x\n", __func__, (uint32_t)page, data_len);
     rt_mutex_take(&spinand_lock, RT_WAITING_FOREVER);
-    ret = mftl_mtd_read(mtd, from, ops);
+    ret = HAL_SPINAND_ReadPageRaw(spinand, page, data, false);
+    if (ret < 0)
+        return 0;
+
+    if (ret == SPINAND_ECC_ERROR)
+    {
+        rt_kprintf("%s addr %lx ret= %d\n", __func__, page, ret);
+    }
     rt_mutex_release(&spinand_lock);
 
     return ret;
 }
 
-int spinand_write(rt_mtd_t *mtd, loff_t to, struct mtd_io_desc *ops)
+rt_err_t spinand_write(rt_mtd_nand_t mtd, rt_off_t page,
+                       const rt_uint8_t *data, rt_uint32_t data_len,
+                       const rt_uint8_t *spare, rt_uint32_t spare_len)
 {
+    struct SPI_NAND *spinand = MTD_TO_SPINAND(mtd);
     int ret;
 
-    spinand_dbg("%s addr= %lx len= %x\n", __func__, (uint32_t)to, (uint32_t)ops->datlen);
+    if (spare && spare_len)
+    {
+        rt_kprintf("%s oob is not supported\n", __func__);
+        return -RT_EINVAL;
+    }
+
+    if (!data || data_len != mtd->page_size)
+    {
+        rt_kprintf("%s data param input invalid, %p %d\n", __func__, data, data_len);
+        return -RT_EINVAL;
+    }
+
+    spinand_dbg("%s addr= %lx len= %x\n", __func__, (uint32_t)page, data_len);
     rt_mutex_take(&spinand_lock, RT_WAITING_FOREVER);
-    ret = mftl_mtd_write(mtd, to, ops);
+    ret = HAL_SPINAND_ProgPageRaw(spinand, page, (uint32_t *)data, false);
     rt_mutex_release(&spinand_lock);
 
     return ret;
 }
 
-int spinand_erase(rt_mtd_t *mtd, loff_t addr, size_t len)
+rt_err_t spinand_erase(rt_mtd_nand_t mtd, rt_uint32_t block)
 {
+    struct SPI_NAND *spinand = MTD_TO_SPINAND(mtd);
     int ret;
 
-    spinand_dbg("%s addr= %lx len= %lx\n", __func__, (uint32_t)addr, (uint32_t)len);
+    spinand_dbg("%s addr= %lx\n", __func__, block);
     rt_mutex_take(&spinand_lock, RT_WAITING_FOREVER);
-    ret = mftl_mtd_erase(mtd, addr, len);
+    ret = HAL_SPINAND_EraseBlock(spinand, block * mtd->pages_per_block);
     rt_mutex_release(&spinand_lock);
 
     return ret;
 }
 
-int spinand_isbad(rt_mtd_t *mtd, uint32_t block)
+rt_err_t spinand_isbad(rt_mtd_nand_t mtd, rt_uint32_t block)
 {
     struct SPI_NAND *spinand = MTD_TO_SPINAND(mtd);
     int32_t ret = RT_EOK;
@@ -134,7 +171,7 @@ int spinand_isbad(rt_mtd_t *mtd, uint32_t block)
     return ret;
 }
 
-int spinand_markbad(rt_mtd_t *mtd, uint32_t block)
+rt_err_t spinand_markbad(rt_mtd_nand_t mtd, rt_uint32_t block)
 {
     struct SPI_NAND *spinand = MTD_TO_SPINAND(mtd);
     int32_t ret = RT_EOK;
@@ -147,11 +184,13 @@ int spinand_markbad(rt_mtd_t *mtd, uint32_t block)
     return ret;
 }
 
-static const struct mtd_ops ops =
+static const struct rt_mtd_nand_driver_ops ops =
 {
-    spinand_erase,
+    NULL,
     spinand_read,
     spinand_write,
+    NULL,
+    spinand_erase,
     spinand_isbad,
     spinand_markbad,
 };
@@ -243,7 +282,7 @@ static int rockchip_sfc_delay_lines_tuning(struct SPI_NAND *spinand, struct rt_f
 
 RT_WEAK struct rt_fspi_device g_fspi_spinand =
 {
-    .host_id = 0,
+    .host_id = 1,
     .dev_type = DEV_SPINAND,
     .chip_select = 0,
 };
@@ -833,19 +872,19 @@ void seq_gen(unsigned int seed, uint8_t *buf, size_t length)
 {
     size_t i;
 
-    srandom(seed);
+    srand(seed);
     for (i = 0; i < length; i++)
-        buf[i] = random();
+        buf[i] = rand();
 }
 
 void seq_assert(unsigned int seed, const uint8_t *buf, size_t length)
 {
     size_t i;
 
-    srandom(seed);
+    srand(seed);
     for (i = 0; i < length; i++)
     {
-        const uint8_t expect = random();
+        const uint8_t expect = rand();
 
         if (buf[i] != expect)
         {
@@ -889,13 +928,13 @@ static void shuffle(int seed)
 {
     int i;
 
-    srandom(seed);
+    srand(seed);
     for (i = 0; i < NUM_SECTORS; i++)
-        sector_list[i] = random() % MAX_SECTORS;
+        sector_list[i] = rand() % MAX_SECTORS;
 
     for (i = NUM_SECTORS - 1; i > 0; i--)
     {
-        const int j = random() % i;
+        const int j = rand() % i;
         const int tmp = sector_list[i];
 
         sector_list[i] = sector_list[j];
@@ -903,7 +942,7 @@ static void shuffle(int seed)
     }
 }
 
-static int dhara_random_test(struct dhara_map *m, int seed)
+static int dhara_rand_test(struct dhara_map *m, int seed)
 {
     int i, loop = 0;
     int a, b, c, d;
@@ -1005,13 +1044,16 @@ static int dhara_register(struct dhara_device *dhara_dev)
     }
     dhara_dev->sector_size = dhara_dev->nand.page_size;
     dhara_dev->capacity = dhara_map_capacity(map);
+    rt_kprintf("  log2_page_size: %d\n", dhara_dev->nand.log2_page_size);
+    rt_kprintf("  log2_ppb: %d\n", dhara_dev->nand.log2_ppb);
     rt_kprintf("  num_blocks: %d\n", dhara_dev->nand.num_blocks);
     rt_kprintf("  sector_size: %d\n", dhara_dev->sector_size);
+    rt_kprintf("  page_per_block: %d\n", dhara_dev->nand.page_per_block);
     rt_kprintf("  capacity(sec): %d\n", dhara_dev->capacity);
     rt_kprintf("  capacity(MB): %d\n", dhara_dev->capacity * dhara_dev->sector_size / 1024 / 1024);
     rt_kprintf("  use count: %d\n", dhara_map_size(map));
 #ifdef DHARA_RANDOM_TEST
-    dhara_random_test(map, dhara_map_size(map));
+    dhara_rand_test(map, dhara_map_size(map));
 #endif
 
     part_num = HAL_ARRAY_SIZE(default_part);
@@ -1044,12 +1086,6 @@ exit:
 }
 #endif /* #ifdef RT_USING_DHARA */
 
-/* define partitions to it, mtd_spinand reserved for spi nand dev */
-struct mtd_part spinand_parts[1] =
-{
-    { "spinand0", 0, 0, },
-};
-
 /**
  * @brief  Init SPI_NAND framwork and apply to use.
  * @attention The SPI_NAND will be enabled when board initialization, do not
@@ -1057,7 +1093,7 @@ struct mtd_part spinand_parts[1] =
  */
 int rt_hw_spinand_init(void)
 {
-    struct mtd_info *mtd_dev;
+    struct rt_mtd_nand_device *mtd_dev;
     struct SPI_NAND *spinand;
     struct SPI_NAND_HOST *spi;
     int32_t ret;
@@ -1065,7 +1101,7 @@ int rt_hw_spinand_init(void)
     struct dhara_device *dhara_dev;
 #endif
 
-    mtd_dev = (struct mtd_info *)rt_calloc(1, sizeof(*mtd_dev));
+    mtd_dev = (struct rt_mtd_nand_device *)rt_calloc(1, sizeof(*mtd_dev));
     RT_ASSERT(mtd_dev);
     spinand = (struct SPI_NAND *)rt_calloc(1, sizeof(*spinand));
     RT_ASSERT(spinand);
@@ -1088,44 +1124,41 @@ int rt_hw_spinand_init(void)
     }
 
     /* register mtd spinand */
-    mtd_dev->sector_size     = spinand->secPerPage * SPINAND_SECTOR_SIZE;
-    mtd_dev->writesize_shift = __rt_ffs(mtd_dev->sector_size) - 1;
-    mtd_dev->writesize_mask  = mtd_dev->sector_size - 1;
-    mtd_dev->block_size      = mtd_dev->sector_size  * spinand->pagePerBlk;
-    mtd_dev->erasesize_shift = __rt_ffs(mtd_dev->block_size) - 1;
-    mtd_dev->erasesize_mask  = mtd_dev->block_size - 1;
+    mtd_dev->page_size       = spinand->secPerPage * SPINAND_SECTOR_SIZE;
     mtd_dev->oob_size        = spinand->secPerPage * 16;
-    mtd_dev->oob_avail        = spinand->secPerPage * 2;
-    mtd_dev->offset          = 0;
-    mtd_dev->size            = spinand->size;
-    mtd_dev->priv            = spinand;
+    mtd_dev->oob_free        = spinand->secPerPage * 2;
+    mtd_dev->plane_num       = spinand->planePerDie;
+    mtd_dev->pages_per_block = spinand->pagePerBlk;
+    mtd_dev->block_total     = spinand->blkPerPlane * spinand->planePerDie;
+    mtd_dev->block_start     = 0;
+    mtd_dev->block_end       = mtd_dev->block_total;
     mtd_dev->ops             = &ops;
+    mtd_dev->priv            = spinand;
 
-    spinand_dbg("sector_size %lx\n", mtd_dev->sector_size);
-    spinand_dbg("writesize_shift %lx\n", mtd_dev->writesize_shift);
-    spinand_dbg("writesize_mask %lx\n", mtd_dev->writesize_mask);
-    spinand_dbg("block_size %lx\n", mtd_dev->block_size);
-    spinand_dbg("erasesize_shift %lx\n", mtd_dev->erasesize_shift);
-    spinand_dbg("erasesize_mask %lx\n", mtd_dev->erasesize_mask);
+    spinand_dbg("page_size %lx\n", mtd_dev->page_size);
     spinand_dbg("oob_size %lx\n", mtd_dev->oob_size);
-    spinand_dbg("oob_avail %lx\n", mtd_dev->oob_avail);
-    spinand_dbg("size %lx\n", mtd_dev->size);
+    spinand_dbg("oob_free %lx\n", mtd_dev->oob_free);
+    spinand_dbg("plane_num %lx\n", mtd_dev->plane_num);
+    spinand_dbg("pages_per_block %lx\n", mtd_dev->pages_per_block);
+    spinand_dbg("block_total %lx\n", mtd_dev->block_total);
+    spinand_dbg("block_start %lx\n", mtd_dev->block_start);
+    spinand_dbg("block_end %lx\n", mtd_dev->block_end);
 
-    spinand_parts[0].size   = (uint32_t)mtd_dev->size;
-
-    ret = rt_mtd_register(mtd_dev, (const struct mtd_part *)spinand_parts, HAL_ARRAY_SIZE(spinand_parts));
+    ret = rt_mtd_nand_register_device("spinand0", mtd_dev);
     if (ret < 0)
     {
         rt_kprintf("rt_mtd_register register fail %d\n", ret);
         goto exit;
     }
 
+#ifdef RT_USING_MINI_FTL
     ret = mini_ftl_register(mtd_dev);
     if (ret < 0)
     {
         rt_kprintf("mini_ftl_register register fail %d\n", ret);
         goto exit;
     }
+#endif
 
 #ifdef RT_USING_DHARA
     spinand->pageBuf = rt_calloc(1, spinand->secPerPage * SPINAND_SECTOR_FULL_SIZE);
@@ -1133,11 +1166,11 @@ int rt_hw_spinand_init(void)
 
     dhara_dev = (struct dhara_device *)rt_calloc(1, sizeof(*dhara_dev));
     RT_ASSERT(dhara_dev);
-    dhara_dev->nand.log2_page_size = log(spinand->secPerPage) + 9;
-    dhara_dev->nand.log2_ppb = log(spinand->pagePerBlk);
-    dhara_dev->nand.num_blocks = spinand->blkPerPlane * spinand->planePerDie;
-    dhara_dev->nand.page_size = 1 << dhara_dev->nand.log2_page_size;
-    dhara_dev->nand.page_per_block = spinand->pagePerBlk;
+    dhara_dev->nand.log2_page_size = __rt_ffs(mtd_dev->page_size) - 1;
+    dhara_dev->nand.log2_ppb = __rt_ffs(mtd_dev->pages_per_block) - 1;
+    dhara_dev->nand.num_blocks = mtd_dev->block_total;
+    dhara_dev->nand.page_size = mtd_dev->page_size;
+    dhara_dev->nand.page_per_block = mtd_dev->pages_per_block;
     dhara_dev->nand.priv_data = spinand;
     ret = dhara_register(dhara_dev);
     if (ret < 0)
