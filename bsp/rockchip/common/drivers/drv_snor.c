@@ -13,7 +13,6 @@
   * 2019-06-27     Dingqiang Lin   support FSPI
   * 2019-08-02     Dingqiang Lin   support SPI
   * 2020-09-23     Dingqiang Lin   Support scan and attach two independent spi nor
-  * 2023-12-16     Dingqiang Lin   Support Octal SPI DTR Nor flash and poll status
   *
   ******************************************************************************
   */
@@ -60,7 +59,6 @@
  *  @{
  */
 
-// #define SNOR_DEBUG
 #ifdef SNOR_DEBUG
 #define SNOR_DBG(...)     rt_kprintf(__VA_ARGS__)
 #else
@@ -91,86 +89,13 @@ static const struct rt_mtd_nor_driver_ops snor_mtd_ops;
  */
 
 #ifdef RT_USING_SNOR_FSPI_HOST
-
-static void fspi_snor_isr(int irq, void *param)
-{
-    struct spiflash_device *spiflash = &s_spiflash[0];
-    struct HAL_FSPI_HOST *host = (struct HAL_FSPI_HOST *)spiflash->nor.spi->userdata;
-
-    if (HAL_FSPI_IsPollFinished(host) == HAL_OK)
-    {
-        // rt_kprintf("%s poll finished\n", __func__);
-        rt_completion_done(&spiflash->done);
-    }
-
-    HAL_FSPI_IRQHelper(host);
-}
-
 static HAL_Status fspi_xfer(struct SNOR_HOST *spi, struct HAL_SPI_MEM_OP *op)
 {
-    struct spiflash_device *spiflash = &s_spiflash[0];
-    struct SPI_NOR *nor = &spiflash->nor;
     struct HAL_FSPI_HOST *host = (struct HAL_FSPI_HOST *)spi->userdata;
-    HAL_Status ret;
 
     host->mode = spi->mode;
     host->cs = 0;
-
-    if (nor->poll)
-    {
-        if (op->data.poll)
-        {
-            /*
-             * The progress of polling status with XIP hand up:
-             *   1. Re-enable XIP
-             *   2. Enable HW Polling and XIP hand up
-             *   3. Re-enable irq
-             *   4. Nor operation waiting for polling status isr
-             *   5. At the same time, the system supports rotating scheduling
-             */
-            if (!spiflash->xip_resumed)
-            {
-                HAL_FSPI_XmmcRequest(host, true);
-                spiflash->xip_resumed = true;
-            }
-            ret = HAL_FSPI_SpiXferHWPolling(host, op);
-            if (ret)
-            {
-                return ret;
-            }
-            if (!spiflash->irq_resumed)
-            {
-                rt_hw_interrupt_enable(spiflash->level);
-                spiflash->irq_resumed = true;
-            }
-            ret = rt_completion_wait(&spiflash->done, rt_tick_from_millisecond(1000));
-            if (ret != RT_EOK)
-            {
-                rt_kprintf("%s timer out \n", __func__);
-                HAL_FSPI_IRQHelper(host);
-            }
-        }
-        else
-        {
-            if (spiflash->irq_resumed)
-            {
-                spiflash->level = rt_hw_interrupt_disable();
-                spiflash->irq_resumed = false;
-            }
-            if (spiflash->xip_resumed)
-            {
-                HAL_FSPI_XmmcRequest(host, false);
-                spiflash->xip_resumed = false;
-            }
-            ret = HAL_FSPI_SpiXfer(host, op);
-        }
-    }
-    else
-    {
-        ret = HAL_FSPI_SpiXfer(host, op);
-    }
-
-    return ret;
+    return HAL_FSPI_SpiXfer(host, op);
 }
 
 #ifdef HAL_FSPI_XIP_ENABLE
@@ -178,7 +103,6 @@ static HAL_Status fspi_xip_config(struct SNOR_HOST *spi, struct HAL_SPI_MEM_OP *
 {
     struct HAL_FSPI_HOST *host = (struct HAL_FSPI_HOST *)spi->userdata;
 
-    host->mode = spi->mode;
     host->cs = 0;
     if (op)
     {
@@ -207,11 +131,7 @@ static uint32_t fspi_snor_adapt(struct SPI_NOR *nor)
     {
         nor->spi->speed = SNOR_SPEED_DEFAULT;
     }
-#ifdef IS_FPGA
-    nor->spi->speed = 24000000;
-#else
     HAL_CRU_ClkSetFreq(host->sclkID, nor->spi->speed);
-#endif
 
     host->xmmcDev[0].type = DEV_NOR;
     HAL_FSPI_Init(host);
@@ -255,20 +175,12 @@ static uint32_t fspi_snor_adapt(struct SPI_NOR *nor)
         }
     }
 
-#ifdef RT_SNOR_DUAL_IO
-    nor->spi->mode |= HAL_SPI_RX_DUAL;
-#else
-#if (FSPI_VER == 0x70011U)
-    nor->spi->mode |= (HAL_SPI_TX_QUAD | HAL_SPI_RX_QUAD | HAL_SPI_TX_OCTAL | HAL_SPI_RX_OCTAL | HAL_SPI_DTR | HAL_SPI_DQS);
-#else
+#ifndef RT_SNOR_DUAL_IO
     nor->spi->mode |= (HAL_SPI_TX_QUAD | HAL_SPI_RX_QUAD);
+#else
+    nor->spi->mode |= HAL_SPI_RX_DUAL;
 #endif
-#endif
-
 #ifdef HAL_FSPI_XIP_ENABLE
-#if (FSPI_VER == 0x70011U)
-    nor->spi->mode |= HAL_SPI_POLL;
-#endif
     nor->spi->mode |= HAL_SPI_XIP;
     nor->spi->xipConfig = fspi_xip_config;
     nor->spi->xipMem = host->xipMemData;
@@ -282,12 +194,6 @@ static uint32_t fspi_snor_adapt(struct SPI_NOR *nor)
         HAL_SNOR_XIPEnable(nor);
     }
     rt_hw_interrupt_enable(level);
-
-    if (nor->poll)
-    {
-        rt_hw_interrupt_install(host->irqNum, (void *)fspi_snor_isr, RT_NULL, RT_NULL);
-        rt_hw_interrupt_umask(host->irqNum);
-    }
 
     return ret;
 }
@@ -470,8 +376,6 @@ static int snor_init(uint8_t dev_id, char *name, enum spiflash_host type)
         RT_ASSERT(0);
     }
 
-    rt_completion_init(&spiflash->done);
-
     /* dev setting */
     mtd_dev->ops = &snor_mtd_ops;
     mtd_dev->block_size   = nor->sectorSize;
@@ -505,9 +409,7 @@ rt_err_t rk_snor_xip_suspend(void)
     if (spiflash->nor.spi->mode & HAL_SPI_XIP)
     {
         spiflash->level = rt_hw_interrupt_disable();
-        spiflash->irq_resumed = false;
         HAL_SNOR_XIPDisable(&spiflash->nor);
-        spiflash->xip_resumed = false;
     }
 #endif
 
@@ -524,16 +426,8 @@ rt_err_t rk_snor_xip_resume(void)
 
     if (spiflash->nor.spi->mode & HAL_SPI_XIP)
     {
-        if (!spiflash->xip_resumed)
-        {
-            HAL_SNOR_XIPEnable(&spiflash->nor);
-            spiflash->xip_resumed = true;
-        }
-        if (!spiflash->irq_resumed)
-        {
-            rt_hw_interrupt_enable(spiflash->level);
-            spiflash->irq_resumed = true;
-        }
+        HAL_SNOR_XIPEnable(&spiflash->nor);
+        rt_hw_interrupt_enable(spiflash->level);
     }
 #endif
 
