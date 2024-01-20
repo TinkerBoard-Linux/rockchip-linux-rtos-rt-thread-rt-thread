@@ -106,6 +106,8 @@ static HAL_Status fspi_xfer(struct SNOR_HOST *spi, struct HAL_SPI_MEM_OP *op)
 {
     struct rt_fspi_device *fspi_device = (struct rt_fspi_device *)spi->userdata;
 
+    rt_fspi_set_mode(fspi_device, spi->mode);
+
     xip_dbg('T');
     return rt_fspi_xfer(fspi_device, op);
 }
@@ -114,6 +116,8 @@ static HAL_Status fspi_xfer(struct SNOR_HOST *spi, struct HAL_SPI_MEM_OP *op)
 static HAL_Status fspi_xip_config(struct SNOR_HOST *spi, struct HAL_SPI_MEM_OP *op, uint32_t on)
 {
     struct rt_fspi_device *fspi_device = (struct rt_fspi_device *)spi->userdata;
+
+    rt_fspi_set_mode(fspi_device, spi->mode);
 
     xip_dbg('X');
     return rt_fspi_xip_config(fspi_device, op, on);
@@ -221,6 +225,9 @@ static uint32_t fspi_snor_adapt(struct SPI_NOR *nor)
         return ret;
     }
 
+#ifdef IS_FPGA
+    nor->spi->speed = 24000000;
+#else
     if (RT_SNOR_SPEED > 0 && RT_SNOR_SPEED <= SNOR_SPEED_MAX)
     {
         nor->spi->speed = RT_SNOR_SPEED;
@@ -229,12 +236,12 @@ static uint32_t fspi_snor_adapt(struct SPI_NOR *nor)
     {
         nor->spi->speed = SNOR_SPEED_DEFAULT;
     }
+#endif
     nor->spi->mode = HAL_SPI_MODE_3;
     nor->spi->xfer = fspi_xfer;
     nor->spi->userdata = (void *)fspi_device;
     xip_dbg('1');
     nor->spi->speed = rt_fspi_set_speed(fspi_device, nor->spi->speed);
-    rt_fspi_set_mode(fspi_device, nor->spi->mode);
     xip_dbg('2');
     rt_fspi_controller_init(fspi_device);
 
@@ -251,18 +258,22 @@ static uint32_t fspi_snor_adapt(struct SPI_NOR *nor)
     xip_dbg('4');
 
     /* Devices initialed with XIP */
-#ifndef RT_SNOR_DUAL_IO
-    nor->spi->mode |= (HAL_SPI_TX_QUAD | HAL_SPI_RX_QUAD);
-#else
+#ifdef RT_SNOR_DUAL_IO
     nor->spi->mode |= HAL_SPI_RX_DUAL;
+#else
+#if (FSPI_VER == 0x70011U)
+    nor->spi->mode |= (HAL_SPI_TX_QUAD | HAL_SPI_RX_QUAD | HAL_SPI_TX_OCTAL | HAL_SPI_RX_OCTAL | HAL_SPI_DTR | HAL_SPI_DQS);
+#else
+    nor->spi->mode |= (HAL_SPI_TX_QUAD | HAL_SPI_RX_QUAD);
 #endif
+#endif
+
 #ifdef HAL_FSPI_XIP_ENABLE
     nor->spi->mode |= HAL_SPI_XIP;
     nor->spi->xipConfig = fspi_xip_config;
     nor->spi->xipMem = rt_fspi_get_xip_mem_data_phys(fspi_device);
     nor->spi->xipMemCode = rt_fspi_get_xip_mem_code_phys(fspi_device);
 #endif
-    rt_fspi_set_mode(fspi_device, nor->spi->mode);
 
     /* Init spi nor abstract */
     ret = HAL_SNOR_Init(nor);
@@ -271,6 +282,7 @@ static uint32_t fspi_snor_adapt(struct SPI_NOR *nor)
         xip_dbg('5');
         HAL_SNOR_XIPEnable(nor);
     }
+
     xip_dbg('6');
 
     if (dll_result)
@@ -304,7 +316,7 @@ static uint32_t sfc_snor_adapt(struct SPI_NOR *nor)
     if (HAL_SNOR_Init(nor))
     {
         rt_free(host);
-        return RT_ERROR;
+        return -RT_ERROR;
     }
     else
     {
@@ -559,7 +571,7 @@ rt_err_t snor_read_uuid(struct rt_mtd_nor_device *dev, uint8_t *buf)
     rk_snor_xip_resume();
     rt_mutex_release(&spiflash->lock);
 
-    return ret ? RT_ERROR : RT_EOK;
+    return ret ? -RT_ERROR : RT_EOK;
 }
 
 static rt_err_t snor_mtd_read_id(struct rt_mtd_nor_device *dev)

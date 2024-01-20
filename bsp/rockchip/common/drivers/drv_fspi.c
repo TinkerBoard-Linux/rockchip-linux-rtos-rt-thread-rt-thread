@@ -244,6 +244,7 @@ rt_err_t rt_fspi_xip_config(struct rt_fspi_device *fspi_device, struct HAL_SPI_M
 
     /* Configure FSPI */
     host->cs = fspi_device->chip_select;
+    host->mode = fspi_device->mode;
     if (op)
     {
         HAL_FSPI_XmmcSetting(host, op);
