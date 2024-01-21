@@ -721,6 +721,11 @@ choice
     config RT_USING_SPINAND_FSPI_HOST
         bool "Attach FSPI controller to SPINAND"
 
+    if RT_USING_SPINAND_FSPI_HOST
+    config RT_USING_SPINAND_FSPI_CS1
+        bool "extend fspi cs1 as SPINAND device"
+    endif
+
     config RT_USING_SPINAND_SPI_HOST
         bool "Attach SPI controller to SPINAND"
 

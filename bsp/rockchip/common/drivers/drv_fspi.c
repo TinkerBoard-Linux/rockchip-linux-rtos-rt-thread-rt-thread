@@ -91,61 +91,62 @@ struct rt_fspi_controller ctrl_buffer[FSPI_CHIP_CNT] =
 /** @defgroup FSPI_Private_Function Private Function
  *  @{
  */
-
+#ifdef RT_USING_SPINAND_FSPI_CS1
 static rt_err_t rt_fspi_cs_gpio_init(struct rt_fspi_cs_gpio *cs_gpio)
 {
-#ifdef HAL_GPIO_MODULE_ENABLED
     HAL_PINCTRL_SetIOMUX(cs_gpio->bank,
                          cs_gpio->pin,
                          PIN_CONFIG_MUX_FUNC0);
     HAL_GPIO_SetPinDirection(cs_gpio->gpio, cs_gpio->pin, GPIO_OUT);
     HAL_GPIO_SetPinLevel(cs_gpio->gpio, cs_gpio->pin, GPIO_HIGH);
-#endif
 
     return RT_EOK;
 }
 
 static rt_err_t rt_fspi_cs_gpio_take(struct rt_fspi_cs_gpio *cs_gpio)
 {
-#ifdef HAL_GPIO_MODULE_ENABLED
     HAL_GPIO_SetPinLevel(cs_gpio->gpio, cs_gpio->pin, GPIO_LOW);
-#endif
 
     return RT_EOK;
 }
 
 static rt_err_t rt_fspi_cs_gpio_release(struct rt_fspi_cs_gpio *cs_gpio)
 {
-#ifdef HAL_GPIO_MODULE_ENABLED
     HAL_GPIO_SetPinLevel(cs_gpio->gpio, cs_gpio->pin, GPIO_HIGH);
-#endif
 
     return RT_EOK;
 }
 
 static rt_err_t rt_fspi_mutex_take(struct rt_fspi_device *fspi_device, rt_int32_t time)
 {
-#ifndef RT_USING_XIP
     if (fspi_device->ctrl->lock_en)
     {
         return rt_mutex_take(&fspi_device->ctrl->host_lock, time);
     }
-#endif
 
     return RT_EOK;
 }
 
 static rt_err_t rt_fspi_mutex_release(struct rt_fspi_device *fspi_device)
 {
-#ifndef RT_USING_XIP
     if (fspi_device->ctrl->lock_en)
     {
         return rt_mutex_release(&fspi_device->ctrl->host_lock);
     }
-#endif
 
     return RT_EOK;
 }
+#else /* #ifdef RT_USING_SPINAND_FSPI_CS1 */
+static rt_err_t rt_fspi_mutex_take(struct rt_fspi_device *fspi_device, rt_int32_t time)
+{
+    return RT_EOK;
+}
+
+static rt_err_t rt_fspi_mutex_release(struct rt_fspi_device *fspi_device)
+{
+    return RT_EOK;
+}
+#endif
 
 /** @} */  // FSPI_Private_Function
 
@@ -185,6 +186,7 @@ rt_err_t rt_fspi_xfer(struct rt_fspi_device *fspi_device, struct HAL_SPI_MEM_OP 
     HAL_ASSERT(fspi_device);
     host = fspi_device->ctrl->host;
 
+#ifdef RT_USING_SPINAND_FSPI_CS1
     /* Config that need to be manually adjusted */
     if (fspi_device->ctrl->cur_speed != fspi_device->speed)
     {
@@ -204,19 +206,22 @@ rt_err_t rt_fspi_xfer(struct rt_fspi_device *fspi_device, struct HAL_SPI_MEM_OP 
     /* Configure cs-gpio */
     if (fspi_device->cs_gpio.gpio)
         rt_fspi_cs_gpio_take(&fspi_device->cs_gpio);
+#endif
 
     /* Configure FSPI */
     host->cs = fspi_device->chip_select;
     host->mode = fspi_device->mode;
     ret = HAL_FSPI_SpiXfer(host, op);
 
+#ifdef RT_USING_SPINAND_FSPI_CS1
     if (fspi_device->cs_gpio.gpio)
         rt_fspi_cs_gpio_release(&fspi_device->cs_gpio);
     rt_fspi_mutex_release(fspi_device);
+#endif
 
     if (ret)
     {
-        rt_kprintf("%s fail, ret= %d\n", __func__, ret);
+        fspi_dbg("%s fail, ret= %d\n", __func__, ret);
     }
 
     return ret;
@@ -230,6 +235,7 @@ rt_err_t rt_fspi_xip_config(struct rt_fspi_device *fspi_device, struct HAL_SPI_M
     HAL_ASSERT(fspi_device);
     host = fspi_device->ctrl->host;
 
+#ifdef RT_USING_SPINAND_FSPI_CS1
     /* Config that need to be manually adjusted */
     if (fspi_device->ctrl->cur_speed != fspi_device->speed)
     {
@@ -241,6 +247,7 @@ rt_err_t rt_fspi_xip_config(struct rt_fspi_device *fspi_device, struct HAL_SPI_M
         HAL_FSPI_SetDelayLines(host, host->xmmcDev[fspi_device->chip_select].cell);
         host->cell = host->xmmcDev[fspi_device->chip_select].cell;
     }
+#endif
 
     /* Configure FSPI */
     host->cs = fspi_device->chip_select;
@@ -438,8 +445,10 @@ int rt_hw_fspi_device_register(struct rt_fspi_device *fspi_device)
     }
 #endif
 
+#ifdef RT_USING_SPINAND_FSPI_CS1
     if (fspi_device->cs_gpio.gpio)
         rt_fspi_cs_gpio_init(&fspi_device->cs_gpio);
+#endif
     ctrl->host->xmmcDev[fspi_device->chip_select].type = fspi_device->dev_type;
 
     fspi_device->ctrl = ctrl;

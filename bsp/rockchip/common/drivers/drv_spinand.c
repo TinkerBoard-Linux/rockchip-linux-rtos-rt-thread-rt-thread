@@ -282,9 +282,15 @@ static int rockchip_sfc_delay_lines_tuning(struct SPI_NAND *spinand, struct rt_f
 
 RT_WEAK struct rt_fspi_device g_fspi_spinand =
 {
+#ifdef RT_USING_SPINAND_FSPI_CS1
+    .host_id = 0,
+    .dev_type = DEV_SPINAND,
+    .chip_select = 1,
+#else
     .host_id = 1,
     .dev_type = DEV_SPINAND,
     .chip_select = 0,
+#endif
 };
 
 static uint32_t spinand_adapt(struct SPI_NAND *spinand)
