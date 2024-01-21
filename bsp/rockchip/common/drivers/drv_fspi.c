@@ -178,6 +178,26 @@ rt_err_t rt_fspi_resume(struct rt_fspi_device *fspi_device)
     return ret;
 }
 
+bool rt_fspi_is_poll_finished(struct rt_fspi_device *fspi_device)
+{
+    struct HAL_FSPI_HOST *host;
+
+    HAL_ASSERT(fspi_device);
+    host = fspi_device->ctrl->host;
+
+    return HAL_FSPI_IsPollFinished(host);
+}
+
+rt_err_t rt_fspi_irqhelper(struct rt_fspi_device *fspi_device)
+{
+    struct HAL_FSPI_HOST *host;
+
+    HAL_ASSERT(fspi_device);
+    host = fspi_device->ctrl->host;
+
+    return HAL_FSPI_IRQHelper(host);
+}
+
 rt_err_t rt_fspi_xfer(struct rt_fspi_device *fspi_device, struct HAL_SPI_MEM_OP *op)
 {
     struct HAL_FSPI_HOST *host;
@@ -218,6 +238,27 @@ rt_err_t rt_fspi_xfer(struct rt_fspi_device *fspi_device, struct HAL_SPI_MEM_OP 
         rt_fspi_cs_gpio_release(&fspi_device->cs_gpio);
     rt_fspi_mutex_release(fspi_device);
 #endif
+
+    if (ret)
+    {
+        fspi_dbg("%s fail, ret= %d\n", __func__, ret);
+    }
+
+    return ret;
+}
+
+rt_err_t rt_fspi_xfer_hw_polling(struct rt_fspi_device *fspi_device, struct HAL_SPI_MEM_OP *op)
+{
+    struct HAL_FSPI_HOST *host;
+    rt_err_t ret;
+
+    HAL_ASSERT(fspi_device);
+    host = fspi_device->ctrl->host;
+
+    /* Configure FSPI */
+    host->cs = fspi_device->chip_select;
+    host->mode = fspi_device->mode;
+    ret = HAL_FSPI_SpiXferHWPolling(host, op);
 
     if (ret)
     {
@@ -363,6 +404,13 @@ rt_err_t rt_fspi_set_mode(struct rt_fspi_device *fspi_device, uint32_t mode)
     fspi_device->mode = mode;
 
     return RT_EOK;
+}
+
+int32_t rt_fspi_get_irqnum(struct rt_fspi_device *fspi_device)
+{
+    HAL_ASSERT(fspi_device);
+
+    return fspi_device->ctrl->host->irqNum;
 }
 
 rt_err_t rt_fspi_controller_init(struct rt_fspi_device *fspi_device)

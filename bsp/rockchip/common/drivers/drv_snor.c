@@ -102,14 +102,76 @@ static const struct rt_mtd_nor_driver_ops snor_mtd_ops;
  */
 
 #ifdef RT_USING_SNOR_FSPI_HOST
+static void fspi_snor_isr(int irq, void *param)
+{
+    struct rt_fspi_device *fspi_device = (struct rt_fspi_device *)fspi_device;
+    struct spiflash_device *spiflash = &s_spiflash[0];
+
+    if (rt_fspi_is_poll_finished(fspi_device) == HAL_OK)
+    {
+        rt_completion_done(&spiflash->done);
+    }
+
+    rt_fspi_irqhelper(fspi_device);
+}
+
 static HAL_Status fspi_xfer(struct SNOR_HOST *spi, struct HAL_SPI_MEM_OP *op)
 {
     struct rt_fspi_device *fspi_device = (struct rt_fspi_device *)spi->userdata;
+    struct spiflash_device *spiflash = &s_spiflash[0];
+    HAL_Status ret;
 
     rt_fspi_set_mode(fspi_device, spi->mode);
 
     xip_dbg('T');
-    return rt_fspi_xfer(fspi_device, op);
+    if (op->data.poll)
+    {
+        /*
+            * The progress of polling status with XIP hand up:
+            *   1. Re-enable XIP
+            *   2. Enable HW Polling and XIP hand up
+            *   3. Re-enable irq
+            *   4. Nor operation waiting for polling status isr
+            *   5. At the same time, the system supports rotating scheduling
+            */
+        if (!spiflash->xip_resumed)
+        {
+            rt_fspi_xip_config(fspi_device, NULL, true);
+            spiflash->xip_resumed = true;
+        }
+        ret = rt_fspi_xfer_hw_polling(fspi_device, op);
+        if (ret)
+        {
+            return ret;
+        }
+        if (!spiflash->irq_resumed)
+        {
+            rt_hw_interrupt_enable(spiflash->level);
+            spiflash->irq_resumed = true;
+        }
+        ret = rt_completion_wait(&spiflash->done, rt_tick_from_millisecond(1000));
+        if (ret != RT_EOK)
+        {
+            rt_kprintf("%s timer out \n", __func__);
+            rt_fspi_irqhelper(fspi_device);
+        }
+    }
+    else
+    {
+        if (spiflash->irq_resumed)
+        {
+            spiflash->level = rt_hw_interrupt_disable();
+            spiflash->irq_resumed = false;
+        }
+        if (spiflash->xip_resumed)
+        {
+            rt_fspi_xip_config(fspi_device, NULL, false);
+            spiflash->xip_resumed = false;
+        }
+        ret = rt_fspi_xfer(fspi_device, op);
+    }
+
+    return ret;
 }
 
 #ifdef HAL_FSPI_XIP_ENABLE
@@ -292,6 +354,11 @@ static uint32_t fspi_snor_adapt(struct SPI_NOR *nor)
     }
 
     rt_hw_interrupt_enable(level);
+    if (nor->poll)
+    {
+        rt_hw_interrupt_install(rt_fspi_get_irqnum(fspi_device), (void *)fspi_snor_isr, fspi_device, "fspi_irq");
+        rt_hw_interrupt_umask(rt_fspi_get_irqnum(fspi_device));
+    }
 
     return ret;
 }
@@ -473,6 +540,7 @@ static int snor_init(uint8_t dev_id, char *name, enum spiflash_host type)
         rt_kprintf("Init mutex error\n");
         RT_ASSERT(0);
     }
+    rt_completion_init(&spiflash->done);
 
     /* dev setting */
     mtd_dev->ops = &snor_mtd_ops;
@@ -507,7 +575,9 @@ rt_err_t rk_snor_xip_suspend(void)
     if (spiflash->nor.spi->mode & HAL_SPI_XIP)
     {
         spiflash->level = rt_hw_interrupt_disable();
+        spiflash->irq_resumed = false;
         HAL_SNOR_XIPDisable(&spiflash->nor);
+        spiflash->xip_resumed = false;
     }
 #endif
 
@@ -524,8 +594,16 @@ rt_err_t rk_snor_xip_resume(void)
 
     if (spiflash->nor.spi->mode & HAL_SPI_XIP)
     {
-        HAL_SNOR_XIPEnable(&spiflash->nor);
-        rt_hw_interrupt_enable(spiflash->level);
+        if (!spiflash->xip_resumed)
+        {
+            HAL_SNOR_XIPEnable(&spiflash->nor);
+            spiflash->xip_resumed = true;
+        }
+        if (!spiflash->irq_resumed)
+        {
+            rt_hw_interrupt_enable(spiflash->level);
+            spiflash->irq_resumed = true;
+        }
     }
 #endif
 
