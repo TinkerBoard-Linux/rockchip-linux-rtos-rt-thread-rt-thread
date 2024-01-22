@@ -22,6 +22,8 @@
 
 #ifdef RT_USING_DEVICE
 
+#define RT_DEVICE_BUF_UNALIGNED_SUPPORT
+
 #ifdef RT_USING_DEVICE_OPS
 #define device_init     (dev->ops->init)
 #define device_open     (dev->ops->open)
@@ -311,11 +313,56 @@ RTM_EXPORT(rt_device_close);
  *
  * @note the unit of size/pos is a block for block device.
  */
+#ifdef RT_DEVICE_BUF_UNALIGNED_SUPPORT
+static int device_align_buffer[128];
+static struct rt_mutex *device_buffer_mutex;
+
+static rt_err_t device_buffer_mutex_init(void)
+{
+    if (device_buffer_mutex == RT_NULL)
+    {
+        device_buffer_mutex = rt_mutex_create("device_buffer", RT_IPC_FLAG_PRIO);
+        if (device_buffer_mutex == RT_NULL)
+        {
+            RT_ASSERT(0);
+        }
+    }
+
+    return RT_EOK;
+}
+
+void device_buffer_lock(void)
+{
+    rt_err_t result = -RT_EBUSY;
+
+    device_buffer_mutex_init();
+
+    while (result == -RT_EBUSY)
+    {
+        result = rt_mutex_take(device_buffer_mutex, RT_WAITING_FOREVER);
+    }
+
+    if (result != RT_EOK)
+    {
+        RT_ASSERT(0);
+    }
+}
+
+static void device_buffer_unlock(void)
+{
+    rt_mutex_release(device_buffer_mutex);
+}
+
+#endif
 rt_size_t rt_device_read(rt_device_t dev,
                          rt_off_t    pos,
                          void       *buffer,
                          rt_size_t   size)
 {
+#ifdef RT_DEVICE_BUF_UNALIGNED_SUPPORT
+    rt_size_t   align, ret, rsec;
+    void *buf = buffer;
+#endif
     /* parameter check */
     RT_ASSERT(dev != RT_NULL);
     RT_ASSERT(rt_object_get_type(&dev->parent) == RT_Object_Class_Device);
@@ -329,6 +376,33 @@ rt_size_t rt_device_read(rt_device_t dev,
     /* call device_read interface */
     if (device_read != RT_NULL)
     {
+#ifdef RT_DEVICE_BUF_UNALIGNED_SUPPORT
+        /* The buffer is not align to 4 bytes and the block device need aligned buffer */
+        align = (long)buffer & 0x3;
+        if (RT_Device_Class_Block == dev->type && align && size)
+        {
+            device_buffer_lock();
+            rsec = size - 1;
+            if (size > 1)
+            {
+                buf = buffer + 4 - align;
+                ret = device_read(dev, pos, buf, rsec);
+                if (ret != rsec)
+                {
+                    device_buffer_unlock();
+                    return ret;
+                }
+                rt_memmove(buffer, buf, rsec * 512);
+                buf = buffer + 512 * rsec;
+            }
+            ret = device_read(dev, pos + rsec, device_align_buffer, 1);
+            rt_memcpy(buf, device_align_buffer, 512);
+            device_buffer_unlock();
+            if (ret != 1)
+                return ret;
+            return size;
+        }
+#endif
         return device_read(dev, pos, buffer, size);
     }
 
@@ -359,6 +433,9 @@ rt_size_t rt_device_write(rt_device_t dev,
                           const void *buffer,
                           rt_size_t   size)
 {
+#ifdef RT_DEVICE_BUF_UNALIGNED_SUPPORT
+    rt_size_t   ret = RT_EOK, i;
+#endif
     /* parameter check */
     RT_ASSERT(dev != RT_NULL);
     RT_ASSERT(rt_object_get_type(&dev->parent) == RT_Object_Class_Device);
@@ -372,6 +449,25 @@ rt_size_t rt_device_write(rt_device_t dev,
     /* call device_write interface */
     if (device_write != RT_NULL)
     {
+#ifdef RT_DEVICE_BUF_UNALIGNED_SUPPORT
+        /* The buffer is not align to 4 bytes and the block device need aligned buffer */
+        if (RT_Device_Class_Block == dev->type && ((long)buffer & 0x3))
+        {
+            device_buffer_lock();
+            for (i = 0; i < size; i++)
+            {
+                rt_memcpy(device_align_buffer, buffer + 512 * i, 512);
+                ret = device_write(dev, pos + i, device_align_buffer, 1);
+                if (ret == 1)
+                {
+                    device_buffer_unlock();
+                    return ret;
+                }
+            }
+            device_buffer_unlock();
+            return size;
+        }
+#endif
         return device_write(dev, pos, buffer, size);
     }
 
