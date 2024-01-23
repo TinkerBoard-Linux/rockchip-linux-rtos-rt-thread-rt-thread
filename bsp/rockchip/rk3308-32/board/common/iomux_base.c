@@ -148,6 +148,35 @@ RT_WEAK void emmc_iomux_config(void)
 }
 #endif
 
+#ifdef RT_USING_GMAC
+#ifdef RT_USING_GMAC0
+/**
+ * @brief  Config iomux for GMAC0
+ */
+RT_WEAK void gmac0_m1_iomux_config(void)
+{
+    /* GMAC0 iomux */
+    HAL_PINCTRL_SetIOMUX(GPIO_BANK4,
+                         GPIO_PIN_A0 | /* gmac0_rxer_m1 */
+                         GPIO_PIN_A1 | /* gmac0_rxdv_m1 */
+                         GPIO_PIN_A2 | /* gmac0_rxd0_m1 */
+                         GPIO_PIN_A3 | /* gmac0_rxd1_m1 */
+                         GPIO_PIN_A4 | /* gmac0_txd0_m1 */
+                         GPIO_PIN_A5 | /* gmac0_txd1_m1 */
+                         GPIO_PIN_B4 | /* gmac0_clk_m1 */
+                         GPIO_PIN_B5 | /* gmac0_mdc_m1 */
+                         GPIO_PIN_B6 | /* gmac0_mdio_m1 */
+                         GPIO_PIN_B7,  /* gmac0_txen_m1 */
+                         PIN_CONFIG_MUX_FUNC2);
+
+    /* set GMAC IOMUX selection to M1 */
+    WRITE_REG_MASK_WE(GRF->SOC_CON5,
+                      GRF_SOC_CON5_GRF_MAC_MULTI_IOFUNC_SRC_SEL_MASK,
+                      (1 << GRF_SOC_CON5_GRF_MAC_MULTI_IOFUNC_SRC_SEL_SHIFT));
+}
+#endif
+#endif
+
 #ifdef RT_USING_BACKLIGHT
 RT_WEAK void pwm0_ch1_iomux_config(void)
 {

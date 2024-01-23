@@ -20,13 +20,16 @@
 #include "hal_bsp.h"
 #include "drv_heap.h"
 
-
 #ifdef RT_USING_PIN
 #include "iomux.h"
 #endif
 
 #ifdef RT_USING_UART
 #include "drv_uart.h"
+#endif
+
+#ifdef RT_USING_GMAC
+#include "drv_gmac.h"
 #endif
 
 #ifdef RT_USING_CRU
@@ -80,6 +83,25 @@ RT_WEAK const struct uart_board g_uart4_board =
     .name = "uart4",
 };
 #endif /* RT_USING_UART4 */
+
+#ifdef RT_USING_GMAC
+const struct rockchip_eth_config rockchip_eth_config_table[] =
+{
+#ifdef RT_USING_GMAC0
+    {
+        .id = GMAC0,
+        .mode = RMII_MODE,
+        .phy_addr = 0,
+
+        .external_clk = true,
+
+        .reset_gpio_bank = GPIO4,
+        .reset_gpio_num = GPIO_PIN_C0,
+        .reset_delay_ms = {1, 20, 100},
+    },
+#endif
+};
+#endif
 
 #if defined(RT_USING_SMP)
 struct mem_desc platform_mem_desc[] =

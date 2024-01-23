@@ -97,6 +97,10 @@
 #define HAL_SDIO_MODULE_ENABLED
 #endif
 
+#ifdef RT_USING_GMAC
+#define HAL_GMAC1000_MODULE_ENABLED
+#endif
+
 #ifdef RT_USING_USB_DEVICE
 #define HAL_PCD_MODULE_ENABLED
 #endif
