@@ -25,7 +25,7 @@
 #include "hal_base.h"
 #include "hal_bsp.h"
 
-#define WORK_QUEUE_STACK_SIZE       512
+#define WORK_QUEUE_STACK_SIZE       1024
 #define WORK_QUEUE_PRIORITY         0
 
 typedef enum
