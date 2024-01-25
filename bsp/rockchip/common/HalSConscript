@@ -12,8 +12,11 @@ if PROJECT == 'CA':
     Import('SOC')
 
     # The set of source files associated with this SConscript file.
-    src = Glob(hal_lib + '/CMSIS/Device/' + SOC + '/Source/Templates/*.c')
-    src += Glob(hal_lib + '/hal/src/*.c')
+    if SOC != 'RK3588':
+        src = Glob(hal_lib + '/CMSIS/Device/' + SOC + '/Source/Templates/*.c')
+        src += Glob(hal_lib + '/hal/src/*.c')
+    else:
+        src = Glob(hal_lib + '/hal/src/*.c')
     src += Glob(hal_lib + '/hal/src/*/*.c')
     src += Glob(hal_lib + '/bsp/' + SOC + '/*.c')
 
@@ -45,11 +48,13 @@ else:
         hal_lib + '/CMSIS/Device',
         hal_lib + '/CMSIS/Device/' + PROJECT + '/Include']
 
-if rtconfig.ARCH == 'arm' or rtconfig.ARCH == 'aarch64':
+if rtconfig.ARCH == 'arm':
     if PROJECT == 'CA':
         path.append(hal_lib + '/CMSIS/Core_A/Include')
     else:
         path.append(hal_lib + '/CMSIS/Core/Include')
+elif rtconfig.ARCH == 'aarch64':
+    path.append(hal_lib + '/CMSIS/Core_A_64/Include')
 elif rtconfig.ARCH == 'risc-v':
     path.append(hal_lib + '/CMSIS/RISCV/Include')
 else:
