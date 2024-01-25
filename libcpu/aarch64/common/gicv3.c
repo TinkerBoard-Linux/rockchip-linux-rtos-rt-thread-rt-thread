@@ -562,6 +562,7 @@ rt_uint64_t arm_gic_get_high_pending_irq(rt_uint64_t index)
 
 rt_uint64_t arm_gic_get_interface_id(rt_uint64_t index)
 {
+#if 0
     rt_uint64_t ret = 0;
 
     RT_ASSERT(index < ARM_GIC_MAX_NR);
@@ -572,6 +573,9 @@ rt_uint64_t arm_gic_get_interface_id(rt_uint64_t index)
     }
 
     return ret;
+#else
+    return 0;
+#endif
 }
 
 void arm_gic_set_group(rt_uint64_t index, int irq, rt_uint64_t group)

@@ -16,6 +16,10 @@
 
 .section ".text.entrypoint","ax"
 
+/* stack */
+.globl stack_limit
+.globl stack_top
+
 .globl _start
 .globl secondary_cpu_start
 _start:
@@ -67,7 +71,7 @@ cpu_id_confirm:
 #endif /* RT_USING_SMP */
 
 boot_cpu_setup:
-    ldr     x1, =_start
+    ldr     x1, =__stack_top
 
 cpu_check_el:
     mrs     x0, CurrentEL           /* CurrentEL Register. bit 2, 3. Others reserved */

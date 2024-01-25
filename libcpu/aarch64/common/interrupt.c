@@ -33,6 +33,7 @@ void rt_hw_vector_init(void)
     rt_hw_set_current_vbar((rt_ubase_t)&system_vectors);
 }
 
+#if defined(RT_USING_SMP) || !defined(HAL_GIC_MODULE_ENABLED)
 /**
  * This function will initialize hardware interrupt
  */
@@ -378,4 +379,150 @@ void rt_hw_ipi_handler_install(int ipi_vector, rt_isr_handler_t ipi_isr_handler)
     rt_hw_interrupt_install(ipi_vector, ipi_isr_handler, 0, "IPI_HANDLER");
 }
 #endif
+#else
 
+#include "hal_base.h"
+
+/**
+ * This function will initialize hardware interrupt
+ */
+void rt_hw_interrupt_init(void)
+{
+    /* initialize vector table */
+    rt_hw_vector_init();
+
+    /* initialize exceptions table */
+    rt_memset(isr_table, 0x00, sizeof(isr_table));
+}
+
+/**
+ * This function will mask a interrupt.
+ * @param vector the interrupt number
+ */
+void rt_hw_interrupt_mask(int vector)
+{
+    HAL_GIC_Disable(vector);
+}
+
+/**
+ * This function will un-mask a interrupt.
+ * @param vector the interrupt number
+ */
+void rt_hw_interrupt_umask(int vector)
+{
+    HAL_GIC_Enable(vector);
+}
+
+/**
+ * This function returns the active interrupt number.
+ * @param none
+ */
+int rt_hw_interrupt_get_irq(void)
+{
+    return HAL_GIC_GetActiveIRQ() & GIC_ACK_INTID_MASK;
+}
+
+/**
+ * This function acknowledges the interrupt.
+ * @param vector the interrupt number
+ */
+void rt_hw_interrupt_ack(int vector)
+{
+    HAL_GIC_EndOfInterrupt(vector);
+}
+
+/**
+ * This function set interrupt pending flag.
+ * @param vector: the interrupt number
+ */
+void rt_hw_interrupt_set_pending(int vector)
+{
+    HAL_GIC_SetPending(vector);
+}
+
+/**
+ * This function get interrupt pending flag.
+ * @param vector: the interrupt number
+ * @return interrupt pending flag, 0: not pending; 1: pending
+ */
+unsigned int rt_hw_interrupt_get_pending(int vector)
+{
+    return HAL_GIC_GetPending(vector);
+}
+
+/**
+ * This function clear interrupt pending flag.
+ * @param vector: the interrupt number
+ */
+void rt_hw_interrupt_clear_pending(int vector)
+{
+    HAL_GIC_ClearPending(vector);
+}
+
+/**
+ * This function set interrupt priority value.
+ * @param vector: the interrupt number
+ * @param priority: the priority of interrupt to set
+ */
+void rt_hw_interrupt_set_priority(int vector, unsigned int priority)
+{
+    HAL_GIC_SetPriority(vector, priority);
+}
+
+/**
+ * This function get interrupt priority.
+ * @param vector: the interrupt number
+ * @return interrupt priority value
+ */
+unsigned int rt_hw_interrupt_get_priority(int vector)
+{
+    return HAL_GIC_GetPriority(vector);
+}
+
+/**
+ * This function set priority masking threshold.
+ * @param priority: priority masking threshold
+ */
+void rt_hw_interrupt_set_priority_mask(unsigned int priority)
+{
+    HAL_GIC_SetPriorityMask(priority);
+}
+
+/**
+ * This function get priority masking threshold.
+ * @param none
+ * @return priority masking threshold
+ */
+unsigned int rt_hw_interrupt_get_priority_mask(void)
+{
+    return HAL_GIC_GetPriorityMask();
+}
+
+/**
+ * This function will install a interrupt service routine to a interrupt.
+ * @param vector the interrupt number
+ * @param new_handler the interrupt service routine to be installed
+ * @param old_handler the old interrupt service routine
+ */
+rt_isr_handler_t rt_hw_interrupt_install(int vector, rt_isr_handler_t handler,
+                                         void *param, const char *name)
+{
+    rt_isr_handler_t old_handler = RT_NULL;
+
+    if (vector < MAX_HANDLERS)
+    {
+        old_handler = isr_table[vector].handler;
+
+        if (handler != RT_NULL)
+        {
+#ifdef RT_USING_INTERRUPT_INFO
+            rt_strncpy(isr_table[vector].name, name, RT_NAME_MAX);
+#endif /* RT_USING_INTERRUPT_INFO */
+            isr_table[vector].handler = handler;
+            isr_table[vector].param = param;
+        }
+    }
+
+    return old_handler;
+}
+#endif
