@@ -774,7 +774,8 @@ int arm_gic_cpu_init(rt_uint64_t index, rt_uint64_t cpu_base)
     rt_uint64_t value;
     int cpu_id = rt_hw_cpu_id();
 
-    RT_ASSERT(index < ARM_GIC_MAX_NR);
+    if (index >= ARM_GIC_MAX_NR)
+        return -1;
 
     _gic_table[index].cpu_hw_base[cpu_id] = cpu_base;
 
