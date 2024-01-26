@@ -348,7 +348,7 @@ static rt_err_t rockchip_uart_control(rt_serial_t *serial, int cmd, void *arg)
     struct rockchip_uart *uart = RT_NULL;
     struct UART_REG *hw_base = RT_NULL;
     const struct HAL_UART_DEV *dev;
-    rt_uint32_t flag = (rt_uint32_t)arg;
+    rt_base_t flag = (rt_base_t)arg;
 
     RT_ASSERT(serial != RT_NULL);
     uart = (struct rockchip_uart *)serial->parent.user_data;

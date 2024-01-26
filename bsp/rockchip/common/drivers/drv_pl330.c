@@ -62,7 +62,6 @@ static int rockchip_pl330_irq(struct rt_dma_pl330 *rt_pl330);
 
 #define DEFINE_ROCKCHIP_PL330(ID)                            \
 static void rockchip_pl330##ID##_irq(int irq, void *param);  \
-static struct rt_dma_device *dma##ID;                        \
 static struct rt_dma_pl330 rk_pl330##ID =                    \
 {                                                            \
     .pl330 = &g_pl330Dev##ID,                                \
@@ -332,7 +331,7 @@ int rt_hw_pl330_init(void)
         rt_mutex_init(&rt_pl330->chan_lock, name, RT_IPC_FLAG_FIFO);
 
         dma = &rt_pl330->dma;
-        dma->base = (uint32_t)rt_pl330->pl330->pReg;
+        dma->base = (rt_base_t)rt_pl330->pl330->pReg;
         dma->start = pl330_start;
         dma->stop = pl330_stop;
         dma->request_channel = pl330_request_channel;
