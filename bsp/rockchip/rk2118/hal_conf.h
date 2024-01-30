@@ -58,6 +58,10 @@
 #define HAL_DSP_MODULE_ENABLED
 #endif
 
+#ifdef RT_USING_HWCRYPTO
+#define HAL_CRYPTO_MODULE_ENABLED
+#endif
+
 #ifdef RT_USING_I2C
 #define HAL_I2C_MODULE_ENABLED
 #endif
