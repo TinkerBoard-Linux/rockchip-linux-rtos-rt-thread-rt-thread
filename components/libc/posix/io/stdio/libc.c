@@ -35,6 +35,7 @@ INIT_COMPONENT_EXPORT(libc_system_init);
 
 #if defined(RT_USING_POSIX_STDIO) && defined(RT_USING_NEWLIB)
 #define STDIO_DEVICE_NAME_MAX   32
+#define NEWLIB_VERSION_NUM (__NEWLIB__ * 10000U + __NEWLIB_MINOR__ * 100U + __NEWLIB_PATCHLEVEL__)
 static FILE* std_console = NULL;
 int libc_stdio_set_console(const char* device_name, int mode)
 {
@@ -90,7 +91,9 @@ int libc_stdio_set_console(const char* device_name, int mode)
             _GLOBAL_REENT->_stderr = std_console;
         }
 
-        _GLOBAL_REENT->__sdidinit = 1;
+#if (NEWLIB_VERSION_NUM < 30400U) || (NEWLIB_VERSION_NUM >= 40000U && NEWLIB_VERSION_NUM < 40300U)
+        _GLOBAL_REENT->__sdidinit = 1; /* __sdidinit is obselete */
+#endif
     }
 
     if (std_console)
