@@ -62,6 +62,10 @@
 #define HAL_CRYPTO_MODULE_ENABLED
 #endif
 
+#ifdef RT_HWCRYPTO_USING_RNG
+#define HAL_TRNG_MODULE_ENABLED
+#endif
+
 #ifdef RT_USING_I2C
 #define HAL_I2C_MODULE_ENABLED
 #endif
