@@ -61,6 +61,16 @@ static rt_err_t dw_wdt_stop(void)
         return RT_EINVAL;
     }
 
+#ifdef TCLK_WDT0_GATE
+    ret = HAL_CRU_ClkDisable(TCLK_WDT0_GATE);
+    if (ret)
+    {
+        rt_kprintf("failed to disable wdt tclk, ret=%d", ret);
+
+        return RT_EINVAL;
+    }
+#endif
+
     return RT_EOK;
 }
 
@@ -75,6 +85,16 @@ static rt_err_t dw_wdt_start(uint32_t type)
 
         return RT_EINVAL;
     }
+
+#ifdef TCLK_WDT0_GATE
+    ret = HAL_CRU_ClkEnable(TCLK_WDT0_GATE);
+    if (ret)
+    {
+        rt_kprintf("failed to enable wdt tclk, ret=%d", ret);
+
+        return RT_EINVAL;
+    }
+#endif
 
     HAL_WDT_Start(type);
 
