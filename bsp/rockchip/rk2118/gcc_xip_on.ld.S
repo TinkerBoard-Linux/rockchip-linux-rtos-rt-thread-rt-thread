@@ -53,6 +53,7 @@ __UNCACHE_HEAP_SIZE = 0x0;
 #endif
 __SRAM_SIZE = __SRAM_SIZE - __UNCACHE_HEAP_SIZE;
 __UNCACHE_HEAP_BASE = __SRAM_BASE + __SRAM_SIZE;
+ASSERT((__UNCACHE_HEAP_BASE % __SRAM_SIZE) == 0, "the uncache heap base addr must align with size")
 
 /*
  *-------------------- <<< layout of memory  >>> -------------------
