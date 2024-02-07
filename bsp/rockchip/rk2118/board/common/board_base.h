@@ -8,9 +8,11 @@
  * 2024-02-07     Cliff Chen   first implementation
  */
 
-#ifndef __BOARD_H__
-#define __BOARD_H__
+#ifndef __BOARD_BASE_H__
+#define __BOARD_BASE_H__
 
-#include "board_base.h"
+void systick_isr(int vector, void *param);
+void mpu_init(void);
+void rt_hw_board_init(void);
 
 #endif

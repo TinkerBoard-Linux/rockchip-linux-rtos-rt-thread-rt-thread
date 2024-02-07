@@ -1,12 +1,11 @@
 /*
- * Copyright (c) 2006-2018, RT-Thread Development Team
+ * Copyright (c) 2024 Rockchip Electronics Co., Ltd.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
  * Change Logs:
  * Date           Author       Notes
- * 2018-12-10     Cliff      first implementation
- *
+ * 2024-02-07     Cliff Chen   first implementation
  */
 
 #include <rthw.h>
@@ -55,6 +54,15 @@ const struct clk_init clk_inits[] =
     INIT_CLK("PCLK_PMU", PCLK_PMU, 100000000),
     INIT_CLK("CLK_32K_FRAC", CLK_32K_FRAC, 32768),
     INIT_CLK("CLK_MAC_OUT", CLK_MAC_OUT, 50000000),
+    /* Audio */
+    INIT_CLK("SCLK_SAI0", SCLK_SAI0, 12288000),
+    INIT_CLK("SCLK_SAI1", SCLK_SAI1, 12288000),
+    INIT_CLK("SCLK_SAI2", SCLK_SAI2, 12288000),
+    INIT_CLK("SCLK_SAI3", SCLK_SAI3, 12288000),
+    INIT_CLK("SCLK_SAI4", SCLK_SAI4, 12288000),
+    INIT_CLK("SCLK_SAI5", SCLK_SAI5, 12288000),
+    INIT_CLK("SCLK_SAI6", SCLK_SAI6, 12288000),
+    INIT_CLK("SCLK_SAI7", SCLK_SAI7, 12288000),
     { /* sentinel */ },
 };
 
@@ -67,6 +75,16 @@ const struct uart_board g_uart0_board =
     .name = "uart0",
 };
 #endif /* RT_USING_UART0 */
+
+#if defined(RT_USING_UART2)
+const struct uart_board g_uart2_board =
+{
+    .baud_rate = UART_BR_1500000,
+    .dev_flag = ROCKCHIP_UART_SUPPORT_FLAG_DEFAULT,
+    .bufer_size = RT_SERIAL_RB_BUFSZ,
+    .name = "uart2",
+};
+#endif /* RT_USING_UART2 */
 
 #ifdef RT_USING_UNCACHE_HEAP
 extern const rt_uint32_t __uncache_heap_start__[];
@@ -102,6 +120,10 @@ void rt_hw_board_init()
     rt_hw_interrupt_install(SysTick_IRQn, systick_isr, RT_NULL, "tick");
     HAL_SetTickFreq(1000 / RT_TICK_PER_SECOND);
     HAL_SYSTICK_Init();
+
+#ifdef RT_USING_PIN
+    rt_hw_iomux_config();
+#endif
 
     rt_system_heap_init((void *)HEAP_START, (void *)HEAP_END);
 #ifdef RT_USING_UNCACHE_HEAP

@@ -1,12 +1,11 @@
 /*
- * Copyright (c) 2006-2018, RT-Thread Development Team
+ * Copyright (c) 2024 Rockchip Electronics Co., Ltd.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
  * Change Logs:
  * Date           Author       Notes
- * 2018-12-10     Cliff      first implementation
- *
+ * 2024-02-07     Cliff Chen   first implementation
  */
 
 #include <rthw.h>
@@ -21,7 +20,7 @@
 #include "hal_bsp.h"
 #include "iomux.h"
 
-const struct clk_init clk_inits[] =
+RT_WEAK const struct clk_init clk_inits[] =
 {
     INIT_CLK("PLL_GPLL", PLL_GPLL, 800000000),
     INIT_CLK("PLL_VPLL0", PLL_VPLL0, 1179648000),
@@ -59,7 +58,7 @@ const struct clk_init clk_inits[] =
 };
 
 #if defined(RT_USING_UART0)
-const struct uart_board g_uart0_board =
+RT_WEAK const struct uart_board g_uart0_board =
 {
     .baud_rate = UART_BR_1500000,
     .dev_flag = ROCKCHIP_UART_SUPPORT_FLAG_DEFAULT,
@@ -68,10 +67,62 @@ const struct uart_board g_uart0_board =
 };
 #endif /* RT_USING_UART0 */
 
+#if defined(RT_USING_UART1)
+RT_WEAK const struct uart_board g_uart1_board =
+{
+    .baud_rate = UART_BR_1500000,
+    .dev_flag = ROCKCHIP_UART_SUPPORT_FLAG_DEFAULT,
+    .bufer_size = RT_SERIAL_RB_BUFSZ,
+    .name = "uart1",
+};
+#endif /* RT_USING_UART1 */
+
+RT_WEAK void systick_isr(int vector, void *param)
+{
+    /* enter interrupt */
+    rt_interrupt_enter();
+
+    HAL_SYSTICK_IRQHandler();
+    rt_tick_increase();
+
+    /* leave interrupt */
+    rt_interrupt_leave();
+}
+
+extern const rt_uint32_t __code_start__[];
+extern const rt_uint32_t __code_end__[];
+extern const rt_uint32_t __data_start__[];
+extern const rt_uint32_t __data_end__[];
+extern const rt_uint32_t __device_start__[];
+extern const rt_uint32_t __device_end__[];
 #ifdef RT_USING_UNCACHE_HEAP
 extern const rt_uint32_t __uncache_heap_start__[];
 extern const rt_uint32_t __uncache_heap_end__[];
 #endif
+RT_WEAK void mpu_init(void)
+{
+    /* text section: non shared, rw, np, exec, cachable */
+    ARM_MPU_SetRegion(0, ARM_MPU_RBAR((rt_uint32_t)__code_start__, 0U, 0U, 1U, 0U), ARM_MPU_RLAR((rt_uint32_t)__code_end__, 0U));
+    /* data section: non shared, rw, np, xn, cachable */
+    ARM_MPU_SetRegion(1, ARM_MPU_RBAR((rt_uint32_t)__data_start__, 0U, 0U, 1U, 1U), ARM_MPU_RLAR((rt_uint32_t)__data_end__, 1U));
+    /* device section: shared, rw, np, xn */
+    ARM_MPU_SetRegion(2, ARM_MPU_RBAR((rt_uint32_t)__device_start__, 1U, 0U, 1U, 1U), ARM_MPU_RLAR((rt_uint32_t)__device_end__, 2U));
+
+    /* cachable normal memory, ARM_MPU_ATTR_MEMORY_(NT, WB, RA, WA) */
+    ARM_MPU_SetMemAttr(0, ARM_MPU_ATTR(ARM_MPU_ATTR_MEMORY_(0, 0, 1, 0), ARM_MPU_SH_INNER));
+    ARM_MPU_SetMemAttr(1, ARM_MPU_ATTR(ARM_MPU_ATTR_MEMORY_(0, 1, 1, 1), ARM_MPU_SH_INNER));
+    /* device memory */
+    ARM_MPU_SetMemAttr(2, ARM_MPU_ATTR(ARM_MPU_ATTR_DEVICE, ARM_MPU_ATTR_DEVICE_nGnRnE));
+
+#ifdef RT_USING_UNCACHE_HEAP
+    /* uncache heap: non shared, rw, np, exec, uncachable */
+    ARM_MPU_SetRegion(3, ARM_MPU_RBAR((rt_uint32_t)__uncache_heap_start__, 0U, 0U, 1U, 1U), ARM_MPU_RLAR((rt_uint32_t)__uncache_heap_end__, 3U));
+    /* uncachable normal memory */
+    ARM_MPU_SetMemAttr(3, ARM_MPU_ATTR(ARM_MPU_ATTR_NON_CACHEABLE, ARM_MPU_ATTR_NON_CACHEABLE));
+#endif
+    ARM_MPU_Enable(MPU_CTRL_PRIVDEFENA_Msk | MPU_CTRL_HFNMIENA_Msk);
+}
+
 #ifdef __ARMCC_VERSION
 extern const rt_uint32_t Image$$ARM_LIB_HEAP$$Limit[];
 extern const rt_uint32_t Image$$ARM_LIB_STACK$$Base[];
@@ -87,7 +138,7 @@ extern const rt_uint32_t __heap_end__[];
 /**
  * This function will initial Pisces board.
  */
-void rt_hw_board_init()
+RT_WEAK void rt_hw_board_init()
 {
     /* mpu init */
     mpu_init();
@@ -102,6 +153,10 @@ void rt_hw_board_init()
     rt_hw_interrupt_install(SysTick_IRQn, systick_isr, RT_NULL, "tick");
     HAL_SetTickFreq(1000 / RT_TICK_PER_SECOND);
     HAL_SYSTICK_Init();
+
+#ifdef RT_USING_PIN
+    rt_hw_iomux_config();
+#endif
 
     rt_system_heap_init((void *)HEAP_START, (void *)HEAP_END);
 #ifdef RT_USING_UNCACHE_HEAP
@@ -122,3 +177,17 @@ void rt_hw_board_init()
     rt_components_board_init();
 #endif
 }
+
+#ifdef __ARMCC_VERSION
+extern int $Super$$main(void);
+void _start(void)
+{
+    $Super$$main();
+}
+#else
+extern int entry(void);
+void _start(void)
+{
+    entry();
+}
+#endif

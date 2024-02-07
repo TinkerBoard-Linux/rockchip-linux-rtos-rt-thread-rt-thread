@@ -11,6 +11,9 @@ choice
         bool "Enable FPGA board"
         select IS_FPGA
 
+    config RT_USING_BOARD_ADSP_DEMO
+        bool "Enable ADSP board"
+
 endchoice
 
 endmenu

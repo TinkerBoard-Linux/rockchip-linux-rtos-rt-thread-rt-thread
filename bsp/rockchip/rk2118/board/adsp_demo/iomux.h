@@ -8,9 +8,9 @@
  * 2024-02-07     Cliff Chen   first implementation
  */
 
-#ifndef __BOARD_H__
-#define __BOARD_H__
+#ifndef __BOARD_IOMUX_H__
+#define __BOARD_IOMUX_H__
 
-#include "board_base.h"
+#include "iomux_base.h"
 
 #endif
