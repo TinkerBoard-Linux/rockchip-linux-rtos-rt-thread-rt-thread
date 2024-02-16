@@ -12,7 +12,10 @@ choice
         select IS_FPGA
 
     config RT_USING_BOARD_ADSP_DEMO
-        bool "Enable ADSP board"
+        bool "Enable ADSP demo board"
+
+    config RT_USING_BOARD_IOTEST
+        bool "Enable io test board"
 
 endchoice
 
