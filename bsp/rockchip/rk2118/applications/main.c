@@ -49,7 +49,7 @@ int main(void)
     //test_reg_read();
 
     __asm volatile("vldr d7, %0" : : "m"(g_double) :);
-    //tfm_ns_interface_init();
-    //psa_framework_version();
+    tfm_ns_interface_init();
+    psa_framework_version();
     return 0;
 }
