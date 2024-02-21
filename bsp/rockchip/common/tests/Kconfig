@@ -77,6 +77,19 @@ config RT_USING_COMMON_TEST
         depends on RT_USING_PIN
         default n
 
+    choice
+        prompt "Pinctrl version"
+        default RT_USING_COMMON_TEST_GPIO_V1 if RKMCU_RK2108
+        default RT_USING_COMMON_TEST_GPIO_V2 if BSP_RK3308
+        default RT_USING_COMMON_TEST_GPIO_V2
+        depends on RT_USING_COMMON_TEST_GPIO
+
+        config RT_USING_COMMON_TEST_GPIO_V1
+            bool "Enalbe BSP Common GPIO with Pinctrl v1"
+        config RT_USING_COMMON_TEST_GPIO_V2
+            bool "Enalbe BSP Common GPIO with Pinctrl v2"
+    endchoice
+
     config RT_USING_COMMON_TEST_I2C
         bool "Enable BSP Common I2C TEST"
         depends on RT_USING_I2C

@@ -15,7 +15,7 @@
 #include <rtthread.h>
 #include <rtdevice.h>
 
-#if defined(RT_USING_COMMON_TEST_GPIO) && defined(BSP_RK3308)
+#if defined(RT_USING_COMMON_TEST_GPIO) && defined(RT_USING_COMMON_TEST_GPIO_V2)
 
 #include <unistd.h>
 #include <stdlib.h>
@@ -164,7 +164,7 @@ static void gpio_test(uint32_t bank, uint32_t pin, uint32_t dir, uint32_t parm1,
         isr_flag = 0;
         for (i = 0; i < 60; i++)
         {
-            rt_thread_delay(RT_TICK_PER_SECOND);
+            HAL_DelayMs(1000);
             if (isr_flag)
             {
                 break;
@@ -203,42 +203,50 @@ static void tgpio_main(int argc, char **argv)
         {
             // Get pin num
             pin  = strtol(argv[2], &pstr, 10);
-            if ((*pstr != 0) || (pin >= 32)) {
+            if ((*pstr != 0) || (pin >= 32))
+            {
                 goto usage;
             }
 
             // Get dir
-            if (!strcmp("-o", argv[3])) {
+            if (!strcmp("-o", argv[3]))
+            {
                 dir = 1;
 
                 // Get parm1: output level (0~1)
                 parm1  = strtol(argv[4], &pstr, 10);
-                if ((*pstr != 0)  || (parm1 > 1)) {
+                if ((*pstr != 0)  || (parm1 > 1))
+                {
                     goto usage;
                 }
 
                 // Get param2: output driven (0~3)
                 parm2  = strtol(argv[5], &pstr, 10);
-                if ((*pstr != 0)  || (parm1 > 3)) {
+                if ((*pstr != 0)  || (parm1 > 3))
+                {
                     goto usage;
                 }
             }
-            else if (!strcmp("-i", argv[3])) {
+            else if (!strcmp("-i", argv[3]))
+            {
                 dir = 0;
 
                 // Get parm1: input pull mode (0~2)
                 parm1  = strtol(argv[4], &pstr, 10);
-                if ((*pstr != 0)  || (parm1 > 2)) {
+                if ((*pstr != 0)  || (parm1 > 2))
+                {
                     goto usage;
                 }
 
                 // Get param2: input irq mode (0~4)
                 parm2  = strtol(argv[5], &pstr, 10);
-                if ((*pstr != 0)  || (parm1 > 4)) {
+                if ((*pstr != 0)  || (parm1 > 4))
+                {
                     goto usage;
                 }
             }
-            else {
+            else
+            {
                 goto usage;
             }
 
