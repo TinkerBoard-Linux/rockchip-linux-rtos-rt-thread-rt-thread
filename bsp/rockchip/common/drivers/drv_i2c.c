@@ -157,10 +157,10 @@ static rt_size_t rockchip_i2c_xfer(struct rt_i2c_bus_device *bus, struct rt_i2c_
     bool use_interrupt = true;
     const struct HAL_I2C_DEV *i2c_dev = i2c->dev;
 
- #ifdef RT_USING_PM
+#ifdef RT_USING_PM
     pm_runtime_request(i2c_dev->runtimeID);
     i2c->pmState = PM_BUSY;
- #endif
+#endif
 
     clk_enable_by_id(i2c_dev->pclkGateID);
     clk_enable_by_id(i2c_dev->clkGateID);
@@ -350,6 +350,22 @@ DEFINE_ROCKCHIP_I2C(4)
 DEFINE_ROCKCHIP_I2C(5)
 #endif
 
+#ifdef RT_USING_I2C6
+DEFINE_ROCKCHIP_I2C(6)
+#endif
+
+#ifdef RT_USING_I2C7
+DEFINE_ROCKCHIP_I2C(7)
+#endif
+
+#ifdef RT_USING_I2C8
+DEFINE_ROCKCHIP_I2C(8)
+#endif
+
+#ifdef RT_USING_I2C9
+DEFINE_ROCKCHIP_I2C(9)
+#endif
+
 static struct rockchip_i2c *const rockchip_i2c_table[] =
 {
 #ifdef RT_USING_I2C0
@@ -369,6 +385,18 @@ static struct rockchip_i2c *const rockchip_i2c_table[] =
 #endif
 #ifdef RT_USING_I2C5
     &i2c5,
+#endif
+#ifdef RT_USING_I2C6
+    &i2c6,
+#endif
+#ifdef RT_USING_I2C7
+    &i2c7,
+#endif
+#ifdef RT_USING_I2C8
+    &i2c8,
+#endif
+#ifdef RT_USING_I2C9
+    &i2c9,
 #endif
     RT_NULL
 };
