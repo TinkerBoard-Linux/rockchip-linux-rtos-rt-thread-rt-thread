@@ -148,10 +148,52 @@ MEMORY
 
 SECTIONS
 {
-    .text :
+    .vectors :
     {
         . = ALIGN(4);
+        __ISR_Vector_start__ = .;
         KEEP(*(.vectors))               /* vector table */
+        __ISR_Vector_end__ = .;
+        *startup_rk2118.o (.text .text.*)
+        . = ALIGN(4);
+    } > CODE
+
+    __vector_remap__ = ORIGIN(DATA);
+    SRAM_TEXT_DST = ORIGIN(DATA) +  SIZEOF(.vectors);
+    SRAM_TEXT_SRC  = LOADADDR(.vectors) + SIZEOF(.vectors);
+    .sram.text SRAM_TEXT_DST : AT(SRAM_TEXT_SRC)
+    {
+        . = ALIGN(4);
+        KEEP(*(.sram.text))
+        *hid.o(.rodata .rodata*)        /* read-only data (constants) */
+        /* *libForceSramDrivers.a: (.text .text.* .rodata .rodata*) */
+        *hal_cache.o(.text .text.* .rodata .rodata*)
+        *hal_cpu_sleep.o(.text .text.* .rodata .rodata*)
+        *hal_base.o(.text .text.* .rodata .rodata*)
+        *hal_base_ex.o(.text .text.* .rodata .rodata*)
+        *hal_snor.o(.text .text.* .rodata .rodata*)
+        *hal_fspi.o(.text .text.* .rodata .rodata*)
+        *hal_systick.o(.text .text.* .rodata .rodata*)
+        *hal_timer.o(.text .text.* .rodata .rodata*)
+        *drv_fspi.o(.text .text.* .rodata .rodata*)
+        *drv_snor.o(.text .text.* .rodata .rodata*)
+        *drv_dsp.o(.text .text.* .rodata .rodata*)
+        *drv_pm.o(.text .text.* .rodata .rodata*)
+        *hal_mbox.o(.text .text.* .rodata .rodata*)
+        *hal_pm_cpu.o(.text .text.* .rodata .rodata*)
+        *hal_pm_rk2118.o(.text .text.* .rodata .rodata*)
+        *snor_test.o(.text .text.* .rodata .rodata*)
+        *hal_qpipsram.o(.text .text.* .rodata .rodata*)
+        *drv_qpipsram.o(.text .text.* .rodata .rodata*)
+        *drv_psram.o(.text .text.* .rodata .rodata*)
+        . = ALIGN(32);
+    }
+
+    TEXT_SRC = LOADADDR(.sram.text) + SIZEOF(.sram.text);
+    TEXT_DST = TEXT_SRC;
+    .text TEXT_DST : AT(TEXT_SRC)
+    {
+        . = ALIGN(4);
         PROVIDE(_stext = .);
         KEEP(*(.text.entrypoint))       /* The entry point */
         *(.text)                        /* remaining code */
@@ -185,80 +227,89 @@ SECTIONS
 
         . = ALIGN(32);
         PROVIDE(_etext = .);
-    } > CODE
+    }
+
+    EXTAB_SRC = LOADADDR(.text) + SIZEOF(.text);
+    EXTAB_DST = EXTAB_SRC;
+    .ARM.extab EXTAB_DST : AT(EXTAB_SRC)
+    {
+        *(.ARM.extab*)
+    }
 
     __exidx_start = .;
-    .ARM.exidx :
+    EXIDX_SRC = LOADADDR(.ARM.extab) + SIZEOF(.ARM.extab);
+    EXIDX_DST = EXIDX_SRC;
+    .ARM.exidx EXIDX_DST : AT(EXIDX_SRC)
     {
         *(.ARM.exidx* .gnu.linkonce.armexidx.*)
-    } > CODE
+    }
     __exidx_end = .;
 
-    .rodata :
-    {
-        *(.rodata) *(.rodata.*)
-    } > CODE
-    __rodata_end = .;
-
-    .zero.table :
+    ZERO_TABLE_SRC = LOADADDR(.ARM.exidx) + SIZEOF(.ARM.exidx);
+    ZERO_TABLE_DST = ZERO_TABLE_SRC;
+    .zero.table ZERO_TABLE_DST : AT(ZERO_TABLE_SRC)
     {
         . = ALIGN(4);
         __zero_table_start__ = .;
         LONG (ADDR(.bss))
         LONG (SIZEOF(.bss) / 4)
         __zero_table_end__ = .;
-    } > CODE
+    }
 
-    .copy.table :
+    COPY_TABLE_SRC = LOADADDR(.zero.table) + SIZEOF(.zero.table);
+    COPY_TABLE_DST = COPY_TABLE_SRC;
+    .copy.table COPY_TABLE_DST : AT(COPY_TABLE_SRC)
     {
         . = ALIGN(4);
         __copy_table_start__ = .;
         LONG (__Vectors)
-        LONG (ORIGIN(DATA))
+        LONG (__vector_remap__)
         LONG (__Vectors_Size / 4)
+        LONG (LOADADDR(.sram.text))
+        LONG (ADDR(.sram.text))
+        LONG (SIZEOF(.sram.text) / 4)
         LONG (LOADADDR(.data))
         LONG (ADDR(.data))
         LONG (SIZEOF(.data) / 4)
         __copy_table_end__ = .;
-    } > CODE
+    }
 
-    . = ALIGN(16);
-
-    .ctors :
+    CTORS_SRC = LOADADDR(.copy.table) + SIZEOF(.copy.table);
+    CTORS_DST = CTORS_SRC;
+    .ctors CTORS_DST : AT(CTORS_SRC)
     {
+        . = ALIGN(16);
         PROVIDE(__ctors_start__ = .);
         KEEP(*(SORT(.ctors.*)))
         KEEP(*(.ctors))
         PROVIDE(__ctors_end__ = .);
-    } > CODE
+    }
 
-    .dtors :
+    DTORS_SRC = LOADADDR(.ctors) + SIZEOF(.ctors);
+    DTORS_DST = DTORS_SRC;
+    .dtors DTORS_DST : AT(DTORS_SRC)
     {
         PROVIDE(__dtors_start__ = .);
         KEEP(*(SORT(.dtors.*)))
         KEEP(*(.dtors))
         PROVIDE(__dtors_end__ = .);
-    } > CODE
+    }
 
-    .vector_remap (NOLOAD):
-    {
-        PROVIDE(__vector_remap__ = .);
-        . = . + __Vectors_Size;
-    } > DATA
-
-    .data :
+    DATA_DST = ORIGIN(DATA) + SIZEOF(.vectors) + SIZEOF(.sram.text);
+    DATA_SRC = LOADADDR(.dtors) + SIZEOF(.dtors);
+    .data DATA_DST : AT(DATA_SRC)
     {
         . = ALIGN(32);
         *(.data)
         *(.data.*)
 
         . = ALIGN(16);
-    } > DATA AT > CODE
+    }
 
-    . = ALIGN(16);
-
-    .bss (NOLOAD) :
+    BSS_DST = ADDR(.data) + SIZEOF(.data);
+    .bss BSS_DST (NOLOAD) :
     {
+        . = ALIGN(16);
         PROVIDE(__bss_start__ = .);
         *(.bss)
         *(.bss.*)
@@ -266,16 +317,17 @@ SECTIONS
         *(COMMON)
         . = ALIGN(16);
         PROVIDE(__bss_end__ = .);
-    } > DATA
+    }
 
-    .heap :
+    HEAP_DST = ADDR(.bss) + SIZEOF(.bss);
+    .heap HEAP_DST (NOLOAD) :
     {
         . = ALIGN(32);
         PROVIDE(__heap_begin__ = .);
         . = ORIGIN(DATA) + LENGTH(DATA) - __STACK_SIZE - __STACKSEAL_SIZE;
         PROVIDE(__heap_end__ = .);
         . = ALIGN(32);
-    } > DATA
+    }
 
    .stack (ORIGIN(DATA) + LENGTH(DATA) - __STACK_SIZE - __STACKSEAL_SIZE) (COPY) :
    {
@@ -287,7 +339,7 @@ SECTIONS
         PROVIDE(__stack = __StackTop);
         PROVIDE(_sstack = __StackLimit);
         PROVIDE(_estack = __StackTop);
-    } > DATA
+    }
 
 #ifdef RT_USING_UNCACHE_HEAP
     .uncache.heap (NOLOAD) :
