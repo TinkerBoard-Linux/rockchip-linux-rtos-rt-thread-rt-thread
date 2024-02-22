@@ -20,6 +20,10 @@
 #include "hal_bsp.h"
 #include "iomux.h"
 
+#ifdef RT_USING_USB_DEVICE
+#include "drv_usbd.h"
+#endif
+
 RT_WEAK const struct clk_init clk_inits[] =
 {
     INIT_CLK("PLL_GPLL", PLL_GPLL, 800000000),
@@ -127,6 +131,20 @@ RT_WEAK void mpu_init(void)
     ARM_MPU_SetMemAttr(4, ARM_MPU_ATTR(ARM_MPU_ATTR_MEMORY_(0, 1, 1, 1), ARM_MPU_SH_INNER));
     ARM_MPU_Enable(MPU_CTRL_PRIVDEFENA_Msk | MPU_CTRL_HFNMIENA_Msk);
 }
+
+#ifdef RT_USING_USB_DEVICE
+RT_WEAK struct ep_id g_usb_ep_pool[] =
+{
+    { 0x0,  USB_EP_ATTR_CONTROL,    USB_DIR_INOUT,  64,   ID_ASSIGNED   },
+    { 0x1,  USB_EP_ATTR_BULK,       USB_DIR_IN,     1024, ID_UNASSIGNED },
+    { 0x2,  USB_EP_ATTR_BULK,       USB_DIR_OUT,    512,  ID_UNASSIGNED },
+    { 0x3,  USB_EP_ATTR_ISOC,       USB_DIR_IN,     1024, ID_UNASSIGNED },
+    { 0x4,  USB_EP_ATTR_ISOC,       USB_DIR_OUT,    512,  ID_UNASSIGNED },
+    { 0x5,  USB_EP_ATTR_INT,        USB_DIR_IN,     64,   ID_UNASSIGNED },
+    { 0x6,  USB_EP_ATTR_INT,        USB_DIR_OUT,    64,   ID_UNASSIGNED },
+    { 0xFF, USB_EP_ATTR_TYPE_MASK,  USB_DIR_MASK,   0,    ID_ASSIGNED   },
+};
+#endif
 
 #ifdef __ARMCC_VERSION
 extern const rt_uint32_t Image$$ARM_LIB_HEAP$$Limit[];

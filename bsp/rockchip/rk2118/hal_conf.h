@@ -115,6 +115,14 @@
 #define HAL_UART_MODULE_ENABLED
 #endif
 
+#ifdef RT_USING_USB_DEVICE
+#define HAL_PCD_MODULE_ENABLED
+#endif
+
+#ifdef RT_USING_USB_HOST
+#define HAL_HCD_MODULE_ENABLED
+#endif
+
 #ifdef RT_USING_VAD
 #define HAL_VAD_MODULE_ENABLED
 #endif
