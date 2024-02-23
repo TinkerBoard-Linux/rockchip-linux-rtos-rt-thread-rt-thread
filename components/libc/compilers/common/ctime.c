@@ -637,6 +637,18 @@ int clock_gettime(clockid_t clockid, struct timespec *tp)
             rt_hw_interrupt_enable(level);
         }
         break;
+    case CLOCK_MONOTONIC:
+        {
+            int tick;
+            rt_base_t level;
+
+            level = rt_hw_interrupt_disable();
+            tick = rt_tick_get(); /* get tick */
+            tp->tv_sec  = tick / RT_TICK_PER_SECOND;
+            tp->tv_nsec = ((tick % RT_TICK_PER_SECOND) * MICROSECOND_PER_TICK) * 1000;
+            rt_hw_interrupt_enable(level);
+        }
+        break;
 
 #ifdef RT_USING_CPUTIME
     case CLOCK_CPUTIME_ID:
