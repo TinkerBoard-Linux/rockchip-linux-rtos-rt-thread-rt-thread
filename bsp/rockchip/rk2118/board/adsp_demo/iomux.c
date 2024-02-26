@@ -72,6 +72,7 @@ void rt_hw_iomux_config(void)
     uart2_iomux_config();
     mcu_jtag_m0_iomux_config();
     spi2_iomux_config();
+    i2c2_iomux_config();
     can_iomux_config();
     uart0_iomux_config();
     sai7_iomux_config();

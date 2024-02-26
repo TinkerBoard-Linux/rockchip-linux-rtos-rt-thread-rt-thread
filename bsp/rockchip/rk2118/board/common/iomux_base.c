@@ -169,6 +169,20 @@ RT_WEAK  void spi2_iomux_config(void)
 }
 
 /**
+ * @brief  Config iomux for I2C2
+ */
+RT_WEAK  void i2c2_iomux_config(void)
+{
+    HAL_PINCTRL_SetRMIO(GPIO_BANK3,
+                        GPIO_PIN_A5,   // I2C2_SCL
+                        RMIO_I2C2_SCL_RM1);
+
+    HAL_PINCTRL_SetRMIO(GPIO_BANK3,
+                        GPIO_PIN_A6,   // I2C2_SDA
+                        RMIO_I2C2_SDA_RM1);
+}
+
+/**
  * @brief  Config iomux for CAN
  */
 RT_WEAK  void can_iomux_config(void)

@@ -17,6 +17,7 @@ void uart2_iomux_config(void);
 void mcu_jtag_m0_iomux_config(void);
 void mcu_jtag_m1_iomux_config(void);
 void spi2_iomux_config(void);
+void i2c2_iomux_config(void);
 void can_iomux_config(void);
 void uart0_iomux_config(void);
 void sai7_iomux_config(void);
