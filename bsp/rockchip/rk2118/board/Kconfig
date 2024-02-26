@@ -17,6 +17,8 @@ choice
     config RT_USING_BOARD_IOTEST
         bool "Enable io test board"
 
+    config RT_USING_BOARD_SOUNDBAR_CORE
+        bool "Enable soundbar core board"
 endchoice
 
 endmenu
