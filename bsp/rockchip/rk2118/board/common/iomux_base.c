@@ -308,7 +308,7 @@ RT_WEAK  void sai0_iomux_config(void)
     HAL_PINCTRL_SetRMIO(GPIO_BANK4,
                         GPIO_PIN_A0,   // SAI0_TDM_SCLK
                         RMIO_SAI0_SCLK);
-
+#if 0 // for i2s multi-lanes
     HAL_PINCTRL_SetRMIO(GPIO_BANK4,
                         GPIO_PIN_A1,   // SAI0_TDM_LRCK
                         RMIO_SAI0_LRCK);
@@ -316,7 +316,11 @@ RT_WEAK  void sai0_iomux_config(void)
     HAL_PINCTRL_SetRMIO(GPIO_BANK4,
                         GPIO_PIN_A2,   // SAI0_TDM_LRCKxN_0
                         RMIO_SAI0_LRCKXN_0);
-
+#else // for tdm8 one lanes
+    HAL_PINCTRL_SetRMIO(GPIO_BANK4,
+                        GPIO_PIN_A2,   // SAI0_TDM_LRCK
+                        RMIO_SAI0_LRCK);
+#endif
     HAL_PINCTRL_SetRMIO(GPIO_BANK4,
                         GPIO_PIN_A3,   // SAI0_TDM_SDO0
                         RMIO_SAI0_SDO0);
