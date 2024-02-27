@@ -668,7 +668,7 @@ int dhara_nand_read(const struct dhara_nand *n, dhara_page_t p,
         rt_kprintf("NAND_read page 0x%x failed, ret=%d\n", p, ret);
         dhara_set_error(err, DHARA_E_ECC);
     }
-    *err = DHARA_E_NONE;
+    dhara_set_error(err, DHARA_E_NONE);
     r_count++;
 
     return ret;
