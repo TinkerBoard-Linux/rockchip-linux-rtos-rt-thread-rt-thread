@@ -92,7 +92,7 @@ SECTIONS
     .text :
     {
         PROVIDE(__vector_remap__ = .);
-        *(.vectors)
+        KEEP(*(.vectors))
         PROVIDE(_stext = .);
         KEEP(*(.text.entrypoint))       /* The entry point */
         *(.text)                        /* remaining code */
