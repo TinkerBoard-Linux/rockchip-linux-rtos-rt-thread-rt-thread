@@ -183,8 +183,7 @@
 
 /* RT-Thread board config */
 
-#define IS_FPGA
-#define RT_USING_BOARD_FPGA
+#define RT_USING_BOARD_ADSP_DEMO
 
 /* RT-Thread Common Test case */
 
