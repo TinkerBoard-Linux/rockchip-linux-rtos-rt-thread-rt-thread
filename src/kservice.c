@@ -30,6 +30,8 @@
 #include <dlmodule.h>
 #endif /* RT_USING_MODULE */
 
+#include "hal_bsp.h"
+
 /* use precision */
 #define RT_PRINTF_PRECISION
 
@@ -1316,6 +1318,10 @@ RT_WEAK int rt_kprintf(const char *fmt, ...)
     rt_size_t length;
     char rt_log_buf[RT_CONSOLEBUF_SIZE];
 
+#if defined(HAL_SHARED_DEBUG_UART_LOCK_ID) && defined(HAL_SPINLOCK_MODULE_ENABLED)
+    bool locked = false;
+#endif
+
     va_start(args, fmt);
     /* the return value of vsnprintf is the number of bytes that would be
      * written to buffer had if the size of the buffer been sufficiently
@@ -1334,6 +1340,22 @@ RT_WEAK int rt_kprintf(const char *fmt, ...)
     rt_spin_lock(&_print_lock);
 #endif
 
+#if defined(HAL_SHARED_DEBUG_UART_LOCK_ID) && defined(HAL_SPINLOCK_MODULE_ENABLED)
+    {
+        HAL_Check ret;
+        uint64_t timeout = PLL_INPUT_OSC_RATE / 1000; /* 1ms */
+
+        timeout += HAL_GetSysTimerCount();
+        do {
+            ret = HAL_SPINLOCK_TryLock(HAL_SHARED_DEBUG_UART_LOCK_ID);
+        } while(!ret && HAL_GetSysTimerCount() < timeout);
+
+        if (ret) {
+            locked = true;
+        }
+    }
+#endif
+
 #ifdef RT_USING_DEVICE
     if (_console_device == RT_NULL)
     {
@@ -1346,6 +1368,12 @@ RT_WEAK int rt_kprintf(const char *fmt, ...)
 #else
     rt_hw_console_output(rt_log_buf);
 #endif /* RT_USING_DEVICE */
+
+#if defined(HAL_SHARED_DEBUG_UART_LOCK_ID) && defined(HAL_SPINLOCK_MODULE_ENABLED)
+    if (locked) {
+        HAL_SPINLOCK_Unlock(HAL_SHARED_DEBUG_UART_LOCK_ID);
+    }
+#endif
 
 #ifdef RT_USING_SMP
     rt_spin_unlock(&_print_lock);
