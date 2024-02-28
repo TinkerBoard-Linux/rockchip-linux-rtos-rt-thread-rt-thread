@@ -41,8 +41,16 @@ void rt_hw_iomux_config(void)
 {
     rt_hw_iodomain_config();
 
+#ifdef RT_USING_UART1
+    uart1_m0_iomux_config();
+#endif
+
 #ifdef RT_USING_UART2
     uart2_m1_iomux_config();
+#endif
+
+#ifdef RT_USING_UART3
+    uart3_m1_iomux_config();
 #endif
 
 #ifdef RT_USING_UART4

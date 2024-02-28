@@ -12,7 +12,18 @@
 #include "iomux.h"
 #include "hal_base.h"
 
-#ifdef RT_USING_UART2
+#if defined(RT_USING_UART1)
+RT_WEAK void uart1_m0_iomux_config(void)
+{
+    /* UART1 M0 RX-1D0 TX-1D1 */
+    HAL_PINCTRL_SetIOMUX(GPIO_BANK1,
+                         GPIO_PIN_D0 |
+                         GPIO_PIN_D1,
+                         PIN_CONFIG_MUX_FUNC1);
+}
+#endif
+
+#if defined(RT_USING_UART2)
 RT_WEAK  void uart2_m1_iomux_config(void)
 {
     /* UART2 M1 RX-4D2 TX-4D3 */
@@ -23,7 +34,23 @@ RT_WEAK  void uart2_m1_iomux_config(void)
 }
 #endif
 
-#ifdef RT_USING_UART4
+#if defined(RT_USING_UART3)
+RT_WEAK void uart3_m1_iomux_config(void)
+{
+    /* UART3 M1 RX-0C1 TX-0C2 */
+    HAL_PINCTRL_SetIOMUX(GPIO_BANK0,
+                         GPIO_PIN_C1 |
+                         GPIO_PIN_C2,
+                         PIN_CONFIG_MUX_FUNC3);
+
+    /* set UART master 1 IOMUX selection to M1 */
+    WRITE_REG_MASK_WE(GRF->SOC_CON5,
+                      GRF_SOC_CON5_GRF_UART3_MULTI_IOFUNC_SRC_SEL_MASK,
+                      (1 << GRF_SOC_CON5_GRF_UART3_MULTI_IOFUNC_SRC_SEL_SHIFT));
+}
+#endif
+
+#if defined(RT_USING_UART4)
 RT_WEAK  void uart4_m0_iomux_config(void)
 {
     /* UART4 M0 RX-4B0 TX-4B1 */

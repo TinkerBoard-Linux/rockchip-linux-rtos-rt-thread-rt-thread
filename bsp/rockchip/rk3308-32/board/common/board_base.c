@@ -64,6 +64,16 @@ RT_WEAK const struct clk_unused clks_unused[] =
 static uint32_t g_tick_load;
 #endif
 
+#if defined(RT_USING_UART1)
+RT_WEAK const struct uart_board g_uart1_board =
+{
+    .baud_rate = UART_BR_1500000,
+    .dev_flag = ROCKCHIP_UART_SUPPORT_FLAG_DEFAULT,
+    .bufer_size = RT_SERIAL_RB_BUFSZ,
+    .name = "uart1",
+};
+#endif /* RT_USING_UART1 */
+
 #if defined(RT_USING_UART2)
 RT_WEAK const struct uart_board g_uart2_board =
 {
@@ -73,6 +83,16 @@ RT_WEAK const struct uart_board g_uart2_board =
     .name = "uart2",
 };
 #endif /* RT_USING_UART2 */
+
+#if defined(RT_USING_UART3)
+RT_WEAK const struct uart_board g_uart3_board =
+{
+    .baud_rate = UART_BR_1500000,
+    .dev_flag = ROCKCHIP_UART_SUPPORT_FLAG_DEFAULT,
+    .bufer_size = RT_SERIAL_RB_BUFSZ,
+    .name = "uart3",
+};
+#endif /* RT_USING_UART3 */
 
 #if defined(RT_USING_UART4)
 RT_WEAK const struct uart_board g_uart4_board =
