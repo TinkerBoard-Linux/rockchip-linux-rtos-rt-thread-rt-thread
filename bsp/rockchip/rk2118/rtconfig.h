@@ -83,6 +83,7 @@
 #define RT_USING_SERIAL_V1
 #define RT_SERIAL_USING_DMA
 #define RT_SERIAL_RB_BUFSZ 64
+#define RT_USING_I2C
 #define RT_USING_PIN
 #define RT_USING_MTD_NOR
 
@@ -119,6 +120,8 @@
 
 /* System */
 
+#define RT_USING_SIMPLE_CODECS
+#define RT_USING_CODEC_TAS6424L
 
 /* RT-Thread Utestcases */
 
@@ -177,6 +180,10 @@
 /* RT-Thread rockchip RK2118 drivers */
 
 #define RT_USING_CRU
+
+/* Enable I2C */
+
+#define RT_USING_I2C2
 #define RT_USING_SYSTICK
 
 /* Enable UART */
