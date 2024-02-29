@@ -113,6 +113,10 @@
 #define HAL_WDT_MODULE_ENABLED
 #endif
 
+#ifdef RT_USING_VOP
+#define HAL_VOP_MODULE_ENABLED
+#endif
+
 /* HAL_DBG SUB CONFIG */
 #define HAL_DBG_USING_RTT_SERIAL
 #define HAL_DBG_ON
