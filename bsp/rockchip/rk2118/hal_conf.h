@@ -99,6 +99,7 @@
 #define HAL_FSPI_DMA_ENABLED
 #ifdef RT_USING_XIP
 #define HAL_FSPI_XIP_ENABLE
+#define HAL_SRAM_SECTION_ENABLED
 #endif
 #endif
 

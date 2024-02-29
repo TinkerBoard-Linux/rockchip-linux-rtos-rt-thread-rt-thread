@@ -165,6 +165,8 @@ SECTIONS
     {
         . = ALIGN(4);
         KEEP(*(.sram.text))
+        KEEP(*(.sram_code)) /* HAL sram text */
+        KEEP(*(.sram_data)) /* HAL sram data */
         *hid.o(.rodata .rodata*)        /* read-only data (constants) */
         /* *libForceSramDrivers.a: (.text .text.* .rodata .rodata*) */
         *hal_cache.o(.text .text.* .rodata .rodata*)
