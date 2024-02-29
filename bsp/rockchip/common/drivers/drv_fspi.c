@@ -364,7 +364,7 @@ int32_t rt_fspi_set_speed(struct rt_fspi_device *fspi_device, uint32_t speed)
     ret = HAL_CRU_ClkSetFreq(host->sclkID, speed);
     if (!ret)
     {
-        fspi_device->speed = HAL_CRU_ClkGetFreq(host->sclkID);
+        fspi_device->speed = speed;
         fspi_device->ctrl->cur_speed = fspi_device->speed;
         ret = fspi_device->ctrl->cur_speed;
     }
