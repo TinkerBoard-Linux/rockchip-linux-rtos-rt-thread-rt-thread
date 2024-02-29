@@ -83,6 +83,11 @@ config RT_USING_TSADC
     bool "Enable TSADC"
     default n
 
+config RT_USING_TOUCHKEY
+    select RT_USING_TOUCHKEY
+    bool "Enable Touchkey"
+    default n
+
 menu "Enable UART"
     config RT_USING_UART
         bool "Enable UART"
