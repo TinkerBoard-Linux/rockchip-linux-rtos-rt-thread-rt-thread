@@ -27,6 +27,7 @@ void sai0_iomux_config(void);
 void spi0_m1_iomux_config(void);
 void sai1_iomux_config(void);
 void sai2_iomux_config(void);
+void pdm_iomux_config(void);
 void rt_hw_iomux_config(void);
 
 #endif

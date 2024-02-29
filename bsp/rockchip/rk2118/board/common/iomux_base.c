@@ -400,6 +400,36 @@ RT_WEAK  void sai2_iomux_config(void)
 }
 
 /**
+ * @brief  Config iomux for pdm
+ */
+RT_WEAK  void pdm_iomux_config(void)
+{
+    HAL_PINCTRL_SetRMIO(GPIO_BANK4,
+                        GPIO_PIN_B0,   // PDM_CLK1
+                        RMIO_PDM_CLK1);
+
+    HAL_PINCTRL_SetRMIO(GPIO_BANK4,
+                        GPIO_PIN_A7,   // PDM_CLK0
+                        RMIO_PDM_CLK0);
+
+    HAL_PINCTRL_SetRMIO(GPIO_BANK4,
+                        GPIO_PIN_B1,   // PDM_SDI0
+                        RMIO_PDM_SDI0);
+
+    HAL_PINCTRL_SetRMIO(GPIO_BANK4,
+                        GPIO_PIN_B3,   // PDM_SDI1
+                        RMIO_PDM_SDI1);
+
+    HAL_PINCTRL_SetRMIO(GPIO_BANK4,
+                        GPIO_PIN_B4,   // PDM_SDI2
+                        RMIO_PDM_SDI2);
+
+    HAL_PINCTRL_SetRMIO(GPIO_BANK4,
+                        GPIO_PIN_B5,   // PDM_SDI3
+                        RMIO_PDM_SDI3);
+}
+
+/**
  * @brief  Config iomux for rk2118 evb board
  */
 RT_WEAK  void rt_hw_iomux_config(void)
@@ -418,6 +448,7 @@ RT_WEAK  void rt_hw_iomux_config(void)
     spi0_m1_iomux_config();
     sai1_iomux_config();
     sai2_iomux_config();
+    pdm_iomux_config();
 }
 /** @} */  // IOMUX_Public_Functions
 

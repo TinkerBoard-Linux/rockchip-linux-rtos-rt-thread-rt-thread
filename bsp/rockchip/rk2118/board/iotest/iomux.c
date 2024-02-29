@@ -92,6 +92,7 @@ void rt_hw_iomux_config(void)
     fspi0_iomux_config();
     dsp_jtag_iomux_config();
     mcu_jtag_m0_iomux_config();
+    pdm_iomux_config();
 }
 
 /** @} */  // IOMUX_Public_Functions
