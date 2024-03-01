@@ -43,6 +43,9 @@ choice
 
     config RT_USING_BOARD_AMP_DEMO
         bool "Enable amplifier terminal demo board"
+
+    config RT_USING_BOARD_VEHICLE_DEMO
+        bool "Enable vehicle terminal demo board"
 endchoice
 
 config RT_USING_HIFI4
