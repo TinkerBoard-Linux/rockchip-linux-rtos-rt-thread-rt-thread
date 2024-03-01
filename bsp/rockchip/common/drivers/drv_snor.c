@@ -323,7 +323,7 @@ static uint32_t fspi_snor_adapt(struct SPI_NOR *nor)
 #ifdef RT_SNOR_DUAL_IO
     nor->spi->mode |= HAL_SPI_RX_DUAL;
 #else
-#if (FSPI_VER == 0x70011U)
+#if (((FSPI_VER >> 18) & 0x1) == 0x1U) /* Support X8_CAP */
     nor->spi->mode |= (HAL_SPI_TX_QUAD | HAL_SPI_RX_QUAD | HAL_SPI_TX_OCTAL | HAL_SPI_RX_OCTAL | HAL_SPI_DTR | HAL_SPI_DQS);
 #else
     nor->spi->mode |= (HAL_SPI_TX_QUAD | HAL_SPI_RX_QUAD);

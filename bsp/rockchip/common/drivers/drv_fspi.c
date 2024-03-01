@@ -361,7 +361,11 @@ int32_t rt_fspi_set_speed(struct rt_fspi_device *fspi_device, uint32_t speed)
 
     if (fspi_device->ctrl->cur_speed == speed)
         return RT_EOK;
+#if (((FSPI_VER >> 18) & 0x1) == 0x1U) /* Support X8_CAP */
+    ret = HAL_CRU_ClkSetFreq(host->sclkID, speed * 2);
+#else
     ret = HAL_CRU_ClkSetFreq(host->sclkID, speed);
+#endif
     if (!ret)
     {
         fspi_device->speed = speed;
