@@ -104,7 +104,7 @@ static const struct rt_mtd_nor_driver_ops snor_mtd_ops;
 #ifdef RT_USING_SNOR_FSPI_HOST
 static void fspi_snor_isr(int irq, void *param)
 {
-    struct rt_fspi_device *fspi_device = (struct rt_fspi_device *)param;
+    struct rt_fspi_device *fspi_device = (struct rt_fspi_device *)fspi_device;
     struct spiflash_device *spiflash = &s_spiflash[0];
 
     if (rt_fspi_is_poll_finished(fspi_device) == HAL_OK)
@@ -277,18 +277,7 @@ static uint32_t fspi_snor_adapt(struct SPI_NOR *nor)
     uint32_t ret;
     rt_base_t level;
     int dll_result = 0;
-    uint32_t threshold, default_speed, max_speed;
 
-
-#if (((FSPI_VER >> 18) & 0x1) == 0x1U) /* Support X8_CAP */
-    threshold = RT_FSPI_SPEED_X2_THRESHOLD;
-    default_speed = SNOR_SPEED_X2_DEFAULT;
-    max_speed = SNOR_SPEED_X2_MAX;
-#else
-    threshold = RT_FSPI_SPEED_THRESHOLD;
-    default_speed = SNOR_SPEED_DEFAULT;
-    max_speed = SNOR_SPEED_MAX;
-#endif
     xip_dbg('0');
     /* Controller low layer initialed with XIP enabled */
     level = rt_hw_interrupt_disable();
@@ -301,13 +290,13 @@ static uint32_t fspi_snor_adapt(struct SPI_NOR *nor)
 #ifdef IS_FPGA
     nor->spi->speed = 24000000;
 #else
-    if (RT_SNOR_SPEED > 0 && RT_SNOR_SPEED <= max_speed)
+    if (RT_SNOR_SPEED > 0 && RT_SNOR_SPEED <= SNOR_SPEED_MAX)
     {
         nor->spi->speed = RT_SNOR_SPEED;
     }
     else
     {
-        nor->spi->speed = default_speed;
+        nor->spi->speed = SNOR_SPEED_DEFAULT;
     }
 #endif
     nor->spi->mode = HAL_SPI_MODE_3;
@@ -319,7 +308,7 @@ static uint32_t fspi_snor_adapt(struct SPI_NOR *nor)
     rt_fspi_controller_init(fspi_device);
 
     /* Controller low layer initialed with XIP disbaled */
-    if (nor->spi->speed > threshold)
+    if (nor->spi->speed > RT_FSPI_SPEED_THRESHOLD)
     {
         xip_dbg('3');
         dll_result = rockchip_sfc_delay_lines_tuning(nor, fspi_device);
@@ -334,8 +323,7 @@ static uint32_t fspi_snor_adapt(struct SPI_NOR *nor)
 #ifdef RT_SNOR_DUAL_IO
     nor->spi->mode |= HAL_SPI_RX_DUAL;
 #else
-
-#if (((FSPI_VER >> 18) & 0x1) == 0x1U) /* Support X8_CAP */
+#if (FSPI_VER == 0x70011U)
     nor->spi->mode |= (HAL_SPI_TX_QUAD | HAL_SPI_RX_QUAD | HAL_SPI_TX_OCTAL | HAL_SPI_RX_OCTAL | HAL_SPI_DTR | HAL_SPI_DQS);
 #else
     nor->spi->mode |= (HAL_SPI_TX_QUAD | HAL_SPI_RX_QUAD);
