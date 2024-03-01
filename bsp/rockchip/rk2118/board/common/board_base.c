@@ -95,15 +95,17 @@ extern const rt_uint32_t __data_start__[];
 extern const rt_uint32_t __data_end__[];
 extern const rt_uint32_t __device_start__[];
 extern const rt_uint32_t __device_end__[];
+extern const rt_uint32_t __ddr_start__[];
+extern const rt_uint32_t __ddr_end__[];
 #ifdef RT_USING_UNCACHE_HEAP
 extern const rt_uint32_t __uncache_heap_start__[];
 extern const rt_uint32_t __uncache_heap_end__[];
 #endif
 RT_WEAK void mpu_init(void)
 {
-    /* text section: non shared, rw, np, exec, cachable */
-    ARM_MPU_SetRegion(0, ARM_MPU_RBAR((rt_uint32_t)__code_start__, 0U, 0U, 1U, 0U), ARM_MPU_RLAR((rt_uint32_t)__code_end__, 0U));
-    /* data section: non shared, rw, np, xn, cachable */
+    /* text section: non shared, ro, np, exec, cachable */
+    ARM_MPU_SetRegion(0, ARM_MPU_RBAR((rt_uint32_t)__code_start__, 0U, 1U, 1U, 0U), ARM_MPU_RLAR((rt_uint32_t)__code_end__, 0U));
+    /* data section: non shared, rw, np, exec, cachable */
     ARM_MPU_SetRegion(1, ARM_MPU_RBAR((rt_uint32_t)__data_start__, 0U, 0U, 1U, 0U), ARM_MPU_RLAR((rt_uint32_t)__data_end__, 1U));
     /* device section: shared, rw, np, xn */
     ARM_MPU_SetRegion(2, ARM_MPU_RBAR((rt_uint32_t)__device_start__, 1U, 0U, 1U, 1U), ARM_MPU_RLAR((rt_uint32_t)__device_end__, 2U));
@@ -120,6 +122,9 @@ RT_WEAK void mpu_init(void)
     /* uncachable normal memory */
     ARM_MPU_SetMemAttr(3, ARM_MPU_ATTR(ARM_MPU_ATTR_NON_CACHEABLE, ARM_MPU_ATTR_NON_CACHEABLE));
 #endif
+    /* ddr section: non shared, rw, np, exec, cachable */
+    ARM_MPU_SetRegion(4, ARM_MPU_RBAR((rt_uint32_t)__ddr_start__, 0U, 0U, 1U, 0U), ARM_MPU_RLAR((rt_uint32_t)__ddr_end__, 4U));
+    ARM_MPU_SetMemAttr(4, ARM_MPU_ATTR(ARM_MPU_ATTR_MEMORY_(0, 1, 1, 1), ARM_MPU_SH_INNER));
     ARM_MPU_Enable(MPU_CTRL_PRIVDEFENA_Msk | MPU_CTRL_HFNMIENA_Msk);
 }
 
