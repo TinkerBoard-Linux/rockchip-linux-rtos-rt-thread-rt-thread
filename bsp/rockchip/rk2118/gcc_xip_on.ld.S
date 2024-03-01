@@ -135,9 +135,11 @@ MEMORY
 #if defined(RK2118_CPU_CORE0)
   CODE (rx) : ORIGIN = __FLASH_CPU0_RTT_BASE,  LENGTH = __FLASH_CPU0_RTT_SIZE
   DATA (rw) : ORIGIN = __SRAM_CPU0_RTT_BASE,  LENGTH = __SRAM_CPU0_RTT_SIZE
+  DDR (rwx) : ORIGIN = __DRAM_CPU0_RTT_BASE,  LENGTH = __DRAM_CPU0_RTT_SIZE
 #elif defined(RK2118_CPU_CORE1)
   CODE (rx) : ORIGIN = __FLASH_CPU1_RTT_BASE,  LENGTH = __FLASH_CPU1_RTT_SIZE
   DATA (rw) : ORIGIN = __DRAM_CPU1_RTT_BASE,  LENGTH = __DRAM_CPU1_RTT_SIZE
+  DDR (rwx) : ORIGIN = __DRAM_CPU1_RTT_BASE,  LENGTH = __DRAM_CPU1_RTT_SIZE
 #else
   #error "must select core0 or core1 in menuconfig"
 #endif
@@ -255,6 +257,8 @@ SECTIONS
         __zero_table_start__ = .;
         LONG (ADDR(.bss))
         LONG (SIZEOF(.bss) / 4)
+        LONG (ADDR(.ddr.bss))
+        LONG (SIZEOF(.ddr.bss) / 4)
         __zero_table_end__ = .;
     }
 
@@ -273,6 +277,12 @@ SECTIONS
         LONG (LOADADDR(.data))
         LONG (ADDR(.data))
         LONG (SIZEOF(.data) / 4)
+        LONG (LOADADDR(.ddr.text))
+        LONG (ADDR(.ddr.text))
+        LONG (SIZEOF(.ddr.text) / 4)
+        LONG (LOADADDR(.ddr.data))
+        LONG (ADDR(.ddr.data))
+        LONG (SIZEOF(.ddr.data) / 4)
         __copy_table_end__ = .;
     }
 
@@ -297,8 +307,25 @@ SECTIONS
         PROVIDE(__dtors_end__ = .);
     }
 
+    GOT_SRC = LOADADDR(.dtors) + SIZEOF(.dtors);
+    GOT_DST = GOT_SRC;
+    .got GOT_DST : AT(GOT_SRC)
+    {
+        *(.got)
+        *(.got.plt)
+    }
+
+    DDR_TEXT_SRC = LOADADDR(.got) + SIZEOF(.got);
+    DDR_TEXT_DST = ORIGIN(DDR);
+    .ddr.text DDR_TEXT_DST : AT(DDR_TEXT_SRC)
+    {
+        . = ALIGN(4);
+        *(.ddr.text)
+        . = ALIGN(4);
+    }
+
     DATA_DST = ORIGIN(DATA) + SIZEOF(.vectors) + SIZEOF(.sram.text);
-    DATA_SRC = LOADADDR(.dtors) + SIZEOF(.dtors);
+    DATA_SRC = LOADADDR(.ddr.text) + SIZEOF(.ddr.text);
     .data DATA_DST : AT(DATA_SRC)
     {
         . = ALIGN(32);
@@ -306,6 +333,15 @@ SECTIONS
         *(.data.*)
 
         . = ALIGN(16);
+    }
+
+    DDR_DATA_SRC = LOADADDR(.data) + SIZEOF(.data);
+    DDR_DATA_DST = ADDR(.ddr.text) + SIZEOF(.ddr.text);
+    .ddr.data DDR_DATA_DST : AT(DDR_DATA_SRC)
+    {
+        . = ALIGN(4);
+        *(.ddr.data)
+        . = ALIGN(4);
     }
 
     BSS_DST = ADDR(.data) + SIZEOF(.data);
@@ -319,6 +355,14 @@ SECTIONS
         *(COMMON)
         . = ALIGN(16);
         PROVIDE(__bss_end__ = .);
+    }
+
+    DDR_BSS_DST = ADDR(.ddr.data) + SIZEOF(.ddr.data);
+    .ddr.bss DDR_BSS_DST (NOLOAD) :
+    {
+        . = ALIGN(32);
+        *(.ddr.bss)
+        . = ALIGN(32);
     }
 
     HEAP_DST = ADDR(.bss) + SIZEOF(.bss);
@@ -360,4 +404,6 @@ SECTIONS
    PROVIDE(__data_end__ = ORIGIN(DATA) + LENGTH(DATA) - 1);
    PROVIDE(__device_start__ = 0x50000000);
    PROVIDE(__device_end__ = 0x50E00000 - 1);
+   PROVIDE(__ddr_start__ = ORIGIN(DDR));
+   PROVIDE(__ddr_end__ = ORIGIN(DDR) + LENGTH(DDR) - 1);
 }
