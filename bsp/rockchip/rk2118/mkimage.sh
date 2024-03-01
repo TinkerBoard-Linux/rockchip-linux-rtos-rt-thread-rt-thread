@@ -14,6 +14,7 @@ IMAGE=$(pwd)/Image
 rm -rf $CUR_DIR/rtthread.bin $IMAGE/rtthread.img $CUR_DIR/rtthread_bak.bin $IMAGE/rtthread_bak.img $IMAGE/Firmware*
 
 arm-none-eabi-objcopy -O binary rtthread.elf rtthread.bin
+./align_bin_size.sh $CUR_DIR/rtthread.bin
 cp -r $CUR_DIR/rtthread.bin $IMAGE/rtthread.img
 $TOOLS/resource_header_tool pack --json $IMAGE/config.json $IMAGE/rtthread.img > /dev/null
 
