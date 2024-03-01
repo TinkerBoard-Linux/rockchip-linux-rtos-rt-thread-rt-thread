@@ -38,6 +38,11 @@ config RT_USING_COMMON_TEST
         bool "Enable BSP Common CPU Usage TEST"
         default n
 
+    config RT_USING_COMMON_TEST_CRYPTO
+        bool "Enable BSP CRYPTO TEST"
+        depends on RT_USING_HWCRYPTO
+        default n
+
     config RT_USING_COMMON_TEST_DCACHE
         bool "Enable BSP Common Dcache TEST"
         default n
