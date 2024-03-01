@@ -27,7 +27,7 @@ fi
 echo 'Image: rtthread image is ready'
 
 if [ ! -n "$1" ] ;then
-    $TOOLS/firmware_merger -p board/common/setting.ini $IMAGE/
+    $TOOLS/firmware_merger/firmware_merger -p board/common/setting.ini $IMAGE/
 else
-    $TOOLS/firmware_merger -p $1 $IMAGE/
+    $TOOLS/firmware_merger/firmware_merger -p $1 $IMAGE/
 fi
