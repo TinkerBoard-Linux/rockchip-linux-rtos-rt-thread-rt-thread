@@ -135,6 +135,9 @@ void rt_hw_board_init()
 
     clk_init(clk_inits, true);
 
+    /* Update system core clock after clk_init */
+    SystemCoreClockUpdate();
+
 #ifdef RT_USING_CONSOLE
     rt_console_set_device(RT_CONSOLE_DEVICE_NAME);
 #endif
