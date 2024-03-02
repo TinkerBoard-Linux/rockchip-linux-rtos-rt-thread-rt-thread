@@ -104,7 +104,7 @@ static const struct rt_mtd_nor_driver_ops snor_mtd_ops;
 #ifdef RT_USING_SNOR_FSPI_HOST
 static void fspi_snor_isr(int irq, void *param)
 {
-    struct rt_fspi_device *fspi_device = (struct rt_fspi_device *)fspi_device;
+    struct rt_fspi_device *fspi_device = (struct rt_fspi_device *)param;
     struct spiflash_device *spiflash = &s_spiflash[0];
 
     if (rt_fspi_is_poll_finished(fspi_device) == HAL_OK)
