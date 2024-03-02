@@ -86,12 +86,50 @@ void fspi0_iomux_config(void)
                          PIN_CONFIG_MUX_FUNC2);
 }
 
+/**
+ * @brief  Config iomux for SDIO
+ */
+void sdmmc_iomux_config(void)
+{
+    HAL_PINCTRL_SetIOMUX(GPIO_BANK3,
+                         GPIO_PIN_D0 |  // SDMMC_CLK
+                         GPIO_PIN_D1 |  // SDMMC_CMD
+                         GPIO_PIN_C7 |  // SDMMC_D0
+                         GPIO_PIN_C6 |  // SDMMC_D1
+                         GPIO_PIN_D2 |  // SDMMC_D2
+                         GPIO_PIN_D3,   // SDMMC_D3
+                         PIN_CONFIG_MUX_FUNC1);
+
+    HAL_PINCTRL_SetIOMUX(GPIO_BANK0,
+                         GPIO_PIN_C4 |    // SDMMC_DET
+                         GPIO_PIN_C5,     // SDMMC_PWREN
+                         PIN_CONFIG_MUX_FUNC0);
+
+    HAL_PINCTRL_SetParam(GPIO_BANK3,
+                         GPIO_PIN_D1 |  // SDMMC_CMD
+                         GPIO_PIN_C7 |  // SDMMC_D0
+                         GPIO_PIN_C6 |  // SDMMC_D1
+                         GPIO_PIN_D2 |  // SDMMC_D2
+                         GPIO_PIN_D3,   // SDMMC_D3
+                         PIN_CONFIG_PUL_UP |
+                         PIN_CONFIG_DRV_LEVEL2);
+
+    /*
+     * PWERN is gpio function.
+     */
+    //HAL_GPIO_SetPinDirection(GPIO_BANK0, GPIO_PIN_C5, GPIO_OUT);
+    //HAL_GPIO_SetPinLevel(GPIO_BANK0, GPIO_PIN_C5, GPIO_HIGH);
+
+
+}
+
 void rt_hw_iomux_config(void)
 {
     uart0_iomux_config();
     fspi0_iomux_config();
     dsp_jtag_iomux_config();
     mcu_jtag_m0_iomux_config();
+    sdmmc_iomux_config();
     pdm_iomux_config();
 }
 

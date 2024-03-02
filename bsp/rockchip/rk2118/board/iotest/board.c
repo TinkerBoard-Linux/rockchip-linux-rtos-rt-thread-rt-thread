@@ -20,6 +20,11 @@
 #include "hal_bsp.h"
 #include "iomux.h"
 
+#ifdef RT_USING_SDIO
+#include "drv_sdio.h"
+#include <drivers/mmcsd_core.h>
+#endif
+
 const struct clk_init clk_inits[] =
 {
     INIT_CLK("PLL_GPLL", PLL_GPLL, 800000000),
@@ -56,6 +61,30 @@ const struct clk_init clk_inits[] =
     INIT_CLK("CLK_MAC_OUT", CLK_MAC_OUT, 50000000),
     { /* sentinel */ },
 };
+
+#ifdef RT_USING_SDIO
+RT_WEAK struct rk_mmc_platform_data rk_mmc_table[] =
+{
+#ifdef RT_USING_SDIO0
+    {
+        .flags = MMCSD_BUSWIDTH_4 | MMCSD_MUTBLKWRITE | MMCSD_SUP_SDIO_IRQ | MMCSD_SUP_HIGHSPEED,
+        .irq = SDIO_IRQn,
+        .base = MMC0_BASE,
+        .clk_id = CLK_SDMMC,
+        .clk_gate = CLK_SDMMC_GATE,
+        .hclk_gate = HCLK_SDMMC_GATE,
+        .freq_min = 100000,
+        .freq_max = 50000000,
+        .control_id = 0,
+        .is_pwr_gpio = true, /* using gpio to control power */
+        .pwr_gpio = GPIO0,
+        .pwr_gpio_bank = GPIO_BANK0,
+        .pwr_gpio_pin = GPIO_PIN_C5,
+    },
+#endif
+    { /* sentinel */ },
+};
+#endif
 
 #if defined(RT_USING_UART0)
 const struct uart_board g_uart0_board =
