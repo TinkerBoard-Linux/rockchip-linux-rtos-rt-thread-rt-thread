@@ -92,6 +92,90 @@ void timer_isr7(void)
 }
 #endif
 
+#ifdef TIMER8
+void timer_isr8(void)
+{
+    timer_isr_helper(8);
+}
+#endif
+
+#ifdef TIMER9
+void timer_isr9(void)
+{
+    timer_isr_helper(9);
+}
+#endif
+
+#ifdef TIMER10
+void timer_isr10(void)
+{
+    timer_isr_helper(10);
+}
+#endif
+
+#ifdef TIMER11
+void timer_isr11(void)
+{
+    timer_isr_helper(11);
+}
+#endif
+
+#ifdef TIMER12
+void timer_isr12(void)
+{
+    timer_isr_helper(12);
+}
+#endif
+
+#ifdef TIMER13
+void timer_isr13(void)
+{
+    timer_isr_helper(13);
+}
+#endif
+
+#ifdef TIMER14
+void timer_isr14(void)
+{
+    timer_isr_helper(14);
+}
+#endif
+
+#ifdef TIMER15
+void timer_isr15(void)
+{
+    timer_isr_helper(15);
+}
+#endif
+
+#ifdef TIMER16
+void timer_isr16(void)
+{
+    timer_isr_helper(16);
+}
+#endif
+
+#ifdef TIMER17
+void timer_isr17(void)
+{
+    timer_isr_helper(17);
+}
+#endif
+
+#ifdef TIMER18
+void timer_isr18(void)
+{
+    timer_isr_helper(18);
+}
+#endif
+
+#ifdef TIMER19
+void timer_isr19(void)
+{
+    timer_isr_helper(19);
+}
+#endif
+
 typedef struct _TIMER_DEV
 {
     const uint32_t irqNum;
@@ -133,6 +217,42 @@ static TIMER_DEV s_timer[TIMER_CHAN_CNT] =
 #ifdef TIMER7
     DEFINE_TIMER_DEV(7),
 #endif
+#ifdef TIMER8
+    DEFINE_TIMER_DEV(8),
+#endif
+#ifdef TIMER9
+    DEFINE_TIMER_DEV(9),
+#endif
+#ifdef TIMER10
+    DEFINE_TIMER_DEV(10),
+#endif
+#ifdef TIMER11
+    DEFINE_TIMER_DEV(11),
+#endif
+#ifdef TIMER12
+    DEFINE_TIMER_DEV(12),
+#endif
+#ifdef TIMER13
+    DEFINE_TIMER_DEV(13),
+#endif
+#ifdef TIMER14
+    DEFINE_TIMER_DEV(14),
+#endif
+#ifdef TIMER15
+    DEFINE_TIMER_DEV(15),
+#endif
+#ifdef TIMER16
+    DEFINE_TIMER_DEV(16),
+#endif
+#ifdef TIMER17
+    DEFINE_TIMER_DEV(17),
+#endif
+#ifdef TIMER18
+    DEFINE_TIMER_DEV(18),
+#endif
+#ifdef TIMER19
+    DEFINE_TIMER_DEV(19),
+#endif
 };
 
 void timer_isr_helper(uint32_t dev_id)
@@ -160,34 +280,63 @@ static HAL_Status timer_set_reload_num(struct TIMER_REG *pReg, uint64_t currentV
 }
 
 
-void timer_gating_enable(void)
-{
-#if defined(RKMCU_RK2206)
-    CRU->CRU_CLKGATE_CON[5] = ((0x3f << 9) << 16) | (0x3f << 9);
-#elif defined(SOC_SWALLOW)
-    CRU->CRU_CLKGATE_CON[5] = ((0x3f << 6) << 16) | (0x3f << 6);
-#else
-    RT_ASSERT(0);
-#endif
-}
-
 void timer_gating_all_enable(void)
 {
-#if defined(RKMCU_RK2206)
-    CRU->CRU_CLKGATE_CON[5] = ((1 << 8) << 16) | (1 << 8);
-#elif defined(SOC_SWALLOW)
-    CRU->CRU_CLKGATE_CON[5] = ((1 << 5) << 16) | (1 << 5);
+#if defined(RKMCU_RK2118)
+    CRU->GATE_CON[16] = ((0x3ff << 5) << 16) | (0x3ff << 5);
+    CRU->GATE_CON[17] = ((0x1f << 0) << 16) | (0x1f << 0);
 #else
     RT_ASSERT(0);
 #endif
 }
 
-void timer_gating_disable(void)
+void timer_gating_enable(int32_t num)
 {
-#if defined(RKMCU_RK2206)
-    CRU->CRU_CLKGATE_CON[5] = ((0x3f << 9) << 16) | (0 << 9);
-#elif defined(SOC_SWALLOW)
-    CRU->CRU_CLKGATE_CON[5] = ((0x3f << 6) << 16) | (0 << 6);
+#if defined(RKMCU_RK2118)
+    if (num < 8)
+    {
+        uint32_t bit = 6;
+
+        bit += num;
+        if (num > 3)
+            bit++;
+        CRU->GATE_CON[16] = ((0x1 << bit) << 16) | (0x1 << bit);
+    }
+    else if (num < 12)
+    {
+        uint32_t bit = 1;
+
+        bit += num - 8;
+        CRU->GATE_CON[17] = ((0x1 << bit) << 16) | (0x1 << bit);
+    }
+    else
+        RT_ASSERT(0);
+#else
+    RT_ASSERT(0);
+#endif
+}
+
+void timer_gating_disable(int32_t num)
+{
+#if defined(RKMCU_RK2118)
+    if (num < 8)
+    {
+        uint32_t bit = 6;
+
+        bit += num;
+        if (num > 3)
+            bit++;
+        CRU->GATE_CON[16] = ((0x1 << bit) << 16) | (0x0 << bit);
+    }
+    else if (num < 12)
+    {
+        uint32_t bit = 1;
+
+        bit += num - 8;
+        CRU->GATE_CON[17] = ((0x1 << bit) << 16) | (0x0 << bit);
+    }
+    else
+        RT_ASSERT(0);
 #else
     RT_ASSERT(0);
 #endif
@@ -195,10 +344,9 @@ void timer_gating_disable(void)
 
 void timer_gating_all_disable(void)
 {
-#if defined(RKMCU_RK2206)
-    CRU->CRU_CLKGATE_CON[5] = ((1 << 8) << 16) | (0 << 8);
-#elif defined(SOC_SWALLOW)
-    CRU->CRU_CLKGATE_CON[5] = ((1 << 5) << 16) | (0 << 5);
+#if defined(RKMCU_RK2118)
+    CRU->GATE_CON[16] = ((0x3ff << 5) << 16) | (0 << 5);
+    CRU->GATE_CON[17] = ((0x1f << 0) << 16) | (0 << 0);
 #else
     RT_ASSERT(0);
 #endif
@@ -206,10 +354,9 @@ void timer_gating_all_disable(void)
 
 void timer_cru_softrst(void)
 {
-#if defined(RKMCU_RK2206)
-    CRU->CRU_SOFTRST_CON[3] = ((1 << 7) << 16) | (1 << 7);
-#elif defined(SOC_SWALLOW)
-    CRU->CRU_SOFTRST_CON[3] = ((1 << 9) << 16) | (1 << 9);
+#if defined(RKMCU_RK2118)
+    CRU->SOFTRST_CON[16] = ((0x3ff << 5) << 16) | (0x3ff << 5);
+    CRU->SOFTRST_CON[17] = ((0x1f << 0) << 16) | (0x1f << 0);
 #else
     RT_ASSERT(0);
 #endif
@@ -217,21 +364,20 @@ void timer_cru_softrst(void)
 
 void timer_cru_softrst_remove(void)
 {
-#if defined(RKMCU_RK2206)
-    CRU->CRU_SOFTRST_CON[3] = ((1 << 7) << 16) | (0 << 7);
-#elif defined(SOC_SWALLOW)
-    CRU->CRU_SOFTRST_CON[3] = ((1 << 9) << 16) | (0 << 9);
+#if defined(RKMCU_RK2118)
+    CRU->SOFTRST_CON[16] = ((0x3ff << 5) << 16) | (0 << 5);
+    CRU->SOFTRST_CON[17] = ((0x1f << 0) << 16) | (0 << 0);
 #else
     RT_ASSERT(0);
 #endif
 }
 
-int32_t timer_start_stop(struct TIMER_REG *timer_dev)
+int32_t timer_start_stop(struct TIMER_REG *timer_dev, int32_t num)
 {
     uint64_t count, count1;
 
 #ifndef IS_FPGA
-    timer_gating_disable();
+    timer_gating_disable(num);
     timer_gating_all_disable();
     timer_cru_softrst_remove();
 #endif
@@ -283,12 +429,12 @@ int32_t timer_start_stop(struct TIMER_REG *timer_dev)
     return 0;
 }
 
-int32_t timer_cru_test(struct TIMER_REG *timer_dev)
+int32_t timer_cru_test(struct TIMER_REG *timer_dev, int32_t num)
 {
 #ifndef IS_FPGA
     uint64_t count;
 
-    timer_gating_disable();
+    timer_gating_disable(num);
     timer_gating_all_disable();
 
     /* test timer_dev stop in normalc mode */
@@ -299,10 +445,10 @@ int32_t timer_cru_test(struct TIMER_REG *timer_dev)
     rt_kprintf("[gate one timer]\n");
     count = HAL_TIMER_GetCount(timer_dev);
     RT_ASSERT(count != HAL_TIMER_GetCount(timer_dev));
-    timer_gating_enable();
+    timer_gating_enable(num);
     count = HAL_TIMER_GetCount(timer_dev);
     RT_ASSERT(count == HAL_TIMER_GetCount(timer_dev));
-    timer_gating_disable();
+    timer_gating_disable(num);
 
     rt_kprintf("[gate all timer]\n");
     count = HAL_TIMER_GetCount(timer_dev);
@@ -466,14 +612,21 @@ static void timer_test_loop(int32_t num)
 
     rt_hw_interrupt_install(s_timer[num].irqNum, (void *)s_timer[num].isr, RT_NULL, RT_NULL);
     rt_hw_interrupt_umask(s_timer[num].irqNum);
-    if (timer_start_stop(s_timer[num].pReg) == 0)
-        rt_kprintf("TIMER%ld: function pass\n", num);
-
-    if (timer_cru_test(s_timer[num].pReg) == 0)
-        rt_kprintf("TIMER%ld: cru pass\n\n", num);
 
     if (timer_precision_test(s_timer[num].pReg) == 0)
         rt_kprintf("TIMER%ld: precision pass\n\n", num);
+
+#ifdef RKMCU_RK2118
+    /* timer12-timer19 need scru, just ignore */
+    if (num >= 12)
+        return;
+#endif
+
+    if (timer_start_stop(s_timer[num].pReg, num) == 0)
+        rt_kprintf("TIMER%ld: function pass\n", num);
+
+    if (timer_cru_test(s_timer[num].pReg, num) == 0)
+        rt_kprintf("TIMER%ld: cru pass\n\n", num);
 }
 
 void hw_timer_test(int32_t argc, char **argv)
@@ -499,7 +652,11 @@ void hw_timer_test(int32_t argc, char **argv)
         int32_t i;
 
         for (i = 0; i < HAL_ARRAY_SIZE(s_timer); i++)
+        {
+            if (s_timer[i].pReg == SYS_TIMER)
+                continue;
             timer_test_loop(i);
+        }
     }
     else
     {
