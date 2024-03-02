@@ -130,7 +130,7 @@
 /* Enable Fault Dump Hook */
 
 #define RT_USING_SNOR
-#define RT_SNOR_SPEED 160000000
+#define RT_SNOR_SPEED 100000000
 #define RT_USING_SNOR_FSPI_HOST
 
 /* RT-Thread rockchip jpeg enc driver */
