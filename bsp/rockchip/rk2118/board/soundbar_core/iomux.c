@@ -271,6 +271,7 @@ void rt_hw_iomux_config(void)
     mcu_jtag_m0_iomux_config();
     spi1_iomux_config();
     i2c1_iomux_config();
+    i2c2_iomux_config();
     i2c3_iomux_config();
     i2c4_iomux_config();
     pwm1_ch3_iomux_config();
