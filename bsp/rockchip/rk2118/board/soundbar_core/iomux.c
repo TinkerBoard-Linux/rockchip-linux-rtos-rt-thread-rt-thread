@@ -30,6 +30,7 @@
 #include "rtdef.h"
 #include "iomux.h"
 #include "hal_base.h"
+#include "board.h"
 
 /********************* Private MACRO Definition ******************************/
 /** @defgroup IOMUX_Private_Macro Private Macro
@@ -237,6 +238,23 @@ void sai4_iomux_config(void)
                         RMIO_SAI4_LRCK);
 }
 
+#ifdef RT_USING_IT6632X
+void it6632x_iomux_config(void)
+{
+    HAL_PINCTRL_SetIOMUX(IT6632X_RST_GPIO_BANK,
+                         IT6632X_RST_GPIO,   // RST
+                         IT6632X_RST_PIN_FUNC_GPIO);
+
+    HAL_PINCTRL_SetIOMUX(IT6632X_INT_GPIO_BANK,
+                         IT6632X_INT_GPIO,   // INT
+                         IT6632X_INT_PIN_FUNC_GPIO);
+
+    HAL_PINCTRL_SetIOMUX(IT6632X_RXMUTE_GPIO_BANK,
+                         IT6632X_RXMUTE_GPIO,   // RXMUTE
+                         IT6632X_RXMUTE_PIN_FUNC_GPIO);
+}
+#endif
+
 /**
  * @brief  Config iomux for rk2118 soundbar core board
  */
@@ -256,6 +274,9 @@ void rt_hw_iomux_config(void)
     sai0_iomux_config();
     sai1_iomux_config();
     sai4_iomux_config();
+#ifdef RT_USING_IT6632X
+    it6632x_iomux_config();
+#endif
 }
 
 /** @} */  // IOMUX_Public_Functions
