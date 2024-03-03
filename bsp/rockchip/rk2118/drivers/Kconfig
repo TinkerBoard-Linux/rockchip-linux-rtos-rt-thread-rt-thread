@@ -37,6 +37,10 @@ menu "Enable I2C"
     config RT_USING_I2C2
         bool "Enable I2C2"
         default n
+
+    config RT_USING_I2C3
+        bool "Enable I2C3"
+        default n
 endmenu
 endif
 
