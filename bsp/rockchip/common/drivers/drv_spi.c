@@ -94,6 +94,7 @@ struct rockchip_spi
     struct rt_device *dma;
     struct rt_dma_transfer tx_dma_xfer;
     struct rt_dma_transfer rx_dma_xfer;
+    bool no_dma;
 };
 
 /**
@@ -133,6 +134,18 @@ static rt_err_t rockchip_spi_configure(struct rt_spi_device *device,
     struct rockchip_spi *spi = device->bus->parent.user_data;
     struct SPI_HANDLE *pSPI = &spi->instance;
     struct SPI_CONFIG *pSPIConfig = &pSPI->config;
+
+#ifdef RT_USING_DMA
+    if (spi->dma == NULL && !spi->no_dma)
+    {
+        spi->dma = rt_dma_get((uint32_t)(spi->hal_dev->txDma.dmac));
+        if (spi->dma == NULL)
+        {
+            rt_kprintf("%s get dma failed, CPU/IT instead\n", __func__);
+            spi->no_dma = true;
+        }
+    }
+#endif
 
     if (!configuration->max_hz)
         return RT_EINVAL;
@@ -198,9 +211,9 @@ static rt_err_t rockchip_spi_configure(struct rt_spi_device *device,
             pSPIConfig->speed = HAL_SPI_SLAVE_MAX_SCLK_OUT;
 
         if (pSPIConfig->speed > (HAL_SPI_SLAVE_MAX_SCLK_OUT >> 1))
-            pSPI->maxFreq = 6 * pSPIConfig->speed;
+            pSPI->maxFreq = 4 * pSPIConfig->speed;
         else
-            pSPI->maxFreq = 6 * HAL_SPI_SLAVE_MAX_SCLK_OUT;
+            pSPI->maxFreq = 4 * HAL_SPI_SLAVE_MAX_SCLK_OUT;
 
         clk_set_rate(spi->hal_dev->clkId, pSPI->maxFreq);
         pSPI->maxFreq = clk_get_rate(spi->hal_dev->clkId);
@@ -618,12 +631,6 @@ static rt_err_t rockchip_spi_probe(struct rockchip_spi *spi, char *bus_name)
 {
     char *dev_name;
     rt_err_t ret;
-
-#ifdef RT_USING_DMA
-    spi->dma = rt_dma_get((uint32_t)(spi->hal_dev->txDma.dmac));
-#endif
-    if (spi->dma == NULL)
-        rt_kprintf("%s only support CPU transfer\n", __func__);
 
     /* register irq */
     rt_hw_interrupt_install(spi->hal_dev->irqNum, (void *)spi->isr, spi, RT_NULL);
