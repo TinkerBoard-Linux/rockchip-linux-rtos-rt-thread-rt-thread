@@ -28,20 +28,53 @@ struct spi_test_data
     uint32_t spi_mode;
     uint32_t bit_first;
     uint32_t max_speed_hz;
+    uint32_t data_width;
 };
 
 static struct spi_test_data g_spi_test_data;
 
-static int spi_test_write(const void *txbuf, size_t n)
+int32_t spi_dbg_hex(char *s, void *buf, uint32_t width, uint32_t len)
 {
-    struct spi_test_data *data = &g_spi_test_data;
+    uint32_t i, j;
+    unsigned char *p8 = (unsigned char *)buf;
+    unsigned short *p16 = (unsigned short *)buf;
+    uint32_t *p32 = (uint32_t *)buf;
+
+    j = 0;
+    for (i = 0; i < len; i++)
+    {
+        if (j == 0)
+        {
+            rt_kprintf("[SPI TEST] %s %p + 0x%lx:", s, buf, i * width);
+        }
+
+        if (width == 4)
+            rt_kprintf("0x%08lx,", p32[i]);
+        else if (width == 2)
+            rt_kprintf("0x%04x,", p16[i]);
+        else
+            rt_kprintf("0x%02x,", p8[i]);
+
+        if (++j >= 16)
+        {
+            j = 0;
+            rt_kprintf("\n");
+        }
+    }
+    rt_kprintf("\n");
+
+    return HAL_OK;
+}
+
+static int spi_test_write(struct spi_test_data *data, const void *txbuf, size_t n)
+{
     struct rt_spi_device *spi_device = data->spi_device;
     int ret = -RT_ERROR;
 
     /* config spi */
     {
         struct rt_spi_configuration cfg;
-        cfg.data_width = 8;
+        cfg.data_width = data->data_width;
         cfg.mode = data->mode | data->spi_mode | data->bit_first;
         cfg.max_hz = data->max_speed_hz;
         rt_spi_configure(spi_device, &cfg);
@@ -53,14 +86,13 @@ static int spi_test_write(const void *txbuf, size_t n)
     return (ret == n) ? RT_EOK : ret;
 }
 
-static int spi_test_read(void *rxbuf, size_t n)
+static int spi_test_read(struct spi_test_data *data, void *rxbuf, size_t n)
 {
-    struct spi_test_data *data = &g_spi_test_data;
     struct rt_spi_device *spi_device = data->spi_device;
     int ret = -RT_ERROR;
     struct rt_spi_configuration cfg;
 
-    cfg.data_width = 8;
+    cfg.data_width = data->data_width;
     cfg.mode = data->mode | data->spi_mode | data->bit_first;
     cfg.max_hz = data->max_speed_hz;
     rt_spi_configure(spi_device, &cfg);
@@ -71,16 +103,15 @@ static int spi_test_read(void *rxbuf, size_t n)
     return (ret == n) ? RT_EOK : ret;
 }
 
-static int spi_test_write_and_read(const void *tx_buf, void *rx_buf, size_t len)
+static int spi_test_write_and_read(struct spi_test_data *data, const void *tx_buf, void *rx_buf, size_t len)
 {
-    struct spi_test_data *data = &g_spi_test_data;
     struct rt_spi_device *spi_device = data->spi_device;
     int ret = -RT_ERROR;
 
     /* config spi */
     {
         struct rt_spi_configuration cfg;
-        cfg.data_width = 8;
+        cfg.data_width = data->data_width;
         cfg.mode = data->mode | data->spi_mode | data->bit_first;
         cfg.max_hz = data->max_speed_hz;
         rt_spi_configure(spi_device, &cfg);
@@ -91,17 +122,16 @@ static int spi_test_write_and_read(const void *tx_buf, void *rx_buf, size_t len)
     return (ret == len) ? RT_EOK : -RT_EIO;
 }
 
-static int __unused spi_test_write_then_read(const void *txbuf, size_t tx_n,
+static int __unused spi_test_write_then_read(struct spi_test_data *data, const void *txbuf, size_t tx_n,
         void *rxbuf, size_t rx_n)
 {
-    struct spi_test_data *data = &g_spi_test_data;
     struct rt_spi_device *spi_device = data->spi_device;
     int ret = -RT_ERROR;
 
     /* config spi */
     {
         struct rt_spi_configuration cfg;
-        cfg.data_width = 8;
+        cfg.data_width = data->data_width;
         cfg.mode = data->mode | data->spi_mode | data->bit_first;
         cfg.max_hz = data->max_speed_hz;
         rt_spi_configure(spi_device, &cfg);
@@ -114,21 +144,23 @@ static int __unused spi_test_write_then_read(const void *txbuf, size_t tx_n,
 
 static void spi_test_show_usage()
 {
-    rt_kprintf("1. spi_test config <spi_device> <is_slave: 1-slave 0-master> <spi_mode> <bit_first> <speed>\n");
+    rt_kprintf("1. spi_test config <spi_device> <is_slave> <spi_mode> <is_msb> <speed> <data_width>\n");
     rt_kprintf("2. spi_test read   <spi_device> <loops> <size>\n");
     rt_kprintf("3. spi_test write  <spi_device> <loops> <size>\n");
-    rt_kprintf("4. spi_test loop   <spi_device> <loops> <size>\n");
+    rt_kprintf("4. spi_test duplex <spi_device> <loops> <size>\n");
     rt_kprintf("5. spi_test cs     <spi_device> <cs_state:1-take, 0-release>\n");
     rt_kprintf("6. spi_test bus    <spi_device> <bus_state:1-take, 0-release>\n");
     rt_kprintf("7. spi_test rate   <spi_device>\n");
+    rt_kprintf("8. spi_test duplex_thread   <spi_device> <loops> <size> <gap_ms> <random_pattern>\n");
     rt_kprintf("like:\n");
-    rt_kprintf("\tspi_test config spi1_0 0 3 0 24000000\n");
+    rt_kprintf("\tspi_test config spi1_0 0 3 0 24000000 8\n");
     rt_kprintf("\tspi_test read   spi1_0 1 256\n");
     rt_kprintf("\tspi_test write  spi1_0 1 256\n");
-    rt_kprintf("\tspi_test loop   spi1_0 1 25\n");
+    rt_kprintf("\tspi_test duplex   spi1_0 1 256\n");
     rt_kprintf("\tspi_test cs     spi1_0 1\n");
     rt_kprintf("\tspi_test bus    spi1_0 1\n");
     rt_kprintf("\tspi_test rate   spi1_0\n");
+    rt_kprintf("\tspi_test duplex_thread   spi1_0 1 256 10 1\n");
 }
 
 static void spi_test_write_loop(uint32_t loops, void *txbuf, uint32_t size)
@@ -137,7 +169,7 @@ static void spi_test_write_loop(uint32_t loops, void *txbuf, uint32_t size)
 
     start_time = rt_tick_get();
     for (i = 0; i < loops; i++)
-        spi_test_write(txbuf, size);
+        spi_test_write(&g_spi_test_data, txbuf, size);
     end_time = rt_tick_get();
     cost_time = (end_time - start_time) * 1000 / RT_TICK_PER_SECOND;
 
@@ -152,13 +184,73 @@ static void spi_test_read_loop(uint32_t loops, void *rxbuf, uint32_t size)
 
     start_time = rt_tick_get();
     for (i = 0; i < loops; i++)
-        spi_test_read(rxbuf, size);
+        spi_test_read(&g_spi_test_data, rxbuf, size);
     end_time = rt_tick_get();
     cost_time = (end_time - start_time) * 1000 / RT_TICK_PER_SECOND;
 
     bytes = size * loops * 1;
     bytes = bytes / cost_time;
     rt_kprintf("spi %s read %d*%d cost %ldms speed:%ldKB/S\n", HAL_IS_CACHELINE_ALIGNED(size) ? "DMA" : "CPU", size, loops, cost_time, bytes);
+    spi_dbg_hex("read rx", rxbuf, 4, size > 0x20 ? 0x20 : size / 4);
+}
+
+static void spi_test_duplex_thread(void *p)
+{
+    char **argv = (char **)p;
+    uint32_t loops = 0, size = 0, i, delay_ms;
+    char *txbuf = NULL, *rxbuf = NULL;
+    struct spi_test_data spi_test_data;
+    bool random;
+
+    memcpy(&spi_test_data, &g_spi_test_data, sizeof(spi_test_data));
+
+    loops = atoi(argv[3]);
+    size = atoi(argv[4]);
+    delay_ms = atoi(argv[5]);
+    random = atoi(argv[6]);
+
+    txbuf = (char *)rt_malloc_align(size, CACHE_LINE_SIZE);
+    if (!txbuf)
+    {
+        rt_kprintf("spi write alloc buf size %d fail\n", size);
+        return;
+    }
+
+    rxbuf = (char *)rt_malloc_align(size, CACHE_LINE_SIZE);
+    if (!rxbuf)
+    {
+        rt_kprintf("spi read alloc buf size %d fail\n", size);
+        rt_free_align(txbuf);
+        return;
+    }
+
+    srand(rt_tick_get());
+    for (i = 0; i < size; i++)
+    {
+        if (random)
+        {
+            txbuf[i] = rand() & 0xFF;
+        }
+        else
+        {
+            txbuf[i] = i & 0xFF;
+        }
+    }
+
+    for (i = 0; i < loops; i++)
+    {
+        spi_test_write_and_read(&spi_test_data, txbuf, rxbuf, size);
+        if (!random && rt_memcmp(txbuf, rxbuf, size))
+        {
+            spi_dbg_hex("duplex_thread rx", rxbuf, 4, size > 0x20 ? 0x20 : size / 4);
+        }
+        if (delay_ms)
+            rt_thread_mdelay(delay_ms);
+    }
+    rt_kprintf("%s finished\n", __func__);
+
+    rt_free_align(txbuf);
+    rt_free_align(rxbuf);
 }
 
 void spi_test(int argc, char **argv)
@@ -184,9 +276,9 @@ void spi_test(int argc, char **argv)
     cmd = argv[1];
     if (!rt_strcmp(cmd, "config"))
     {
-        int mode, bit_first;
+        int mode, is_msb;
 
-        if (argc < 7)
+        if (argc < 8)
             goto out;
 
         mode = atoi(argv[3]);
@@ -196,23 +288,29 @@ void spi_test(int argc, char **argv)
             data->mode = RT_SPI_SLAVE;
 
         data->spi_mode = atoi(argv[4]);
-        bit_first = atoi(argv[5]);
-        if (bit_first)
+        is_msb = atoi(argv[5]);
+        if (is_msb)
             data->bit_first = RT_SPI_MSB;
         else
             data->bit_first = RT_SPI_LSB;
         data->max_speed_hz = atoi(argv[6]);
+        data->data_width = atoi(argv[7]);
+        if (data->data_width != 8 || data->data_width != 16)
+        {
+            data->data_width = data->data_width;
+        }
 
-        rt_kprintf("spi %s, mode%d, %s, %dHz speed\n",
+        rt_kprintf("spi %s, mode%d, %s, %dHz speed, data_width=%d\n",
                    mode ? "slave" : "master", data->spi_mode,
-                   bit_first ? "MSB" : "LSB", data->max_speed_hz);
+                   is_msb ? "MSB" : "LSB", data->max_speed_hz,
+                   data->data_width);
     }
     else if (!rt_strcmp(cmd, "write"))
     {
         loops = atoi(argv[3]);
         size = atoi(argv[4]);
 
-        txbuf = (char *)rt_malloc_align(size, 32);
+        txbuf = (char *)rt_malloc_align(size, CACHE_LINE_SIZE);
         if (!txbuf)
         {
             rt_kprintf("spi write alloc buf size %d fail\n", size);
@@ -231,7 +329,7 @@ void spi_test(int argc, char **argv)
         loops = atoi(argv[3]);
         size = atoi(argv[4]);
 
-        rxbuf = (char *)rt_malloc_align(size, 32);
+        rxbuf = (char *)rt_malloc_align(size, CACHE_LINE_SIZE);
         if (!rxbuf)
         {
             rt_kprintf("spi read alloc buf size %d fail\n", size);
@@ -241,19 +339,19 @@ void spi_test(int argc, char **argv)
 
         rt_free_align(rxbuf);
     }
-    else if (!rt_strcmp(cmd, "loop"))
+    else if (!rt_strcmp(cmd, "duplex"))
     {
         loops = atoi(argv[3]);
         size = atoi(argv[4]);
 
-        txbuf = (char *)rt_malloc_align(size, 32);
+        txbuf = (char *)rt_malloc_align(size, CACHE_LINE_SIZE);
         if (!txbuf)
         {
             rt_kprintf("spi write alloc buf size %d fail\n", size);
             return;
         }
 
-        rxbuf = (char *)rt_malloc_align(size, 32);
+        rxbuf = (char *)rt_malloc_align(size, CACHE_LINE_SIZE);
         if (!rxbuf)
         {
             rt_kprintf("spi read alloc buf size %d fail\n", size);
@@ -266,17 +364,13 @@ void spi_test(int argc, char **argv)
 
         start_time = rt_tick_get();
         for (i = 0; i < loops; i++)
-            spi_test_write_and_read(txbuf, rxbuf, size);
+            spi_test_write_and_read(&g_spi_test_data, txbuf, rxbuf, size);
         end_time = rt_tick_get();
         cost_time = (end_time - start_time) * 1000 / RT_TICK_PER_SECOND;
 
         if (rt_memcmp(txbuf, rxbuf, size))
         {
-            for (i = 0; i < size; i++)
-            {
-                if (txbuf[i] !=  rxbuf[i])
-                    rt_kprintf("send[%d]: 0x%x, recv[%d]: 0x%x\n", i, txbuf[i], i, rxbuf[i]);
-            }
+            spi_dbg_hex("loop rx", rxbuf, 4, size > 0x20 ? 0x20 : size / 4);
             rt_kprintf("spi loop test fail\n");
         }
 
@@ -305,7 +399,7 @@ void spi_test(int argc, char **argv)
 
         temp = atoi(argv[3]);
 
-        cfg.data_width = 8;
+        cfg.data_width = data->data_width;
         cfg.mode = data->mode | data->spi_mode | data->bit_first;
         cfg.max_hz = data->max_speed_hz;
         rt_spi_configure(spi_device, &cfg);
@@ -321,7 +415,7 @@ void spi_test(int argc, char **argv)
     }
     else if (!rt_strcmp(cmd, "rate"))
     {
-        txbuf = (char *)rt_malloc_align(4096, 32);
+        txbuf = (char *)rt_malloc_align(4096, CACHE_LINE_SIZE);
         if (!txbuf)
         {
             rt_kprintf("spi write alloc buf size %d fail\n", size);
@@ -396,6 +490,22 @@ void spi_test(int argc, char **argv)
 
         rt_free_align(txbuf);
     }
+    else if (!rt_strcmp(cmd, "duplex_thread"))
+    {
+        if (argc < 7)
+            goto out;
+
+        rt_thread_t loop_thread = rt_thread_create("spi_duplex", spi_test_duplex_thread, argv, 1024, 5, 10);
+
+        if (loop_thread == RT_NULL)
+        {
+            rt_kprintf("thread create failed\n");
+            return;
+        }
+
+        rt_thread_startup(loop_thread);
+        rt_thread_mdelay(100);
+    }
     else
     {
         goto out;
@@ -426,7 +536,7 @@ int _at_spi_test(void)
     data->max_speed_hz = 50000000;
 
     size = 2048;
-    buffer = (char *)rt_malloc_align(size, 32);
+    buffer = (char *)rt_malloc_align(size, CACHE_LINE_SIZE);
     if (!buffer)
     {
         rt_kprintf("spi buffer alloc buf size %d fail\n", size);
@@ -435,13 +545,13 @@ int _at_spi_test(void)
 
     for (size = 1024; size < 1036; size++)
     {
-        ret = spi_test_write(buffer, size);
+        ret = spi_test_write(&g_spi_test_data, buffer, size);
         if (ret)
         {
             rt_kprintf("spi_test_write %d fail %d\n", size, ret);
             goto out;
         }
-        ret = spi_test_read(buffer, size);
+        ret = spi_test_read(&g_spi_test_data, buffer, size);
         if (ret)
         {
             rt_kprintf("spi_test_read %d fail %d\n", size, ret);
