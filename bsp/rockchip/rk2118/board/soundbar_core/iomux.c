@@ -162,6 +162,10 @@ void pwm1_ch3_iomux_config(void)
     HAL_PINCTRL_SetRMIO(GPIO_BANK3,
                         GPIO_PIN_B0,   // PWM1_CH3
                         RMIO_PWM1_CH3);
+
+    HAL_PINCTRL_SetParam(GPIO_BANK3,
+                         GPIO_PIN_B0,
+                         PIN_CONFIG_PUL_UP);
 }
 
 /**
