@@ -561,6 +561,20 @@ config RT_USING_BUFFER_MANAGE
     default n
 endmenu
 
+menuconfig RT_USING_HDMI_SWITCH_DRIVERS
+    bool "hdmi switch drivers config"
+    default n
+
+if RT_USING_HDMI_SWITCH_DRIVERS
+    choice
+        prompt "Choose hdmi switch driver"
+
+        config RT_USING_IT6632X
+        depends on RT_USING_I2C
+        bool "it6632x driver select"
+    endchoice
+endif
+
 menuconfig RT_USING_TOUCH_DRIVERS
     bool "Touch drivers config"
     depends on RT_USING_TOUCH
