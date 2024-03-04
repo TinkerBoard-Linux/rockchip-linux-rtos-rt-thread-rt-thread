@@ -11,6 +11,8 @@ CUR_DIR=$(pwd)
 TOOLS=$CUR_DIR/../tools
 IMAGE=$(pwd)/Image
 
+../tools/boot_merger ./Image/rk2118_ddr.ini
+
 rm -rf $CUR_DIR/rtthread.bin $IMAGE/rtthread.img $CUR_DIR/rtthread_bak.bin $IMAGE/rtthread_bak.img $IMAGE/Firmware*
 
 arm-none-eabi-objcopy -O binary rtthread.elf rtthread.bin
