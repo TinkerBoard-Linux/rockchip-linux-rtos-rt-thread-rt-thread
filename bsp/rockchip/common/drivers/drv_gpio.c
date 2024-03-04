@@ -293,6 +293,50 @@ static int pin_read(struct rt_device *dev, rt_base_t pin)
     RT_ASSERT(PIN_BANK(pin) < GPIO_BANK_NUM);
     return HAL_GPIO_GetPinLevel(get_st_gpio(pin), get_st_pin(pin));;
 }
+
+static rt_base_t pin_get(const char *name)
+{
+    rt_base_t pin = -1;
+    rt_base_t bank = -1;
+    char *ptr;
+
+    if (name[0] != 'P' && name[0] != 'p')
+    {
+        return -RT_EINVAL;
+    }
+
+    if (('A' <= name[1]) && (name[1] <= 'Z'))
+    {
+        bank = name[1] - 'A';
+    }
+    if (('a' <= name[1]) && (name[1] <= 'a'))
+    {
+        bank = name[1] - 'a';
+    }
+    if (bank >= GPIO_BANK_NUM)
+    {
+        return -RT_EINVAL;
+    }
+
+    if (name[2] == '.')
+    {
+        pin = atoi(&name[3]);
+    }
+    else
+    {
+        pin = atoi(&name[2]);
+    }
+    if (pin >= 32)
+    {
+        return -RT_EINVAL;
+    }
+
+    rt_kprintf("%s --> gpio%d.%02d --> gpio%d.%c%d\n", name, bank, pin, bank, 'A' + pin / 8, pin % 8);
+
+    pin = BANK_PIN(bank, pin);
+
+    return pin;
+}
 /** @} */
 
 #ifdef GPIO0
@@ -344,6 +388,7 @@ static const struct rt_pin_ops pin_ops =
     pin_attach_irq,
     pin_detach_irq,
     pin_irq_enable,
+    pin_get,
 };
 
 /** @defgroup GPIO_Public_Functions Public Functions
