@@ -14,6 +14,7 @@
 void dsp_jtag_iomux_config(void);
 void fspi0_iomux_config(void);
 void uart2_iomux_config(void);
+void lcdc_iomux_config(void);
 void mcu_jtag_m0_iomux_config(void);
 void mcu_jtag_m1_iomux_config(void);
 void spi2_iomux_config(void);

@@ -100,12 +100,33 @@ RT_WEAK  void fspi0_iomux_config(void)
 RT_WEAK  void uart2_iomux_config(void)
 {
     HAL_PINCTRL_SetRMIO(GPIO_BANK3,
-                        GPIO_PIN_B4,   // UART2_TX
+                        GPIO_PIN_B3,   // UART2_TX_AUDIO_DEBUG
                         RMIO_UART2_TX_RM1);
 
     HAL_PINCTRL_SetRMIO(GPIO_BANK3,
-                        GPIO_PIN_B5,   // UART2_RX
+                        GPIO_PIN_B4,   // UART2_RX_AUDIO_DEBUG
                         RMIO_UART2_RX_RM1);
+}
+
+/**
+ * @brief  Config iomux for lcdc
+ */
+RT_WEAK  void lcdc_iomux_config(void)
+{
+    HAL_PINCTRL_SetIOMUX(GPIO_BANK3,
+                         GPIO_PIN_A0 |  // VO_LCDC_CSN
+                         GPIO_PIN_A1 |  // VO_LCDC_RS
+                         GPIO_PIN_A2 |  // VO_LCDC_WRN
+                         GPIO_PIN_A3 |  // VO_LCDC_D0
+                         GPIO_PIN_A4 |  // VO_LCDC_D1
+                         GPIO_PIN_A5 |  // VO_LCDC_D2
+                         GPIO_PIN_A6 |  // VO_LCDC_D3
+                         GPIO_PIN_A7 |  // VO_LCDC_D4
+                         GPIO_PIN_B0 |  // VO_LCDC_D5
+                         GPIO_PIN_B1 |  // VO_LCDC_D6
+                         GPIO_PIN_B2 |  // VO_LCDC_D7
+                         GPIO_PIN_B3,   // VO_LCDC_RDN_M0
+                         PIN_CONFIG_MUX_FUNC4);
 }
 
 /**

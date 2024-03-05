@@ -19,6 +19,10 @@ choice
 
     config RT_USING_BOARD_SOUNDBAR_CORE
         bool "Enable soundbar core board"
+
+    config RT_USING_BOARD_EVB
+        bool "Enable evb board"
+ 
 endchoice
 
 endmenu
