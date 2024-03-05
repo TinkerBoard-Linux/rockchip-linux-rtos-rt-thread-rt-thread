@@ -19,6 +19,9 @@
 #include "hal_base.h"
 #include "hal_bsp.h"
 #include "iomux.h"
+#ifdef RT_USING_I2C
+#include "drv_i2c.h"
+#endif
 
 #ifdef RT_USING_SDIO
 #include "drv_sdio.h"
@@ -83,6 +86,17 @@ RT_WEAK struct rk_mmc_platform_data rk_mmc_table[] =
     },
 #endif
     { /* sentinel */ },
+};
+#endif
+
+#ifdef RT_USING_I2C
+const struct rockchip_i2c_config rockchip_i2c_config_table[] =
+{
+    {
+        .id = I2C0,
+        .speed = I2C_100K,
+    },
+    { /* sentinel */ }
 };
 #endif
 

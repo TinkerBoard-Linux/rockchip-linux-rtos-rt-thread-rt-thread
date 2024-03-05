@@ -167,6 +167,19 @@ void sdmmc_iomux_config(void)
 
 }
 
+#ifdef RT_USING_I2C0
+/**
+ * @brief  Config iomux for I2C0
+ */
+void i2c0_iomux_config(void)
+{
+    HAL_PINCTRL_SetIOMUX(GPIO_BANK4,
+                         GPIO_PIN_A1 |  // I2C0_SCL
+                         GPIO_PIN_A2,   // I2C0_SDA
+                         PIN_CONFIG_MUX_FUNC1);
+}
+#endif
+
 void rt_hw_iomux_config(void)
 {
     uart0_iomux_config();
@@ -174,6 +187,9 @@ void rt_hw_iomux_config(void)
     dsp_jtag_iomux_config();
     mcu_jtag_m0_iomux_config();
     sdmmc_iomux_config();
+#ifdef RT_USING_I2C0
+    i2c0_iomux_config();
+#endif
     pdm_iomux_config();
 #ifdef RT_USING_PWM0
     pwm0_iomux_config();
