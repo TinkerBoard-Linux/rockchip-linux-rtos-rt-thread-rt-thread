@@ -102,19 +102,6 @@ static const struct rt_mtd_nor_driver_ops snor_mtd_ops;
  */
 
 #ifdef RT_USING_SNOR_FSPI_HOST
-static void fspi_snor_isr(int irq, void *param)
-{
-    struct rt_fspi_device *fspi_device = (struct rt_fspi_device *)param;
-    struct spiflash_device *spiflash = &s_spiflash[0];
-
-    if (rt_fspi_is_poll_finished(fspi_device) == HAL_OK)
-    {
-        rt_completion_done(&spiflash->done);
-    }
-
-    rt_fspi_irqhelper(fspi_device);
-}
-
 static HAL_Status fspi_xfer(struct SNOR_HOST *spi, struct HAL_SPI_MEM_OP *op)
 {
     struct rt_fspi_device *fspi_device = (struct rt_fspi_device *)spi->userdata;
@@ -149,7 +136,15 @@ static HAL_Status fspi_xfer(struct SNOR_HOST *spi, struct HAL_SPI_MEM_OP *op)
             rt_hw_interrupt_enable(spiflash->level);
             spiflash->irq_resumed = true;
         }
-        ret = rt_completion_wait(&spiflash->done, rt_tick_from_millisecond(1000));
+
+        /*
+         * When there is a chance for interrupt related code to be fully stored
+         * in the SRAM space, it is possible to consider abandoning polling, but
+         * currently it is not possible
+         */
+        while (rt_fspi_is_poll_finished(fspi_device) != HAL_OK)
+            ;
+        ret = rt_fspi_irqhelper(fspi_device);
         if (ret != RT_EOK)
         {
             rt_kprintf("%s timer out \n", __func__);
@@ -195,7 +190,6 @@ static int rockchip_sfc_delay_lines_tuning(struct SPI_NOR *nor, struct rt_fspi_d
     bool dll_valid = false;
 
     xip_dbg('a');
-    HAL_SNOR_Init(nor);
     for (right = 0; right <= cell_max; right += step)
     {
         int ret;
@@ -213,11 +207,18 @@ static int rockchip_sfc_delay_lines_tuning(struct SPI_NOR *nor, struct rt_fspi_d
             break;
         }
 
-        xip_dbg('b');
         snor_dbg("dll read flash id:%x %x %x\n",
                  id_temp[0], id_temp[1], id_temp[2]);
 
         ret = HAL_SNOR_IsFlashSupported(id_temp);
+        if (ret)
+        {
+            xip_dbg('D');
+        }
+        else
+        {
+            xip_dbg('_');
+        }
         if (dll_valid && !ret)
         {
             right -= step;
@@ -311,6 +312,7 @@ static uint32_t fspi_snor_adapt(struct SPI_NOR *nor)
     if (nor->spi->speed > RT_FSPI_SPEED_THRESHOLD)
     {
         xip_dbg('3');
+        HAL_SNOR_Init(nor);
         dll_result = rockchip_sfc_delay_lines_tuning(nor, fspi_device);
     }
     else
@@ -324,7 +326,7 @@ static uint32_t fspi_snor_adapt(struct SPI_NOR *nor)
     nor->spi->mode |= HAL_SPI_RX_DUAL;
 #else
 #if (((FSPI_VER >> 18) & 0x1) == 0x1U) /* Support X8_CAP */
-    nor->spi->mode |= (HAL_SPI_TX_QUAD | HAL_SPI_RX_QUAD | HAL_SPI_TX_OCTAL | HAL_SPI_RX_OCTAL | HAL_SPI_DTR | HAL_SPI_DQS);
+    nor->spi->mode |= (HAL_SPI_TX_QUAD | HAL_SPI_RX_QUAD | HAL_SPI_TX_OCTAL | HAL_SPI_RX_OCTAL | HAL_SPI_DTR | HAL_SPI_DQS | HAL_SPI_POLL);
 #else
     nor->spi->mode |= (HAL_SPI_TX_QUAD | HAL_SPI_RX_QUAD);
 #endif
@@ -345,7 +347,19 @@ static uint32_t fspi_snor_adapt(struct SPI_NOR *nor)
         HAL_SNOR_XIPEnable(nor);
     }
 
-    xip_dbg('6');
+    /*
+     * When quad dtr transmission occurs, the timing changes and there
+     * is no DQS to cover the sampling timing issue, requiring DLL.
+     */
+    if (nor->qpi && nor->dtr)
+    {
+        xip_dbg('6');
+        HAL_SNOR_XIPDisable(nor);
+        dll_result = rockchip_sfc_delay_lines_tuning(nor, fspi_device);
+        HAL_SNOR_XIPEnable(nor);
+    }
+
+    xip_dbg('7');
 
     if (dll_result)
     {
@@ -354,11 +368,6 @@ static uint32_t fspi_snor_adapt(struct SPI_NOR *nor)
     }
 
     rt_hw_interrupt_enable(level);
-    if (nor->poll)
-    {
-        rt_hw_interrupt_install(rt_fspi_get_irqnum(fspi_device), (void *)fspi_snor_isr, fspi_device, "fspi_irq");
-        rt_hw_interrupt_umask(rt_fspi_get_irqnum(fspi_device));
-    }
 
     return ret;
 }
@@ -540,7 +549,6 @@ static int snor_init(uint8_t dev_id, char *name, enum spiflash_host type)
         rt_kprintf("Init mutex error\n");
         RT_ASSERT(0);
     }
-    rt_completion_init(&spiflash->done);
 
     /* dev setting */
     mtd_dev->ops = &snor_mtd_ops;

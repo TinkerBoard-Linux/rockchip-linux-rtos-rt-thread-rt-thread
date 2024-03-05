@@ -48,7 +48,6 @@ struct spiflash_device
     struct SNOR_HOST host;
     enum spiflash_host type;
     rt_base_t level;
-    struct rt_completion done;
     bool xip_resumed;
     bool irq_resumed;
 };
