@@ -53,3 +53,35 @@ int main(void)
     //psa_framework_version();
     return 0;
 }
+
+extern void coremark_main(void);
+extern void linpack_main(void);
+void cpu_stress(int argc, char **argv)
+{
+    uint32_t loop = 1;
+    uint32_t i = 0;
+    uint32_t *ptr;
+
+    if (argc == 2)
+        loop = atoi(argv[1]);
+
+    rt_kprintf("loop=%d\n", loop);
+    while (i++ < loop)
+    {
+        ptr = (uint32_t *)rt_malloc(20 * 1024);
+        RT_ASSERT(ptr);
+        memset(ptr, 0x55, 20 * 1024);
+        rt_free(ptr);
+#ifdef RT_USING_COREMARK
+        coremark_main();
+#endif
+#ifdef RT_USING_LINPACK
+        linpack_main();
+#endif
+    }
+}
+
+#ifdef RT_USING_FINSH
+#include <finsh.h>
+MSH_CMD_EXPORT(cpu_stress, cpu stress test);
+#endif
