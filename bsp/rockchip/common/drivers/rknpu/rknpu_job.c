@@ -169,7 +169,7 @@ static int rknpu_job_wait(struct rknpu_job *job)
                       ktime_us_delta(ktime_get(), job->timestamp),
                       args->timeout * 1000);
 
-            rt_thread_mdelay(10);
+            rt_thread_mdelay(100);
         }
     }
     while (ret != RT_EOK && continue_wait);

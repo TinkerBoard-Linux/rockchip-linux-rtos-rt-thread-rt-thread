@@ -18,11 +18,11 @@
 #endif
 
 typedef unsigned int __u32;
-typedef unsigned long int __u64;
+typedef rt_uint64_t __u64;
 typedef int __s32;
-typedef long __s64;
+typedef rt_int64_t __s64;
 
-#define RKNPU_CACHE_LINE_SIZE 64
+#define RKNPU_ALIGN_SIZE 64
 
 #define RKNPU_OFFSET_VERSION 0x0
 #define RKNPU_OFFSET_VERSION_NUM 0x4
