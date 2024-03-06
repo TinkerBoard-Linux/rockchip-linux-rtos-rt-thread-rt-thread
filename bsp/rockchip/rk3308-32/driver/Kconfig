@@ -81,7 +81,6 @@ menu "Enable GMAC"
     config RT_USING_GMAC
         bool "Enable GMAC"
         select RT_USING_LWIP
-        select RT_LWIP_USING_HW_CHECKSUM
         default n
 
     if RT_USING_GMAC

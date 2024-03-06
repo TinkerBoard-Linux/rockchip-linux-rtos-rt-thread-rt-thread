@@ -781,10 +781,6 @@ config RT_USING_RPMSG_LITE
 
 endmenu
 
-config RT_LWIP_USING_HW_CHECKSUM
-    bool
-    default n
-
 menu "Enable FTL"
     config RT_USING_FTL
         bool "Enable Flash FTL"
