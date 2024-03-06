@@ -162,4 +162,8 @@
 #endif
 #endif
 
+#ifdef RT_USING_RKNPU
+#define HAL_RKNPU_MODULE_ENABLED
+#endif
+
 #endif /* _HAL_CONF_H_ */
