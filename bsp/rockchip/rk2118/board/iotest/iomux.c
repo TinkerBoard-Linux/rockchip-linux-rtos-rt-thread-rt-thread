@@ -87,6 +87,50 @@ void fspi0_iomux_config(void)
 }
 
 /**
+ * @brief  Config iomux for PWM0
+ */
+void pwm0_iomux_config(void)
+{
+    HAL_PINCTRL_SetRMIO(GPIO_BANK0,
+                        GPIO_PIN_A0,
+                        RMIO_PWM0_CH0);
+
+    HAL_PINCTRL_SetRMIO(GPIO_BANK0,
+                        GPIO_PIN_A1,
+                        RMIO_PWM0_CH1);
+
+    HAL_PINCTRL_SetRMIO(GPIO_BANK0,
+                        GPIO_PIN_A2,
+                        RMIO_PWM0_CH2);
+
+    HAL_PINCTRL_SetRMIO(GPIO_BANK0,
+                        GPIO_PIN_A3,
+                        RMIO_PWM0_CH3);
+}
+
+/**
+ * @brief  Config iomux for PWM1
+ */
+void pwm1_iomux_config(void)
+{
+    HAL_PINCTRL_SetRMIO(GPIO_BANK3,
+                        GPIO_PIN_C0,
+                        RMIO_PWM1_CH0);
+
+    HAL_PINCTRL_SetRMIO(GPIO_BANK3,
+                        GPIO_PIN_C1,
+                        RMIO_PWM1_CH1);
+
+    HAL_PINCTRL_SetRMIO(GPIO_BANK3,
+                        GPIO_PIN_C2,
+                        RMIO_PWM1_CH2);
+
+    HAL_PINCTRL_SetRMIO(GPIO_BANK3,
+                        GPIO_PIN_C3,
+                        RMIO_PWM1_CH3);
+}
+
+/**
  * @brief  Config iomux for SDIO
  */
 void sdmmc_iomux_config(void)
@@ -131,6 +175,13 @@ void rt_hw_iomux_config(void)
     mcu_jtag_m0_iomux_config();
     sdmmc_iomux_config();
     pdm_iomux_config();
+#ifdef RT_USING_PWM0
+    pwm0_iomux_config();
+#endif
+#ifdef RT_USING_PWM1
+    pwm1_iomux_config();
+#endif
+
 }
 
 /** @} */  // IOMUX_Public_Functions
