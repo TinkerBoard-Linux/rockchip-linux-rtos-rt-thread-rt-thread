@@ -101,6 +101,10 @@ const struct uart_board g_uart2_board =
 extern const rt_uint32_t __uncache_heap_start__[];
 extern const rt_uint32_t __uncache_heap_end__[];
 #endif
+#ifdef RT_USING_LARGE_HEAP
+extern const rt_uint32_t __large_heap_start__[];
+extern const rt_uint32_t __large_heap_end__[];
+#endif
 #ifdef __ARMCC_VERSION
 extern const rt_uint32_t Image$$ARM_LIB_HEAP$$Limit[];
 extern const rt_uint32_t Image$$ARM_LIB_STACK$$Base[];
@@ -139,6 +143,9 @@ void rt_hw_board_init()
     rt_system_heap_init((void *)HEAP_START, (void *)HEAP_END);
 #ifdef RT_USING_UNCACHE_HEAP
     rt_uncache_heap_init((void *)__uncache_heap_start__, (void *)__uncache_heap_end__);
+#endif
+#ifdef RT_USING_LARGE_HEAP
+    rt_large_heap_init((void *)__large_heap_start__, (void *)__large_heap_end__);
 #endif
 
     /* Initial usart deriver, and set console device */
