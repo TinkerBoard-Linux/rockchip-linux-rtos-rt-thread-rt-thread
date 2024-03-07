@@ -199,9 +199,6 @@ rt_err_t rt_udisk_run(struct uhintf* intf)
 //    ret = rt_usbh_set_interface(intf->device, intf->intf_desc->bInterfaceNumber);
 //    if(ret != RT_EOK)
 //        rt_usbh_clear_feature(intf->device, 0, USB_FEATURE_ENDPOINT_HALT);
-    /* reset mass storage class device */
-    ret = rt_usbh_storage_reset(intf);
-    if(ret != RT_EOK) return ret;
 
     stor = (ustor_t)intf->user_data;
 
