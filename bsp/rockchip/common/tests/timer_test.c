@@ -217,6 +217,7 @@ static TIMER_DEV s_timer[TIMER_CHAN_CNT] =
 #ifdef TIMER7
     DEFINE_TIMER_DEV(7),
 #endif
+#if TIMER_CHAN_CNT > 8
 #ifdef TIMER8
     DEFINE_TIMER_DEV(8),
 #endif
@@ -252,6 +253,7 @@ static TIMER_DEV s_timer[TIMER_CHAN_CNT] =
 #endif
 #ifdef TIMER19
     DEFINE_TIMER_DEV(19),
+#endif
 #endif
 };
 
@@ -594,6 +596,81 @@ int32_t timer_precision_test(struct TIMER_REG *timer_dev)
     return 0;
 }
 
+int32_t timer_freq_test(struct TIMER_REG *timer_dev, int32_t num)
+{
+#ifdef CLK_RKTIMER0_TIME0
+    uint64_t timer_start, timer_end;
+    uint32_t count_24m, count_100m;
+    eCLOCK_Name clk = CLK_RKTIMER0_TIME0;
+    uint32_t rate;
+    float ratio, stand, deviation;
+    char szBuf[32];
+
+    switch (num)
+    {
+    case 0:
+        clk = CLK_RKTIMER0_TIME0;
+        break;
+    case 1:
+        clk = CLK_RKTIMER0_TIME1;
+        break;
+    case 2:
+        clk = CLK_RKTIMER0_TIME2;
+        break;
+    case 3:
+        clk = CLK_RKTIMER0_TIME3;
+        break;
+    case 4:
+        clk = CLK_RKTIMER1_TIME0;
+        break;
+    case 5:
+        clk = CLK_RKTIMER1_TIME1;
+        break;
+    case 6:
+        clk = CLK_RKTIMER1_TIME2;
+        break;
+    case 7:
+        clk = CLK_RKTIMER1_TIME3;
+        break;
+    }
+
+    /* init and start timer */
+    HAL_TIMER_Init(timer_dev, TIMER_FREE_RUNNING);
+    HAL_TIMER_SetCount(timer_dev, (uint64_t) -1);
+    HAL_TIMER_Start(timer_dev);
+
+    /* get 10ms timer count with 24M */
+    HAL_CRU_ClkSetFreq(clk, 24000000);
+    timer_start = HAL_TIMER_GetCount(timer_dev);
+    HAL_CPUDelayUs(100000);
+    timer_end = HAL_TIMER_GetCount(timer_dev);
+    count_24m = timer_end > timer_start ? (timer_end - timer_start) : (timer_start - timer_end);
+
+    /* get 10ms timer count with 100M */
+    HAL_CRU_ClkSetFreq(clk, 100000000);
+    rate = HAL_CRU_ClkGetFreq(clk);
+    if (rate != 100000000)
+    {
+        rt_kprintf("set timer%d freq fail: %d\n", num, rate);
+    }
+    timer_start = HAL_TIMER_GetCount(timer_dev);
+    HAL_CPUDelayUs(100000);
+    timer_end = HAL_TIMER_GetCount(timer_dev);
+    count_100m = timer_end > timer_start ? (timer_end - timer_start) : (timer_start - timer_end);
+    ratio = (count_100m * 1.0) / count_24m;
+
+    stand = 100.0 / 24;
+    deviation = ratio > stand ? (ratio - stand) : (stand - ratio);
+    deviation = deviation / stand;
+    snprintf(szBuf, sizeof(szBuf), "deviation=%f", deviation);
+    rt_kprintf("%s\n", szBuf);
+    RT_ASSERT(deviation < 0.01);
+    HAL_TIMER_Stop(timer_dev);
+#endif
+
+    return 0;
+}
+
 static void timer_test_loop(int32_t num)
 {
     if (num >= TIMER_CHAN_CNT)
@@ -627,6 +704,9 @@ static void timer_test_loop(int32_t num)
 
     if (timer_cru_test(s_timer[num].pReg, num) == 0)
         rt_kprintf("TIMER%ld: cru pass\n\n", num);
+
+    if (timer_freq_test(s_timer[num].pReg, num) == 0)
+        rt_kprintf("TIMER%ld: freq pass\n\n", num);
 }
 
 void hw_timer_test(int32_t argc, char **argv)
