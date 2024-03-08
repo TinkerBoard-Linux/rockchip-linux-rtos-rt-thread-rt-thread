@@ -509,7 +509,7 @@ static int pwm(int argc, char **argv)
                 {
                     result = rt_pwm_set_offset(pwm_device, atoi(argv[2]), atoi(argv[3]));
                     result_str = (result == RT_EOK) ? "Success" : "Fail";
-                    rt_kprintf("%s to set oneshot count to %d on %s at channel %d\n", result_str, atoi(argv[3]), pwm_device, atoi(argv[2]));
+                    rt_kprintf("%s to set offset %dns on %s at channel %d\n", result_str, atoi(argv[3]), pwm_device, atoi(argv[2]));
                 }
                 else
                 {
@@ -523,7 +523,7 @@ static int pwm(int argc, char **argv)
                 {
                     result = rt_pwm_set_oneshot(pwm_device, atoi(argv[2]), atoi(argv[3]));
                     result_str = (result == RT_EOK) ? "Success" : "Fail";
-                    rt_kprintf("%s to set offset %dns on %s at channel %d\n", result_str, atoi(argv[3]), pwm_device, atoi(argv[2]));
+                    rt_kprintf("%s to set oneshot count to %d on %s at channel %d\n", result_str, atoi(argv[3]), pwm_device, atoi(argv[2]));
                 }
                 else
                 {
