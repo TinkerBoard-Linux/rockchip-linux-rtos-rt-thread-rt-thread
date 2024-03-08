@@ -248,6 +248,7 @@ void audio_connector_iomux_config(void)
 
 }
 
+#ifdef RT_USING_GMAC0
 /**
  * @brief  Config iomux for RMII
  */
@@ -265,6 +266,7 @@ void rmii_iomux_config(void)
                          GPIO_PIN_B0,   // ETH_RMII_RXD0
                          PIN_CONFIG_MUX_FUNC1);
 }
+#endif
 
 /**
  * @brief  Config iomux for emmc(multiplexing with fspi)
@@ -349,7 +351,6 @@ void rt_hw_iomux_config(void)
     uart0_iomux_config();
     sai4_iomux_config();
     sai7_iomux_config();
-    rmii_iomux_config();
     dsp_jtag_iomux_config();
 #ifdef RT_USING_SNOR
     fspi0_iomux_config();
@@ -372,6 +373,10 @@ void rt_hw_iomux_config(void)
     i2c1_iomux_config();
     sai0_iomux_config();
     spdif_rx1_iomux_config();
+#endif
+#ifdef RT_USING_GMAC0
+    // conflict with dsp_jtag
+    rmii_iomux_config();
 #endif
 }
 

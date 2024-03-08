@@ -18,10 +18,12 @@
 #include "hal_base.h"
 #include "hal_bsp.h"
 #include "iomux.h"
+#ifdef RT_USING_GMAC
+#include "drv_gmac.h"
+#endif
 #ifdef RT_USING_I2C
 #include "drv_i2c.h"
 #endif
-
 #ifdef RT_USING_PWM_REGULATOR
 #include "drv_pwm_regulator.h"
 #endif
@@ -109,6 +111,25 @@ const struct uart_board g_uart2_board =
     .name = "uart2",
 };
 #endif /* RT_USING_UART2 */
+
+#ifdef RT_USING_GMAC
+const struct rockchip_eth_config rockchip_eth_config_table[] =
+{
+#ifdef RT_USING_GMAC0
+    {
+        .id = GMAC,
+        .mode = RMII_MODE,
+        .phy_addr = 0,
+
+        .external_clk = false,
+
+        .reset_gpio_bank = GPIO0,
+        .reset_gpio_num = GPIO_PIN_A0,
+        .reset_delay_ms = {1, 20, 100},
+    },
+#endif
+};
+#endif
 
 #ifdef HAL_PWR_MODULE_ENABLED
 #ifdef RT_USING_PWM_REGULATOR
