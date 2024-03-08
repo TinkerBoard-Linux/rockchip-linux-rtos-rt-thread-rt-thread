@@ -122,9 +122,6 @@ struct rockchip_eth
     rt_uint8_t *tx_buff;
 };
 
-extern void rt_hw_cpu_dcache_invalidate(void *addr, int size);
-extern void rt_hw_cpu_dcache_clean(void *addr, int size);
-
 /* interrupt service routine */
 void rt_rockchip_eth_irq(struct rockchip_eth *eth)
 {
@@ -257,10 +254,9 @@ static rt_err_t rt_rockchip_eth_init(rt_device_t dev)
         goto err;
     }
 
-    rt_memset(eth->rx_buff, 0, HAL_GMAC_MAX_PACKET_SIZE * ETH_RXBUFNB);
     rt_memset(eth->tx_buff, 0, HAL_GMAC_MAX_PACKET_SIZE * ETH_TXBUFNB);
 
-    rt_hw_cpu_dcache_invalidate(eth->rx_buff, HAL_GMAC_MAX_PACKET_SIZE * ETH_RXBUFNB);
+    HAL_DCACHE_InvalidateByRange((rt_int32_t)eth->rx_buff, HAL_GMAC_MAX_PACKET_SIZE * ETH_RXBUFNB);
 
     /* Initialize Rx Descriptors list */
     HAL_GMAC_DMARxDescInit(pGMAC, eth->rx_desc, eth->rx_buff, ETH_RXBUFNB);
@@ -513,7 +509,7 @@ rt_err_t rt_rockchip_eth_tx(rt_device_t dev, struct pbuf *p)
     pbuf_copy_partial(p, ptr, p->tot_len, 0);
     rt_rockchip_dump_hex(p->payload, p->tot_len);
 
-    rt_hw_cpu_dcache_clean(ptr, p->tot_len);
+    HAL_DCACHE_CleanByRange((rt_uint32_t)ptr, p->tot_len);
 
     status = HAL_GMAC_Send(pGMAC, ptr, p->tot_len);
     if (status)
@@ -545,7 +541,7 @@ struct pbuf *rt_rockchip_eth_rx(rt_device_t dev)
     ptr = HAL_GMAC_Recv(pGMAC, &size);
     if (size > 0 && ptr)
     {
-        rt_hw_cpu_dcache_invalidate(ptr, size);
+        HAL_DCACHE_InvalidateByRange((rt_int32_t)ptr, size);
         /* allocate buffer */
         p = pbuf_alloc(PBUF_LINK, size, PBUF_RAM);
         if (p != RT_NULL)
@@ -554,7 +550,7 @@ struct pbuf *rt_rockchip_eth_rx(rt_device_t dev)
         }
         rt_rockchip_dump_hex(p->payload, p->tot_len);
         HAL_GMAC_CleanRX(pGMAC);
-        rt_hw_cpu_dcache_invalidate(ptr, HAL_GMAC_MAX_PACKET_SIZE);
+        HAL_DCACHE_InvalidateByRange((rt_int32_t)ptr, HAL_GMAC_MAX_PACKET_SIZE);
     }
     else
     {
