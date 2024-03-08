@@ -190,6 +190,7 @@ SECTIONS
         *hal_qpipsram.o(.text .text.* .rodata .rodata*)
         *drv_qpipsram.o(.text .text.* .rodata .rodata*)
         *drv_psram.o(.text .text.* .rodata .rodata*)
+        *context_gcc.o(.text .text.* .rodata .rodata*)
         . = ALIGN(32);
     }
 
