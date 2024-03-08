@@ -298,7 +298,6 @@ static rt_base_t pin_get(const char *name)
 {
     rt_base_t pin = -1;
     rt_base_t bank = -1;
-    char *ptr;
 
     if (name[0] != 'P' && name[0] != 'p')
     {
