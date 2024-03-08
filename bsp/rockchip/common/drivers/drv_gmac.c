@@ -610,6 +610,7 @@ int rt_rockchip_hw_eth_init(void)
         HAL_GMAC_Init(&(*eth)->instance, gmac_dev->pReg, freq, interface,
                       (*eth)->config->external_clk);
 
+        memset(&config, 0, sizeof(struct GMAC_PHY_Config));
         config.speed = (*eth)->config->speed;
         config.maxSpeed = (*eth)->config->max_speed;
         config.duplexMode = PHY_DUPLEX_FULL;
