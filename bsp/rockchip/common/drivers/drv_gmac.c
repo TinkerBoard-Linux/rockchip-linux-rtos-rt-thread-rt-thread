@@ -760,6 +760,39 @@ void phy_write(uint32_t phyReg, uint32_t data)
     }
 }
 
+void phy_reg_show_usage(void)
+{
+    rt_kprintf("phy_reg read 0\n");
+    rt_kprintf("phy_reg write 0 0x3100\n");
+}
+
+void phy_reg(int argc, char **argv)
+{
+    rt_uint16_t addr, data;
+    char *cmd;
+
+    cmd = argv[1];
+    addr = strtol(argv[2], NULL, 16);
+    if (!rt_strcmp(cmd, "read"))
+    {
+        phy_read(addr);
+    }
+    else if (!rt_strcmp(cmd, "write"))
+    {
+        data = strtol(argv[3], NULL, 16);
+        phy_write(addr, data);
+    }
+    else
+    {
+        goto out;
+    }
+
+    return;
+out:
+    phy_reg_show_usage();
+    return;
+}
+
 void phy_dump(void)
 {
     struct GMAC_HANDLE *pGMAC;
@@ -853,12 +886,11 @@ void dump_desc_stat(void)
     }
 }
 
-FINSH_FUNCTION_EXPORT(switch_id, switch eth id);
-FINSH_FUNCTION_EXPORT(phy_read, read phy register);
-FINSH_FUNCTION_EXPORT(phy_write, write phy register);
-FINSH_FUNCTION_EXPORT(phy_dump, dump phy registers);
-FINSH_FUNCTION_EXPORT(dump_net_stat, dump network info);
-FINSH_FUNCTION_EXPORT(dump_desc_stat, dump description info);
+MSH_CMD_EXPORT(switch_id, switch eth id);
+MSH_CMD_EXPORT(phy_reg, read / write phy register);
+MSH_CMD_EXPORT(phy_dump, dump phy registers);
+MSH_CMD_EXPORT(dump_net_stat, dump network info);
+MSH_CMD_EXPORT(dump_desc_stat, dump description info);
 #endif
 #endif
 #endif
