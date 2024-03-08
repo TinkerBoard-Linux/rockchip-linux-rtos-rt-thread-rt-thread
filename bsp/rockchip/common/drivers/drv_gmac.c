@@ -348,15 +348,15 @@ static void rt_rockchip_phy_reset(const struct rockchip_eth_config *config)
         HAL_GPIO_SetPinLevel(config->reset_gpio_bank,
                              config->reset_gpio_num,
                              GPIO_HIGH);
-        rt_thread_mdelay(config->reset_delay_ms[0]);
+        HAL_DelayMs(config->reset_delay_ms[0]);
         HAL_GPIO_SetPinLevel(config->reset_gpio_bank,
                              config->reset_gpio_num,
                              GPIO_LOW);
-        rt_thread_mdelay(config->reset_delay_ms[1]);
+        HAL_DelayMs(config->reset_delay_ms[1]);
         HAL_GPIO_SetPinLevel(config->reset_gpio_bank,
                              config->reset_gpio_num,
                              GPIO_HIGH);
-        rt_thread_mdelay(config->reset_delay_ms[2]);
+        HAL_DelayMs(config->reset_delay_ms[2]);
     }
 }
 
