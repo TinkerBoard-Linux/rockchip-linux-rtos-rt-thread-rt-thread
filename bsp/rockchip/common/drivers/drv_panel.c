@@ -352,7 +352,7 @@ static void rockchip_panel_prepare(struct display_state *state)
 #endif
     rockchip_panel_reset(state);
     rt_thread_delay(10);
-    if (&panel_state->on_cmds)
+    if (panel_state->on_cmds.cmds)
     {
         if (panel_state->conn_type == RK_DISPLAY_CONNECTOR_DSI)
             ret = rockchip_panel_send_dsi_cmds(state, &panel_state->on_cmds);
@@ -378,7 +378,7 @@ static void rockchip_panel_unprepare(struct display_state *state)
         return;
 
     rt_thread_delay(10);
-    if (&panel_state->off_cmds)
+    if (panel_state->off_cmds.cmds)
     {
         if (panel_state->conn_type == RK_DISPLAY_CONNECTOR_DSI)
             ret = rockchip_panel_send_dsi_cmds(state, &panel_state->off_cmds);
