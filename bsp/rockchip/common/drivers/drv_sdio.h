@@ -41,7 +41,7 @@ struct rk_mmc_platform_data
     rt_uint32_t flags; /* define device capabilities */
     rt_uint32_t irq;
     rt_uint32_t base;
-    rt_uint32_t clk_id; /* clock for devices */
+    rt_uint64_t clk_id; /* clock for devices */
     rt_uint32_t hclk_gate;  /* clock gate for registers */
     rt_uint32_t clk_gate;  /* clock gate for device */
     rt_uint32_t freq_min;
