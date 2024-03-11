@@ -13,4 +13,6 @@
 
 #include "board_base.h"
 
+#define RT_USING_BVALID_IRQ
+
 #endif

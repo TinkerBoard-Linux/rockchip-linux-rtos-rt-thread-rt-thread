@@ -24,5 +24,6 @@
 #define TAS5805M_ADR_GPIO      GPIO_PIN_A5
 #define TAS5805M_ADR_GPIO_GRP  GPIO3
 #endif
+#define USB_VBUS_PIN            BANK_PIN(GPIO_BANK2, 12)
 
 #endif

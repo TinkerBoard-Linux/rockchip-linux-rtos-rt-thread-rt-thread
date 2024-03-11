@@ -151,6 +151,11 @@ RT_WEAK const struct regulator_init regulator_inits[] =
 #endif
 #endif
 
+void usb_vbus_pin_enable()
+{
+    WRITE_REG(GPIO2_IOC->GPIO_SARADC_CON, 0x00800080);
+}
+
 /**
  * This function will initial Pisces board.
  */
@@ -195,6 +200,8 @@ void rt_hw_board_init()
 
     /* Update system core clock after clk_init */
     SystemCoreClockUpdate();
+
+    usb_vbus_pin_enable();
 
 #ifdef RT_USING_CONSOLE
     rt_console_set_device(RT_CONSOLE_DEVICE_NAME);
