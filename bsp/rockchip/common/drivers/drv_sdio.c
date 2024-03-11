@@ -861,7 +861,6 @@ int rk_mmc_probe(struct rk_mmc_platform_data *pdata)
     struct mmc_driver *mmc_drv;
     struct rt_mmcsd_host *host;
     struct HAL_MMC_HOST *hal_host;
-    struct rt_device *dev = RT_NULL;
 
     PRINT_MMC_DBG("%s start\n", __func__);
 
