@@ -22,7 +22,10 @@ choice
 
     config RT_USING_BOARD_EVB
         bool "Enable evb board"
- 
+
+    config RT_USING_BOARD_TEST1
+        bool "Enable test1 board"
+
 endchoice
 
 endmenu
