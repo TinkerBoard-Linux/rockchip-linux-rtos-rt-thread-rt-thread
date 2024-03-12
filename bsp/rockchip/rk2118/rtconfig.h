@@ -131,6 +131,7 @@
 
 #define RT_USING_SNOR
 #define RT_SNOR_SPEED 100000000
+#define RT_SNOR_XIP_DATA_BEGIN 327680
 #define RT_USING_SNOR_FSPI_HOST
 
 /* RT-Thread rockchip jpeg enc driver */
