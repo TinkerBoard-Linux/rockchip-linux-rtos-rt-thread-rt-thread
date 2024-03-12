@@ -26,7 +26,7 @@
 struct rt_mtd_nor_device *snor_device = RT_NULL;
 
 #define SNOR_BUFFER_LIMIT  0x1000
-#define TUNING_PATTERN_SIZE 0x40
+#define TUNING_PATTERN_SIZE 0x80
 
 static const uint8_t tuning_blk_pattern_4bit[TUNING_PATTERN_SIZE] =
 {
@@ -38,6 +38,34 @@ static const uint8_t tuning_blk_pattern_4bit[TUNING_PATTERN_SIZE] =
     0xcc, 0x33, 0xcc, 0xcf, 0xff, 0xef, 0xff, 0xee,
     0xff, 0xfd, 0xff, 0xfd, 0xdf, 0xff, 0xbf, 0xff,
     0xbb, 0xff, 0xf7, 0xff, 0xf7, 0x7f, 0x7b, 0xde,
+    0xff, 0x0f, 0xff, 0x00, 0xff, 0xcc, 0xc3, 0xcc,
+    0xc3, 0x3c, 0xcc, 0xff, 0xfe, 0xff, 0xfe, 0xef,
+    0xff, 0xdf, 0xff, 0xdd, 0xff, 0xfb, 0xff, 0xfb,
+    0xbf, 0xff, 0x7f, 0xff, 0x77, 0xf7, 0xbd, 0xef,
+    0xff, 0xf0, 0xff, 0xf0, 0x0f, 0xfc, 0xcc, 0x3c,
+    0xcc, 0x33, 0xcc, 0xcf, 0xff, 0xef, 0xff, 0xee,
+    0xff, 0xfd, 0xff, 0xfd, 0xdf, 0xff, 0xbf, 0xff,
+    0xbb, 0xff, 0xf7, 0xff, 0xf7, 0x7f, 0x7b, 0xde,
+};
+
+static const uint8_t tuning_blk_pattern_8bit[TUNING_PATTERN_SIZE] =
+{
+    0xff, 0xff, 0x00, 0xff, 0xff, 0xff, 0x00, 0x00,
+    0xff, 0xff, 0xcc, 0xcc, 0xcc, 0x33, 0xcc, 0xcc,
+    0xcc, 0x33, 0x33, 0xcc, 0xcc, 0xcc, 0xff, 0xff,
+    0xff, 0xee, 0xff, 0xff, 0xff, 0xee, 0xee, 0xff,
+    0xff, 0xff, 0xdd, 0xff, 0xff, 0xff, 0xdd, 0xdd,
+    0xff, 0xff, 0xff, 0xbb, 0xff, 0xff, 0xff, 0xbb,
+    0xbb, 0xff, 0xff, 0xff, 0x77, 0xff, 0xff, 0xff,
+    0x77, 0x77, 0xff, 0x77, 0xbb, 0xdd, 0xee, 0xff,
+    0xff, 0xff, 0xff, 0x00, 0xff, 0xff, 0xff, 0x00,
+    0x00, 0xff, 0xff, 0xcc, 0xcc, 0xcc, 0x33, 0xcc,
+    0xcc, 0xcc, 0x33, 0x33, 0xcc, 0xcc, 0xcc, 0xff,
+    0xff, 0xff, 0xee, 0xff, 0xff, 0xff, 0xee, 0xee,
+    0xff, 0xff, 0xff, 0xdd, 0xff, 0xff, 0xff, 0xdd,
+    0xdd, 0xff, 0xff, 0xff, 0xbb, 0xff, 0xff, 0xff,
+    0xbb, 0xbb, 0xff, 0xff, 0xff, 0x77, 0xff, 0xff,
+    0xff, 0x77, 0x77, 0xff, 0x77, 0xbb, 0xdd, 0xee,
 };
 
 static void snor_test_show_usage()
@@ -46,14 +74,14 @@ static void snor_test_show_usage()
     rt_kprintf("2. snor_test read offset size loop\n");
     rt_kprintf("3. snor_test erase offset\n");
     rt_kprintf("4. snor_test stress offset size loop\n");
-    rt_kprintf("5. snor_test io_stress offset size loop\n");
+    rt_kprintf("5. snor_test io_stress offset size loop width\n");
     rt_kprintf("6. snor_test pm_test\n");
     rt_kprintf("like:\n");
     rt_kprintf("\tsnor_test write 2097152 4096\n");
     rt_kprintf("\tsnor_test read 2097152 4096 2000\n");
     rt_kprintf("\tsnor_test erase 2097152\n");
     rt_kprintf("\tsnor_test stress 2097152 2097152 5000\n");
-    rt_kprintf("\tsnor_test io_stress 2097152 2097152 5000\n");
+    rt_kprintf("\tsnor_test io_stress 2097152 2097152 5000 4\n");
     rt_kprintf("\tsnor_test pm_test\n");
 }
 
@@ -79,7 +107,7 @@ HAL_Status snor_dbg_hex(char *s, void *buf, uint32_t width, uint32_t len)
         else
             rt_kprintf("0x%02x,", p8[i]);
 
-        if (++j >= 16)
+        if (++j >= 4)
         {
             j = 0;
             rt_kprintf("\n");
@@ -154,7 +182,7 @@ static uint32_t snor_stress_test(uint32_t from, uint32_t size, uint32_t loop)
     return HAL_OK;
 }
 
-static uint32_t snor_io_stress_test(uint32_t from, uint32_t size, uint32_t loop)
+static uint32_t snor_io_stress_test(uint32_t from, uint32_t size, uint32_t loop, uint8_t width)
 {
     int32_t ret, i, j;
     uint32_t test_lba;
@@ -170,7 +198,12 @@ static uint32_t snor_io_stress_test(uint32_t from, uint32_t size, uint32_t loop)
     pwrite32 = (rt_uint32_t *)txbuf;
     pread32 = (rt_uint32_t *)rxbuf;
     for (int32_t i = 0; i < (snor_device->block_size / 4); i++)
-        pwrite32[i] = tuning_blk_pattern_4bit[i & (TUNING_PATTERN_SIZE - 1)];
+    {
+        if (width == 8)
+            pwrite32[i] = tuning_blk_pattern_8bit[i & (TUNING_PATTERN_SIZE - 1)];
+        else
+            pwrite32[i] = tuning_blk_pattern_4bit[i & (TUNING_PATTERN_SIZE - 1)];
+    }
 
     rt_kprintf("---------%s from LBA 0x%lx to 0x%lx---------\n", __func__, test_begin_lba, test_end_lba);
     for (i = 0; i < loop; i++)
@@ -221,7 +254,7 @@ static uint32_t snor_io_stress_test(uint32_t from, uint32_t size, uint32_t loop)
 void snor_test(int argc, char **argv)
 {
     char *cmd;
-    rt_uint8_t *txbuf = NULL, *rxbuf = NULL;
+    rt_uint8_t *txbuf = NULL, *rxbuf = NULL, width = 4;
     uint32_t loop, start_time, end_time, cost_time;
     rt_off_t offset = 0;
     rt_uint32_t size = 0;
@@ -362,11 +395,12 @@ void snor_test(int argc, char **argv)
     }
     else if (!rt_strcmp(cmd, "io_stress"))
     {
-        if (argc != 5)
+        if (argc != 6)
             goto out;
         offset = atoi(argv[2]);
         size = atoi(argv[3]);
         loop = atoi(argv[4]);
+        width = atoi(argv[5]);
 
         if ((size / snor_device->block_size) == 0)
         {
@@ -380,7 +414,7 @@ void snor_test(int argc, char **argv)
             return;
         }
 
-        snor_io_stress_test(offset, size, loop);
+        snor_io_stress_test(offset, size, loop, width);
     }
     else if (!rt_strcmp(cmd, "pm_test"))
     {
