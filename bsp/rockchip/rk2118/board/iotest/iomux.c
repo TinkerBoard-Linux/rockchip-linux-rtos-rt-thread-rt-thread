@@ -130,6 +130,7 @@ void pwm1_iomux_config(void)
                         RMIO_PWM1_CH3);
 }
 
+#ifdef RT_USING_SDIO
 /**
  * @brief  Config iomux for SDIO
  */
@@ -166,6 +167,7 @@ void sdmmc_iomux_config(void)
 
 
 }
+#endif
 
 #ifdef RT_USING_I2C0
 /**
@@ -186,7 +188,9 @@ void rt_hw_iomux_config(void)
     fspi0_iomux_config();
     dsp_jtag_iomux_config();
     mcu_jtag_m0_iomux_config();
+#ifdef RT_USING_SDIO
     sdmmc_iomux_config();
+#endif
 #ifdef RT_USING_I2C0
     i2c0_iomux_config();
 #endif
