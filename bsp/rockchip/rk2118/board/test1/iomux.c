@@ -96,6 +96,70 @@ void i2c0_iomux_config(void)
 }
 #endif
 
+#ifdef RT_USING_TOUCHKEY
+/**
+ * @brief  Config iomux for touchkey
+ */
+void touchkey_iomux_config(void)
+{
+    HAL_PINCTRL_SetRMIO(GPIO_BANK3,
+                        GPIO_PIN_A0,
+                        RMIO_TOUCH_KEY_DRIVE_RM1);
+    HAL_PINCTRL_SetParam(GPIO_BANK3,
+                         GPIO_PIN_A0,
+                         PIN_CONFIG_PUL_NORMAL | PIN_CONFIG_DRV_LEVEL2);
+
+    HAL_PINCTRL_SetRMIO(GPIO_BANK3,
+                        GPIO_PIN_A1,
+                        RMIO_TOUCH_KEY0_RM1);
+    HAL_PINCTRL_SetParam(GPIO_BANK3,
+                         GPIO_PIN_A1,
+                         PIN_CONFIG_PUL_NORMAL | PIN_CONFIG_DRV_LEVEL2);
+
+    HAL_PINCTRL_SetRMIO(GPIO_BANK3,
+                        GPIO_PIN_A2,
+                        RMIO_TOUCH_KEY1_RM1);
+    HAL_PINCTRL_SetParam(GPIO_BANK3,
+                         GPIO_PIN_A2,
+                         PIN_CONFIG_PUL_NORMAL | PIN_CONFIG_DRV_LEVEL2);
+
+    HAL_PINCTRL_SetRMIO(GPIO_BANK3,
+                        GPIO_PIN_A3,
+                        RMIO_TOUCH_KEY2_RM1);
+    HAL_PINCTRL_SetParam(GPIO_BANK3,
+                         GPIO_PIN_A3,
+                         PIN_CONFIG_PUL_NORMAL | PIN_CONFIG_DRV_LEVEL2);
+
+    HAL_PINCTRL_SetRMIO(GPIO_BANK3,
+                        GPIO_PIN_A4,
+                        RMIO_TOUCH_KEY3_RM1);
+    HAL_PINCTRL_SetParam(GPIO_BANK3,
+                         GPIO_PIN_A4,
+                         PIN_CONFIG_PUL_NORMAL | PIN_CONFIG_DRV_LEVEL2);
+
+    HAL_PINCTRL_SetRMIO(GPIO_BANK3,
+                        GPIO_PIN_A5,
+                        RMIO_TOUCH_KEY4_RM1);
+    HAL_PINCTRL_SetParam(GPIO_BANK3,
+                         GPIO_PIN_A5,
+                         PIN_CONFIG_PUL_NORMAL | PIN_CONFIG_DRV_LEVEL2);
+
+    HAL_PINCTRL_SetRMIO(GPIO_BANK3,
+                        GPIO_PIN_A6,
+                        RMIO_TOUCH_KEY5_RM1);
+    HAL_PINCTRL_SetParam(GPIO_BANK3,
+                         GPIO_PIN_A6,
+                         PIN_CONFIG_PUL_NORMAL | PIN_CONFIG_DRV_LEVEL2);
+
+    HAL_PINCTRL_SetRMIO(GPIO_BANK3,
+                        GPIO_PIN_A7,
+                        RMIO_TOUCH_KEY6_RM1);
+    HAL_PINCTRL_SetParam(GPIO_BANK3,
+                         GPIO_PIN_A7,
+                         PIN_CONFIG_PUL_NORMAL | PIN_CONFIG_DRV_LEVEL2);
+}
+#endif
+
 void rt_hw_iomux_config(void)
 {
     uart0_iomux_config();
@@ -105,6 +169,9 @@ void rt_hw_iomux_config(void)
     //mcu_jtag_m1_iomux_config();
 #ifdef RT_USING_I2C0
     i2c0_iomux_config();
+#endif
+#ifdef RT_USING_TOUCHKEY
+    touchkey_iomux_config();
 #endif
 }
 
