@@ -115,6 +115,10 @@
 #define HAL_SPI2APB_MODULE_ENABLED
 #endif
 
+#ifdef RT_USING_TSADC
+#define HAL_TSADC_MODULE_ENABLED
+#endif
+
 #ifdef RT_USING_UART
 #define HAL_UART_MODULE_ENABLED
 #endif
