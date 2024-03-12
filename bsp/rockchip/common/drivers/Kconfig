@@ -351,6 +351,12 @@ if RT_USING_SNOR
         bool "Set SPI Host DUAL IO Lines"
         default n
 
+    config RT_SNOR_XIP_DATA_BEGIN
+        int "Designate the starting address for accessing in XIP mode"
+        default 0
+        help
+            Designate the starting address for accessing in XIP mode rather than in function interface mode. If set
+            to 0, it means full space XIP access.
 choice
     prompt "Choose SPI Nor Flash Adapter"
     default RT_USING_SNOR_FSPI_HOST

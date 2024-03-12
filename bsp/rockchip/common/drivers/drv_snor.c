@@ -717,7 +717,11 @@ static rt_size_t snor_mtd_read(struct rt_mtd_nor_device *dev, rt_off_t pos, rt_u
     RT_ASSERT(size != 0);
 
     rt_mutex_take(&spiflash->lock, RT_WAITING_FOREVER);
+#if RT_SNOR_XIP_DATA_BEGIN
+    if (nor->spi->mode & HAL_SPI_XIP && pos >= RT_SNOR_XIP_DATA_BEGIN)
+#else
     if (nor->spi->mode & HAL_SPI_XIP)
+#endif
     {
         HAL_DCACHE_InvalidateByRange((uint32_t)(pos + nor->spi->xipMem), size);
         rt_memcpy(data, (uint32_t *)(pos + nor->spi->xipMem), size);
