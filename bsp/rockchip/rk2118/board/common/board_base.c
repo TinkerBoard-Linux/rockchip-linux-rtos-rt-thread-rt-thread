@@ -16,6 +16,7 @@
 #include "drv_uart.h"
 #include "drv_cache.h"
 #include "drv_heap.h"
+#include "drv_thermal.h"
 #include "hal_base.h"
 #include "hal_bsp.h"
 #include "iomux.h"
@@ -70,6 +71,8 @@ RT_WEAK const struct clk_init clk_inits[] =
     INIT_CLK("MCLK_OUT_SAI5", MCLK_OUT_SAI5, 12288000),
     INIT_CLK("MCLK_OUT_SAI6", MCLK_OUT_SAI6, 12288000),
     INIT_CLK("MCLK_OUT_SAI7", MCLK_OUT_SAI7, 12288000),
+    INIT_CLK("CLK_TSADC", CLK_TSADC, 1200000),
+    INIT_CLK("CLK_TSADC_TSEN", CLK_TSADC_TSEN, 12000000),
     INIT_CLK("SCLK_SAI0", SCLK_SAI0, 12288000),
     INIT_CLK("SCLK_SAI1", SCLK_SAI1, 12288000),
     INIT_CLK("SCLK_SAI2", SCLK_SAI2, 12288000),
@@ -80,6 +83,16 @@ RT_WEAK const struct clk_init clk_inits[] =
     INIT_CLK("SCLK_SAI7", SCLK_SAI7, 12288000),
     { /* sentinel */ },
 };
+
+#if defined(RT_USING_TSADC)
+RT_WEAK const struct tsadc_init g_tsadc_init =
+{
+    .chn_id = {0},
+    .chn_num = 1,
+    .polarity = TSHUT_LOW_ACTIVE,
+    .mode = TSHUT_MODE_CRU,
+};
+#endif /* RT_USING_TSADC */
 
 #if defined(RT_USING_UART0)
 RT_WEAK const struct uart_board g_uart0_board =
