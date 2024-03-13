@@ -178,6 +178,20 @@ extern const rt_uint32_t __heap_end__[];
 #define HEAP_END         (__heap_end__)
 #endif
 
+#ifdef RT_USING_SWO_PRINTF
+void swo_console_hook(const char *str, int flush)
+{
+    char ch;
+
+    while (str && *str != '\0')
+    {
+        ch = *str;
+        ITM_SendChar(ch);
+        str++;
+    }
+}
+#endif
+
 /**
  * This function will initial Pisces board.
  */
@@ -216,6 +230,10 @@ RT_WEAK void rt_hw_board_init()
 
 #ifdef RT_USING_CONSOLE
     rt_console_set_device(RT_CONSOLE_DEVICE_NAME);
+#endif
+
+#ifdef RT_USING_SWO_PRINTF
+    rt_console_set_output_hook(swo_console_hook);
 #endif
 
     /* Call components board initial (use INIT_BOARD_EXPORT()) */

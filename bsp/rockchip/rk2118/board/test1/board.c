@@ -184,6 +184,10 @@ void rt_hw_board_init()
     rt_console_set_device(RT_CONSOLE_DEVICE_NAME);
 #endif
 
+#ifdef RT_USING_SWO_PRINTF
+    rt_console_set_output_hook(swo_console_hook);
+#endif
+
     /* Call components board initial (use INIT_BOARD_EXPORT()) */
 #ifdef RT_USING_COMPONENTS_INIT
     rt_components_board_init();
