@@ -74,14 +74,14 @@ static void snor_test_show_usage()
     rt_kprintf("2. snor_test read offset size loop\n");
     rt_kprintf("3. snor_test erase offset\n");
     rt_kprintf("4. snor_test stress offset size loop\n");
-    rt_kprintf("5. snor_test io_stress offset size loop width\n");
+    rt_kprintf("5. snor_test io_stress offset size loop width rw\n");
     rt_kprintf("6. snor_test pm_test\n");
     rt_kprintf("like:\n");
     rt_kprintf("\tsnor_test write 2097152 4096\n");
     rt_kprintf("\tsnor_test read 2097152 4096 2000\n");
     rt_kprintf("\tsnor_test erase 2097152\n");
     rt_kprintf("\tsnor_test stress 2097152 2097152 5000\n");
-    rt_kprintf("\tsnor_test io_stress 2097152 2097152 5000 4\n");
+    rt_kprintf("\tsnor_test io_stress 2097152 2097152 5000 4 3\n");
     rt_kprintf("\tsnor_test pm_test\n");
 }
 
@@ -182,13 +182,16 @@ static uint32_t snor_stress_test(uint32_t from, uint32_t size, uint32_t loop)
     return HAL_OK;
 }
 
-static uint32_t snor_io_stress_test(uint32_t from, uint32_t size, uint32_t loop, uint8_t width)
+static uint32_t snor_io_stress_test(uint32_t from, uint32_t size, uint32_t loop, uint8_t width, uint8_t rw)
 {
     int32_t ret, i, j;
     uint32_t test_lba;
     rt_uint8_t *txbuf = NULL, *rxbuf = NULL;
     rt_uint32_t *pwrite32 = NULL, *pread32 = NULL;
     rt_uint32_t test_begin_lba, test_end_lba;
+
+    if (!(rw & 0x3))
+        rw = 3;
 
     test_begin_lba = from / snor_device->block_size;
     test_end_lba = (from + size) / snor_device->block_size;
@@ -212,32 +215,41 @@ static uint32_t snor_io_stress_test(uint32_t from, uint32_t size, uint32_t loop,
         for (test_lba = test_begin_lba; test_lba < test_end_lba; test_lba++)
         {
             pwrite32[0] = test_lba;
-            rt_mtd_nor_erase_block(snor_device, test_lba * snor_device->block_size, snor_device->block_size);
-            ret = rt_mtd_nor_write(snor_device, test_lba * snor_device->block_size, (const rt_uint8_t *)pwrite32, snor_device->block_size);
-            if (ret != snor_device->block_size)
+            if (rw & 0x1)
             {
-                rt_kprintf("%s 0x%lx write fail\n", __func__, test_lba);
-                while (1)
-                    ;
-            }
-            pread32[0] = -1;
-            ret = rt_mtd_nor_read(snor_device, test_lba * snor_device->block_size, (rt_uint8_t *)pread32, snor_device->block_size);
-            if (ret != snor_device->block_size)
-            {
-                rt_kprintf("%s 0x%lx read fail\n", __func__, test_lba);
-                while (1)
-                    ;
-            }
-            for (j = 0; j < (int32_t)snor_device->block_size / 4; j++)
-            {
-                if (pwrite32[j] != pread32[j])
+                rt_mtd_nor_erase_block(snor_device, test_lba * snor_device->block_size, snor_device->block_size);
+                ret = rt_mtd_nor_write(snor_device, test_lba * snor_device->block_size, (const rt_uint8_t *)pwrite32, snor_device->block_size);
+                if (ret != snor_device->block_size)
                 {
-                    snor_dbg_hex("w:", pwrite32, 4, 16);
-                    snor_dbg_hex("r:", pread32, 4, 16);
-                    rt_kprintf("check not match:row=0x%lx, num=0x%lx, write=0x%lx, read=0x%lx 0x%lx 0x%lx 0x%lx\n",
-                               test_lba, j, pwrite32[j], pread32[j], pread32[j + 1], pread32[j + 2], pread32[j - 1]);
+                    rt_kprintf("%s 0x%lx write fail\n", __func__, test_lba);
                     while (1)
                         ;
+                }
+            }
+            if (rw & 0x2)
+            {
+                pread32[0] = -1;
+                ret = rt_mtd_nor_read(snor_device, test_lba * snor_device->block_size, (rt_uint8_t *)pread32, snor_device->block_size);
+                if (ret != snor_device->block_size)
+                {
+                    rt_kprintf("%s 0x%lx read fail\n", __func__, test_lba);
+                    while (1)
+                        ;
+                }
+            }
+            if (rw == 3)
+            {
+                for (j = 0; j < (int32_t)snor_device->block_size / 4; j++)
+                {
+                    if (pwrite32[j] != pread32[j])
+                    {
+                        snor_dbg_hex("w:", pwrite32, 4, 16);
+                        snor_dbg_hex("r:", pread32, 4, 16);
+                        rt_kprintf("check not match:row=0x%lx, num=0x%lx, write=0x%lx, read=0x%lx 0x%lx 0x%lx 0x%lx\n",
+                                   test_lba, j, pwrite32[j], pread32[j], pread32[j + 1], pread32[j + 2], pread32[j - 1]);
+                        while (1)
+                            ;
+                    }
                 }
             }
             rt_kprintf("test_lba= 0x%lx\n", test_lba);
@@ -254,7 +266,7 @@ static uint32_t snor_io_stress_test(uint32_t from, uint32_t size, uint32_t loop,
 void snor_test(int argc, char **argv)
 {
     char *cmd;
-    rt_uint8_t *txbuf = NULL, *rxbuf = NULL, width = 4;
+    rt_uint8_t *txbuf = NULL, *rxbuf = NULL, width = 4, rw = 3;
     uint32_t loop, start_time, end_time, cost_time;
     rt_off_t offset = 0;
     rt_uint32_t size = 0;
@@ -395,12 +407,13 @@ void snor_test(int argc, char **argv)
     }
     else if (!rt_strcmp(cmd, "io_stress"))
     {
-        if (argc != 6)
+        if (argc != 7)
             goto out;
         offset = atoi(argv[2]);
         size = atoi(argv[3]);
         loop = atoi(argv[4]);
         width = atoi(argv[5]);
+        rw = atoi(argv[6]);
 
         if ((size / snor_device->block_size) == 0)
         {
@@ -414,7 +427,7 @@ void snor_test(int argc, char **argv)
             return;
         }
 
-        snor_io_stress_test(offset, size, loop, width);
+        snor_io_stress_test(offset, size, loop, width, rw);
     }
     else if (!rt_strcmp(cmd, "pm_test"))
     {
