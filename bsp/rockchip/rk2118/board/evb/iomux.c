@@ -203,6 +203,20 @@ void emmc_iomux_config(void)
                          PIN_CONFIG_MUX_FUNC1);
 }
 
+/**
+ * @brief  Config iomux for pwm0
+ */
+void pwm0_iomux_config(void)
+{
+    HAL_PINCTRL_SetRMIO(GPIO_BANK0,
+                        GPIO_PIN_A3,   // PWM0_3
+                        RMIO_PWM0_CH3);
+
+    HAL_PINCTRL_SetRMIO(GPIO_BANK0,
+                        GPIO_PIN_A5,   // PWM0_2
+                        RMIO_PWM0_CH2);
+}
+
 void rt_hw_iomux_config(void)
 {
     uart1_iomux_config();
@@ -215,6 +229,7 @@ void rt_hw_iomux_config(void)
     rmii_iomux_config();
     dsp_jtag_iomux_config();
     fspi0_iomux_config();
+    pwm0_iomux_config();
 }
 
 /** @} */  // IOMUX_Public_Functions
