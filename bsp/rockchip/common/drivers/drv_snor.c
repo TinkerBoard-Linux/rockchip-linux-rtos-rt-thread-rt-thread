@@ -78,7 +78,6 @@ void xip_dbg(uint8_t c)
 #endif
 
 #define SPIFLASH_MTD_DEV_NAME_MAX 8
-#define SPINOR_ID_MAX_LENGTH      5    /**< SPI Nor id data max length */
 
 #define MTD_TO_SPIFLASH(m) (struct spiflash_device *)(m)
 
@@ -183,7 +182,7 @@ static HAL_Status fspi_xip_config(struct SNOR_HOST *spi, struct HAL_SPI_MEM_OP *
 
 static int rockchip_sfc_delay_lines_tuning(struct SPI_NOR *nor, struct rt_fspi_device *fspi_device)
 {
-    uint8_t id_temp[SPINOR_ID_MAX_LENGTH];
+    uint8_t id_temp[SNOR_ID_LENGTH_MAX];
     uint16_t cell_max = (uint16_t)rt_fspi_get_max_dll_cells(fspi_device);
     uint16_t right, left = 0, final;
     uint16_t step = HAL_FSPI_DLL_TRANING_STEP;
@@ -351,7 +350,7 @@ static uint32_t fspi_snor_adapt(struct SPI_NOR *nor)
      * When quad dtr transmission occurs, the timing changes and there
      * is no DQS to cover the sampling timing issue, requiring DLL.
      */
-    if (nor->qpi && nor->dtr)
+    if (HAL_SNOR_IsDtr(nor))
     {
         xip_dbg('6');
         HAL_SNOR_XIPDisable(nor);
