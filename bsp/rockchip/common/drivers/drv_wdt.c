@@ -107,9 +107,9 @@ static rt_err_t dw_wdt_init(rt_watchdog_t *wdt)
     uint32_t freq;
 
 #ifdef CONFIG_RT_USING_SND_GLB_RST
-    HAL_CRU_WdtGlbRstEnable(GLB_RST_SND_WDT0);
+    HAL_CRU_WdtGlbRstEnable(GLB_RST_SND_WDT);
 #else
-    HAL_CRU_WdtGlbRstEnable(GLB_RST_FST_WDT0);
+    HAL_CRU_WdtGlbRstEnable(GLB_RST_FST_WDT);
 #endif
 
     freq = HAL_CRU_ClkGetFreq(PCLK_WDT);
