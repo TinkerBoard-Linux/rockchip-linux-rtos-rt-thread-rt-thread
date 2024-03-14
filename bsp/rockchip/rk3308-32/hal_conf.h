@@ -81,6 +81,13 @@
 #define HAL_SNOR_SFC_HOST
 #endif
 
+#ifdef RT_USING_SPINAND
+#define HAL_SPINAND_MODULE_ENABLED
+#ifdef RT_USING_SPINAND_SFC_HOST
+#define HAL_SFC_MODULE_ENABLED
+#endif
+#endif
+
 #ifdef RT_USING_SPI
 #define HAL_SPI_MODULE_ENABLED
 #endif
