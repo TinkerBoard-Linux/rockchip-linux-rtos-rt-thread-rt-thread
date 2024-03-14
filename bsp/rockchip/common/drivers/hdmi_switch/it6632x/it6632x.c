@@ -1884,6 +1884,9 @@ static rt_err_t it6632x_control(rt_device_t dev, int cmd, void *args)
     case RT_IT6632X_CTRL_ARC_VOL_GET:
         it6632x_arc_volume_get((struct it6632x_volume_info *)args);
         break;
+    case RT_IT6632X_CTRL_ARC_SET_MAX_VOL:
+        it6632x_arc_set_max_volume(*((rt_uint8_t *)args));
+        break;
     case RT_IT6632X_CTRL_REG_DUMP:
         SB_I2C_Dump();
         it6632x_get_hdmi_decoderinfo(&g_it6632x_dev->ado_info);
