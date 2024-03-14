@@ -141,9 +141,8 @@ RT_WEAK  void mcu_jtag_m0_iomux_config(void)
                          PIN_CONFIG_MUX_FUNC4);
 
     /* m0 for cpu0, m1 for cpu1, default target for cpu0 */
-    GRF->SOC_CON0 |= (0x0 << GRF_SOC_CON0_GRF_JTAG_SEL_M0_SHIFT)
-                     | (0x1 << GRF_SOC_CON0_GRF_JTAG_SEL_M1_SHIFT)
-                     | (0x0 << GRF_SOC_CON0_GRF_JTAG_SWO_M0_SEL_SHIFT);
+    GRF->SOC_CON0 |= (0x2 << GRF_SOC_CON0_GRF_JTAG_SEL_SHIFT)
+                     | (0x0 << GRF_SOC_CON0_JTAG_MCU_SWO_M0_SEL_SHIFT);
 }
 
 /**
@@ -158,9 +157,8 @@ RT_WEAK  void mcu_jtag_m1_iomux_config(void)
                          PIN_CONFIG_MUX_FUNC2);
 
     /* m1 for cpu0, m0 for cpu1, default target for cpu0 */
-    GRF->SOC_CON0 |= (0x1 << GRF_SOC_CON0_GRF_JTAG_SEL_M0_SHIFT)
-                     | (0x0 << GRF_SOC_CON0_GRF_JTAG_SEL_M1_SHIFT)
-                     | (0x0 << GRF_SOC_CON0_GRF_JTAG_SWO_M1_SEL_SHIFT);
+    GRF->SOC_CON0 |= (0x1 << GRF_SOC_CON0_GRF_JTAG_SEL_SHIFT)
+                     | (0x0 << GRF_SOC_CON0_JTAG_MCU_SWO_M1_SEL_SHIFT);
 }
 
 /**
