@@ -42,6 +42,10 @@
 #include "drv_clock.h"
 #include "hal_base.h"
 
+#ifdef RT_USING_PWM_REMOTECTL
+#include "drv_pwm_remotectl.h"
+#endif
+
 #define RK_PWM_DEBUG 0
 #if RK_PWM_DEBUG
 #define rk_pwm_dbg(dev, fmt, ...) \
@@ -135,8 +139,13 @@ static void rockchip_pwm_irq(struct rockchip_pwm *pwm)
     {
         HAL_PWM_ChannelIRQHandler(pPWM, i);
         if (pPWM->pChHandle[i].mode == HAL_PWM_CAPTURE)
+        {
             rk_pwm_dbg(&pwm->dev, "%s chanel%d pos cycles = %ld and neg cycles = %ld\n", pwm->name, i,
                        pPWM->pChHandle[i].result.posCycles, pPWM->pChHandle[i].result.negCycles);
+#ifdef RT_USING_PWM_REMOTECTL
+            remotectl_get_pwm_period(pwm->name, i, pPWM->freq, pPWM->pChHandle[i].result.negCycles, pPWM->pChHandle[i].result.posCycles);
+#endif
+        }
     }
 #else
     HAL_PWM_IRQHandler(pPWM);
@@ -193,6 +202,11 @@ rt_err_t rockchip_pwm_control(struct rt_device_pwm *device, int cmd, void *arg)
         break;
     case PWM_CMD_SET_CAPTURE:
         clk_enable(pwm->clk_gate);
+#ifdef RT_USING_PWM_REMOTECTL
+        HAL_PWM_EnableCaptureInt(pPWM, config->channel, HAL_PWM_CAP_HPR_INT);
+#else
+        HAL_PWM_EnableCaptureInt(pPWM, config->channel, HAL_PWM_CAP_LPR_INT | HAL_PWM_CAP_HPR_INT);
+#endif
         ret = HAL_PWM_Enable(pPWM, config->channel, HAL_PWM_CAPTURE);
         break;
     case PWM_CMD_LOCK:
