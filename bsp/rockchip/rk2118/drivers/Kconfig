@@ -59,6 +59,17 @@ config RT_USING_SARADC
     bool "Enable SARADC"
     default n
 
+if RT_USING_SDIO
+menu "Enable SDIO/SDMMC/eMMC"
+    config RT_USING_SDIO0
+        bool "Enable SDIO0 controller"
+        default n
+    config RT_USING_SDIO1
+        bool "Enable SDIO1 controller"
+        default n
+endmenu
+endif
+
 if RT_USING_SPI
 menu "Enable SPI"
     config RT_USING_SPI0
