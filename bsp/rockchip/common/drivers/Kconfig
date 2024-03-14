@@ -760,6 +760,9 @@ choice
         bool "extend fspi cs1 as SPINAND device"
     endif
 
+    config RT_USING_SPINAND_SFC_HOST
+        bool "Attach SFC controller to SPINAND"
+
     config RT_USING_SPINAND_SPI_HOST
         bool "Attach SPI controller to SPINAND"
 

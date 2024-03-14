@@ -273,7 +273,7 @@ static int rockchip_sfc_delay_lines_tuning(struct SPI_NAND *spinand, struct rt_f
     }
     else
     {
-        rt_kprintf("spinor %d %d dll training failed in %dMHz, reduce the frequency\n",
+        rt_kprintf("spinand %d %d dll training failed in %dMHz, reduce the frequency\n",
                    left, right, spinand->spi->speed);
         rt_fspi_dll_disable(fspi_device);
         return -1;
@@ -358,6 +358,32 @@ static uint32_t spinand_adapt(struct SPI_NAND *spinand)
     }
 
     return ret;
+}
+#elif defined(RT_USING_SPINAND_SFC_HOST)
+static uint32_t spinand_adapt(struct SPI_NAND *spinand)
+{
+    struct HAL_SFC_HOST *host = (struct HAL_SFC_HOST *)rt_calloc(1, sizeof(*host));
+
+    RT_ASSERT(host);
+
+    /* Designated host to SPINAND */
+    host->instance = SFC;
+    HAL_SFC_Init(host);
+    spinand->spi->userdata = (void *)host;
+    spinand->spi->mode = HAL_SPI_MODE_3;
+    spinand->spi->mode |= (HAL_SPI_TX_QUAD | HAL_SPI_RX_QUAD);
+    spinand->spi->xfer = HAL_SFC_SPINandSpiXfer;
+
+    /* Init SPI Nand abstract */
+    if (HAL_SPINAND_Init(spinand))
+    {
+        rt_free(host);
+        return -RT_ERROR;
+    }
+    else
+    {
+        return RT_EOK;
+    }
 }
 #elif defined(RT_USING_SPINAND_SPI_HOST)
 static HAL_Status SPI_Xfer(struct SPI_NAND_HOST *spi, struct HAL_SPI_MEM_OP *op)
@@ -488,7 +514,7 @@ int dhara_nand_is_bad(const struct dhara_nand *n, dhara_block_t bno)
 
     if (n->blocks[bno].bbm == NAND_BBT_BLOCK_STATUS_UNKNOWN)
     {
-        ret = HAL_SPINAND_IsBad(spinand, bno);
+        ret = HAL_SPINAND_IsBad(spinand, bno * spinand->pagePerBlk);
         if (ret)
         {
             dhara_dbg("NAND_is_bad blk 0x%x is bad block, ret=%d\n", bno, ret);
@@ -668,7 +694,10 @@ int dhara_nand_read(const struct dhara_nand *n, dhara_page_t p,
         rt_kprintf("NAND_read page 0x%x failed, ret=%d\n", p, ret);
         dhara_set_error(err, DHARA_E_ECC);
     }
-    dhara_set_error(err, DHARA_E_NONE);
+    else
+    {
+        dhara_set_error(err, DHARA_E_NONE);
+    }
     r_count++;
 
     return ret;
@@ -851,7 +880,7 @@ static rt_err_t spinand_blk_init_partition(struct dhara_device *dev, struct rt_f
     blk_part->blk.close     = part_blk_close;
     blk_part->blk.control   = part_blk_control;
 #endif
-    blk_part->blk.user_data = dev;  /* snor blk dev for operation */
+    blk_part->blk.user_data = dev;  /* spinad blk dev for operation */
     /* register device */
     return rt_device_register(&blk_part->blk, blk_part->name, blk_part->mask_flags | RT_DEVICE_FLAG_STANDALONE);
 }
