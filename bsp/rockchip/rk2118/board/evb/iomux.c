@@ -109,7 +109,7 @@ void sai4_iomux_config(void)
 {
     HAL_PINCTRL_SetRMIO(GPIO_BANK4,
                         GPIO_PIN_C4,   // SAI4_I2S_MCLK
-                        RMIO_MCLK4);
+                        RMIO_SAI4_MCLK);
 
     HAL_PINCTRL_SetRMIO(GPIO_BANK4,
                         GPIO_PIN_C5,   // SAI4_I2S_SCLK
