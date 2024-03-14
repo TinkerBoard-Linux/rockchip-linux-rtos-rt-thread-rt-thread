@@ -294,7 +294,7 @@ int rockchip_rt_hw_pwm_init(void)
     return 0;
 }
 
-INIT_DEVICE_EXPORT(rockchip_rt_hw_pwm_init);
+INIT_PREV_EXPORT(rockchip_rt_hw_pwm_init);
 
 #endif
 
