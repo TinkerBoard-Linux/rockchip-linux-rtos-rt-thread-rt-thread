@@ -57,15 +57,13 @@ int main(void)
 
 extern void coremark_main(void);
 extern void linpack_main(void);
-void cpu_stress(int argc, char **argv)
+void stress_entry(void *param)
 {
-    uint32_t loop = 1;
-    uint32_t i = 0;
+    uint32_t loop;
     uint32_t *ptr;
+    uint32_t i = 0;
 
-    if (argc == 2)
-        loop = atoi(argv[1]);
-
+    loop = *((uint32_t *)param);
     rt_kprintf("loop=%d\n", loop);
     while (i++ < loop)
     {
@@ -80,6 +78,21 @@ void cpu_stress(int argc, char **argv)
         linpack_main();
 #endif
     }
+}
+
+void cpu_stress(int argc, char **argv)
+{
+    rt_thread_t thread;
+    static uint32_t loop = 1;
+
+    if (argc == 2)
+        loop = atoi(argv[1]);
+
+    thread = rt_thread_create("cpu",
+                              stress_entry, &loop,
+                              2048,
+                              21, 20);
+    rt_thread_startup(thread);
 }
 
 #ifdef RT_USING_FINSH
