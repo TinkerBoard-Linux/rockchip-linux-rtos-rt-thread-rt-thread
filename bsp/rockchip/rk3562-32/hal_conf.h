@@ -64,6 +64,7 @@
 #endif
 
 #ifdef RT_USING_DMA_PL330
+#define g_pl330Dev0 g_pl330Dev
 #define HAL_PL330_MODULE_ENABLED
 #endif
 
