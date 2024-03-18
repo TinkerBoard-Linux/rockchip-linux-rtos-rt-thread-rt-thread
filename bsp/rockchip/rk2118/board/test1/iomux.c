@@ -160,6 +160,22 @@ void touchkey_iomux_config(void)
 }
 #endif
 
+#ifdef RT_USING_PWM0
+/**
+ * @brief  Config iomux for pwm0
+ */
+void pwm0_iomux_config(void)
+{
+    HAL_PINCTRL_SetRMIO(GPIO_BANK0,
+                        GPIO_PIN_A5,   // PWM0_2
+                        RMIO_PWM0_CH2);
+
+    HAL_PINCTRL_SetRMIO(GPIO_BANK0,
+                        GPIO_PIN_B0,   // PWM0_3
+                        RMIO_PWM0_CH1);
+}
+#endif
+
 void rt_hw_iomux_config(void)
 {
     uart0_iomux_config();
@@ -172,6 +188,9 @@ void rt_hw_iomux_config(void)
 #endif
 #ifdef RT_USING_TOUCHKEY
     touchkey_iomux_config();
+#endif
+#ifdef RT_USING_PWM0
+    pwm0_iomux_config();
 #endif
 }
 

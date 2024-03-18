@@ -22,6 +22,12 @@
 #ifdef RT_USING_I2C
 #include "drv_i2c.h"
 #endif
+#ifdef RT_USING_PWM_REGULATOR
+#include "drv_pwm_regulator.h"
+#endif
+#ifdef HAL_PWR_MODULE_ENABLED
+#include "drv_regulator.h"
+#endif
 
 #ifdef RT_USING_SDIO
 #include "drv_sdio.h"
@@ -121,6 +127,67 @@ const struct uart_board g_uart2_board =
 };
 #endif /* RT_USING_UART2 */
 
+#ifdef HAL_PWR_MODULE_ENABLED
+#ifdef RT_USING_PWM_REGULATOR
+RT_WEAK struct pwr_pwm_info_desc pwm_pwr_desc[] =
+{
+    {
+        .name = "pwm0",
+        .chanel = 2,
+        .invert = true,
+    },
+    {
+        .name = "pwm0",
+        .chanel = 1,
+        .invert = true,
+    },
+    { /* sentinel */ },
+};
+
+RT_WEAK struct regulator_desc regulators[] =
+{
+    {
+        .flag = REGULATOR_FLG_PWM | REGULATOR_FLG_LOCK,
+        .desc.pwm_desc = {
+            .flag = DESC_FLAG_LINEAR(PWR_CTRL_VOLT_RUN | PWR_CTRL_PWR_EN),
+            .info = {
+                .pwrId = PWR_ID_CORE,
+            },
+            .pwrId = PWR_ID_CORE,
+            .period = 25000,
+            .minVolt = 810000,
+            .maxVlot = 1000000,
+            .voltage = 900000,
+            .pwm = &pwm_pwr_desc[1],
+        },
+    },
+    {
+        .flag = REGULATOR_FLG_PWM | REGULATOR_FLG_LOCK,
+        .desc.pwm_desc = {
+            .flag = DESC_FLAG_LINEAR(PWR_CTRL_VOLT_RUN | PWR_CTRL_PWR_EN),
+            .info = {
+                .pwrId = PWR_ID_DSP_CORE,
+            },
+            .pwrId = PWR_ID_DSP_CORE,
+            .period = 25000,
+            .minVolt = 800000,
+            .maxVlot = 1100000,
+            .voltage = 900000,
+            .pwm = &pwm_pwr_desc[0],
+        },
+    },
+    { /* sentinel */ },
+};
+
+RT_WEAK const struct regulator_init regulator_inits[] =
+{
+    REGULATOR_INIT("vdd_core",  PWR_ID_CORE,       900000, 1, 900000, 1),
+    REGULATOR_INIT("vdd_dsp",   PWR_ID_DSP_CORE,   900000, 1, 900000, 1),
+    { /* sentinel */ },
+};
+#endif
+#endif
+
 #ifdef RT_USING_UNCACHE_HEAP
 extern const rt_uint32_t __uncache_heap_start__[];
 extern const rt_uint32_t __uncache_heap_end__[];
@@ -174,7 +241,11 @@ void rt_hw_board_init()
 
     /* Initial usart deriver, and set console device */
     rt_hw_usart_init();
-
+#ifdef RT_USING_PWM_REGULATOR
+#ifdef HAL_PWR_MODULE_ENABLED
+    regulator_desc_init(regulators);
+#endif
+#endif
     clk_init(clk_inits, true);
 
     /* Update system core clock after clk_init */
