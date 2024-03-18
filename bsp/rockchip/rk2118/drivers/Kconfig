@@ -72,8 +72,8 @@ endif
 
 if RT_USING_SPI
 menu "Enable SPI"
-    config RT_USING_SPI0
-        bool "Enable SPI0"
+    config RT_USING_SPI2APB
+        bool "Enable SPI2APB(SPI0)"
         default n
 
     config RT_USING_SPI1

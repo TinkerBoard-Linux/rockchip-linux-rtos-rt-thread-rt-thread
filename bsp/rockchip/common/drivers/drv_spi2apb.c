@@ -46,7 +46,11 @@ struct rockchip_spi2apb
 static struct rockchip_spi2apb rk_spi2apb =
 {
     .base = SPI2APB,
+#if defined(SPISLV0_IRQn)
     .irq = SPISLV0_IRQn,
+#elif defined(SPI2APB_IRQn)
+    .irq = SPI2APB_IRQn,
+#endif
     .callback = NULL,
 };
 
