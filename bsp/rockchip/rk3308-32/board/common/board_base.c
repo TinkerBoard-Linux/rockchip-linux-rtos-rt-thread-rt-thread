@@ -19,6 +19,7 @@
 #include "hal_base.h"
 #include "hal_bsp.h"
 #include "drv_heap.h"
+#include "drv_thermal.h"
 
 #ifdef RT_USING_PIN
 #include "iomux.h"
@@ -38,6 +39,7 @@
 RT_WEAK const struct clk_init clk_inits[] =
 {
     INIT_CLK("PLL_APLL", PLL_APLL, 816 * MHZ),
+    INIT_CLK("CLK_TSADC", CLK_TSADC, 50000),
     { /* sentinel */ },
 };
 
@@ -63,6 +65,16 @@ RT_WEAK const struct clk_unused clks_unused[] =
 #define TICK_IRQn CNTPNS_IRQn
 static uint32_t g_tick_load;
 #endif
+
+#if defined(RT_USING_TSADC)
+RT_WEAK const struct tsadc_init g_tsadc_init =
+{
+    .chn_id = {0, 1},
+    .chn_num = 2,
+    .polarity = TSHUT_LOW_ACTIVE,
+    .mode = TSHUT_MODE_CRU,
+};
+#endif /* RT_USING_TSADC */
 
 #if defined(RT_USING_UART1)
 RT_WEAK const struct uart_board g_uart1_board =
