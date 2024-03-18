@@ -87,6 +87,7 @@
 
 #ifdef RT_USING_TSADC
 #define HAL_TSADC_MODULE_ENABLED
+#define TSADC_NONLINEAR
 #endif
 
 #ifdef RT_USING_UART
