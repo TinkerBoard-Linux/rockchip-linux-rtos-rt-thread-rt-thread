@@ -402,6 +402,16 @@ SECTIONS
     } > SRAM_U
 #endif
 
+    DDR_BSS_DST = ADDR(.ddr.bss) + SIZEOF(.ddr.bss);
+    .ddr.heap DDR_BSS_DST (NOLOAD) :
+    {
+        . = ALIGN(32);
+        PROVIDE(__ddr_heap_begin__ = .);
+        . = ORIGIN(DDR) + LENGTH(DDR);
+        PROVIDE(__ddr_heap_end__ = .);
+        . = ALIGN(32);
+    }
+
    PROVIDE(__code_start__ = ORIGIN(CODE));
    PROVIDE(__code_end__ = ORIGIN(CODE) + LENGTH(CODE) - 1);
    PROVIDE(__data_start__ = ORIGIN(DATA));
@@ -410,6 +420,6 @@ SECTIONS
    PROVIDE(__device_end__ = 0x50E00000 - 1);
    PROVIDE(__ddr_start__ = ORIGIN(DDR));
    PROVIDE(__ddr_end__ = ORIGIN(DDR) + LENGTH(DDR) - 1);
-   PROVIDE(__large_heap_start__ = ADDR(.ddr.bss) + SIZEOF(.ddr.bss));
-   PROVIDE(__large_heap_end__ = __DRAM_DSP0_BASE - 32);
+   PROVIDE(__large_heap_start__ = __DRAM_NPU_BASE);
+   PROVIDE(__large_heap_end__ = __DRAM_NPU_BASE + __DRAM_NPU_SIZE - 32);
 }

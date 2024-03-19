@@ -154,10 +154,10 @@ extern const rt_uint32_t Image$$ARM_LIB_STACK$$Base[];
 #define HEAP_START       Image$$ARM_LIB_HEAP$$Limit
 #define HEAP_END         Image$$ARM_LIB_STACK$$Base
 #else
-extern const rt_uint32_t __heap_begin__[];
-extern const rt_uint32_t __heap_end__[];
-#define HEAP_START       (__heap_begin__)
-#define HEAP_END         (__heap_end__)
+extern const rt_uint32_t __ddr_heap_begin__[];
+extern const rt_uint32_t __ddr_heap_end__[];
+#define HEAP_START       (__ddr_heap_begin__)
+#define HEAP_END         (__ddr_heap_end__)
 #endif
 
 /**
