@@ -70,14 +70,14 @@ void spi2apb_test(int argc, char **argv)
         rt_memset(&config, 0, sizeof(struct rt_spi2apb_configuration));
         mode = atoi(argv[3]);
         if (mode & RT_CONFIG_SPI2APB_MSB)
-            config.mode |= RT_CONFIG_SPI2APB_LSB;
+            config.mode |= RT_CONFIG_SPI2APB_MSB;
         else
             config.mode |= RT_CONFIG_SPI2APB_LSB;
 
-        if (mode & RT_CONFIG_SPI2APB_LITTLE_ENDIAN)
-            config.mode |= RT_CONFIG_SPI2APB_LITTLE_ENDIAN;
-        else
+        if (mode & RT_CONFIG_SPI2APB_BIG_ENDIAN)
             config.mode |= RT_CONFIG_SPI2APB_BIG_ENDIAN;
+        else
+            config.mode |= RT_CONFIG_SPI2APB_LITTLE_ENDIAN;
 
         polarity = atoi(argv[4]) << 2;
         if (polarity & RT_CONFIG_SPI2APB_RXCP_INVERT)
