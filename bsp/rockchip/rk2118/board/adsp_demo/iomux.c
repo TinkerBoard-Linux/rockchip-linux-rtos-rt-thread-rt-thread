@@ -65,6 +65,20 @@
  *  @{
  */
 
+/**
+ * @brief  Config iomux for UART2
+ */
+void uart2_iomux_config(void)
+{
+    HAL_PINCTRL_SetRMIO(GPIO_BANK3,
+                        GPIO_PIN_B4,   // UART2_TX_AUDIO_DEBUG
+                        RMIO_UART2_TX_RM1);
+
+    HAL_PINCTRL_SetRMIO(GPIO_BANK3,
+                        GPIO_PIN_B5,   // UART2_RX_AUDIO_DEBUG
+                        RMIO_UART2_RX_RM1);
+}
+
 void rt_hw_iomux_config(void)
 {
     dsp_jtag_iomux_config();
