@@ -217,6 +217,23 @@ void pwm0_iomux_config(void)
                         RMIO_PWM0_CH2);
 }
 
+/**
+ * @brief  Config iomux for usb host
+ */
+void usb_host_iomux_config(void)
+{
+    HAL_PINCTRL_SetIOMUX(GPIO_BANK3,
+                         GPIO_PIN_A6,
+                         PIN_CONFIG_MUX_FUNC0);
+
+    HAL_PINCTRL_SetParam(GPIO_BANK3,
+                         GPIO_PIN_A6, // USB_HOST_PWREN
+                         PIN_CONFIG_PUL_UP);
+
+    HAL_GPIO_SetPinDirection(GPIO3, GPIO_PIN_A6, GPIO_OUT);
+    HAL_GPIO_SetPinLevel(GPIO3, GPIO_PIN_A6, GPIO_HIGH);
+}
+
 void rt_hw_iomux_config(void)
 {
     uart1_iomux_config();
@@ -230,6 +247,7 @@ void rt_hw_iomux_config(void)
     dsp_jtag_iomux_config();
     fspi0_iomux_config();
     pwm0_iomux_config();
+    usb_host_iomux_config();
 }
 
 /** @} */  // IOMUX_Public_Functions
