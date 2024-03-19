@@ -19,6 +19,9 @@
 #include "hal_base.h"
 #include "hal_bsp.h"
 #include "iomux.h"
+#ifdef RT_USING_I2C
+#include "drv_i2c.h"
+#endif
 
 #ifdef RT_USING_PWM_REGULATOR
 #include "drv_pwm_regulator.h"
@@ -83,6 +86,17 @@ const struct clk_init clk_inits[] =
     INIT_CLK("SCLK_SAI7", SCLK_SAI7, 12288000),
     { /* sentinel */ },
 };
+
+#ifdef RT_USING_I2C
+const struct rockchip_i2c_config rockchip_i2c_config_table[] =
+{
+    {
+        .id = I2C0,
+        .speed = I2C_100K,
+    },
+    { /* sentinel */ }
+};
+#endif
 
 #if defined(RT_USING_UART0)
 const struct uart_board g_uart0_board =

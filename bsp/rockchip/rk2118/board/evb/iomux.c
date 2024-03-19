@@ -65,6 +65,22 @@
  *  @{
  */
 
+#ifdef RT_USING_I2C0
+/**
+ * @brief  Config iomux for I2C0
+ */
+void i2c0_iomux_config(void)
+{
+    HAL_PINCTRL_SetRMIO(GPIO_BANK0,
+                        GPIO_PIN_A7,   // I2C0_SCL
+                        RMIO_I2C0_SCL);
+
+    HAL_PINCTRL_SetRMIO(GPIO_BANK0,
+                        GPIO_PIN_A6,   // I2C0_SDA
+                        RMIO_I2C0_SDA);
+}
+#endif
+
 /**
  * @brief  Config iomux for uart1
  */
@@ -238,6 +254,9 @@ void rt_hw_iomux_config(void)
 {
     uart1_iomux_config();
     sdmmc_iomux_config();
+#ifdef RT_USING_I2C0
+    i2c0_iomux_config();
+#endif
     lcdc_iomux_config();
     mcu_jtag_m0_iomux_config();
     uart0_iomux_config();
