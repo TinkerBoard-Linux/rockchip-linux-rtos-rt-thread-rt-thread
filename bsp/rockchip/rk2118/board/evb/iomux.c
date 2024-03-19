@@ -257,7 +257,6 @@ void rt_hw_iomux_config(void)
 #ifdef RT_USING_I2C0
     i2c0_iomux_config();
 #endif
-    lcdc_iomux_config();
     mcu_jtag_m0_iomux_config();
     uart0_iomux_config();
     sai4_iomux_config();
