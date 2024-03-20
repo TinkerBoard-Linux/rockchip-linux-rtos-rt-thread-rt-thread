@@ -66,6 +66,11 @@ static rt_err_t rk_get_saradc_value(struct rt_adc_device *device, rt_uint32_t ch
     clk_enable(rk_saradc->pclk_saradc);
     clk_enable(rk_saradc->clk_saradc);
 
+    /* A delay is necessary to guarantee clock stability; otherwise, sampling may be abnormal on RK3308 */
+#if defined(SOC_RK3308)
+    HAL_DelayUs(10);
+#endif
+
     HAL_SARADC_Start(rk_saradc->reg, rk_saradc->mode, channel);
 
     ret = rk_wait_saradc_completed(rk_saradc);
@@ -113,6 +118,12 @@ static int rk_saradc_init(void)
     rk_saradc.pclk_saradc = get_clk_gate_from_id(PCLK_SARADC_CONTROL_GATE);
 #endif
     rk_saradc.clk_saradc = get_clk_gate_from_id(CLK_SARADC_GATE);
+
+#ifdef SRST_P_SARADC
+    HAL_CRU_ClkResetAssert(SRST_P_SARADC);
+    HAL_DelayUs(10);
+    HAL_CRU_ClkResetDeassert(SRST_P_SARADC);
+#endif
 
     rt_event_init(&rk_saradc.event, "saradc", RT_IPC_FLAG_FIFO);
 
