@@ -225,6 +225,10 @@ void emmc_iomux_config(void)
 void pwm0_iomux_config(void)
 {
     HAL_PINCTRL_SetRMIO(GPIO_BANK0,
+                        GPIO_PIN_A2,   // PWM0_1 IR
+                        RMIO_PWM0_CH1);
+
+    HAL_PINCTRL_SetRMIO(GPIO_BANK0,
                         GPIO_PIN_A3,   // PWM0_3
                         RMIO_PWM0_CH3);
 
