@@ -216,6 +216,13 @@ config RT_USING_COMMON_TEST
         bool "Enable BSP Common TIMER TEST"
         default n
 
+    if RT_USING_PWM_REMOTECTL
+    config RT_USING_PWM_REMOTECTL_TEST
+        bool "Enable BSP Common REMOTECTL TEST"
+        depends on RT_USING_PWM_REMOTECTL
+        default n
+    endif
+
     config RT_USING_COMMON_TEST_LINUX_RPMSG_LITE
         bool "Enable linux rpmsg lite test"
         depends on RT_USING_LINUX_RPMSG
