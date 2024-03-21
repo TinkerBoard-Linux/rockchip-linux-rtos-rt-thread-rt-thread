@@ -16,7 +16,6 @@ config RT_USING_COMMON_TEST
 
     config RT_USING_AUTO_TEST
         bool "Enable BSP AUTO TEST"
-        select RT_USING_COMMON_TEST_SNOR
         default n
 
     config RT_USING_COMMON_TEST_SUSPEND
