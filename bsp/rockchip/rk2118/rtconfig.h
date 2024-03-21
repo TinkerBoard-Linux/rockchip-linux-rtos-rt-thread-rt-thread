@@ -83,6 +83,8 @@
 #define RT_USING_SERIAL_V1
 #define RT_SERIAL_USING_DMA
 #define RT_SERIAL_RB_BUFSZ 64
+#define RT_USING_I2C
+#define RT_USING_I2C_BITOPS
 #define RT_USING_PIN
 #define RT_USING_MTD_NOR
 
@@ -130,7 +132,7 @@
 /* Enable Fault Dump Hook */
 
 #define RT_USING_SNOR
-#define RT_SNOR_SPEED 100000000
+#define RT_SNOR_SPEED 120000000
 #define RT_SNOR_XIP_DATA_BEGIN 327680
 #define RT_USING_SNOR_FSPI_HOST
 
@@ -178,6 +180,10 @@
 /* RT-Thread rockchip RK2118 drivers */
 
 #define RT_USING_CRU
+
+/* Enable I2C */
+
+#define RT_USING_I2C0
 #define RT_USING_SYSTICK
 
 /* Enable UART */
@@ -187,6 +193,7 @@
 
 /* RT-Thread board config */
 
+#define RT_USING_CLK_CONFIG0
 #define RT_USING_BOARD_ADSP_DEMO
 
 /* RT-Thread Common Test case */

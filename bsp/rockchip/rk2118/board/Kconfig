@@ -4,6 +4,21 @@ menu "RT-Thread board config"
         bool "Is FPGA Board"
         default n
 choice
+    prompt "Clock config"
+    default RT_USING_CLK_CONFIG0
+
+    config RT_USING_CLK_CONFIG0
+        bool "clk config0: for RK2118M"
+
+    config RT_USING_CLK_CONFIG1
+        bool "clk config1: for rk2118BM"
+
+    config RT_USING_CLK_CONFIG2
+        bool "clk config2: for rk2118G or RK2118B"
+
+endchoice
+
+choice
     prompt "Board Type"
     default RT_USING_BOARD_FPGA
 
