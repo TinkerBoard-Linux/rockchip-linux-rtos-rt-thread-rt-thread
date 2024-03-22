@@ -63,17 +63,12 @@ extern void linpack_main(void);
 void stress_entry(void *param)
 {
     uint32_t loop;
-    uint32_t *ptr;
     uint32_t i = 0;
 
     loop = *((uint32_t *)param);
     rt_kprintf("loop=%d\n", loop);
     while (i++ < loop)
     {
-        ptr = (uint32_t *)rt_malloc(20 * 1024);
-        RT_ASSERT(ptr);
-        memset(ptr, 0x55, 20 * 1024);
-        rt_free(ptr);
 #ifdef RT_USING_COREMARK
         coremark_main();
 #endif
