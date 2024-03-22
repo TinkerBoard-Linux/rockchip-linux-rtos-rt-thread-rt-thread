@@ -342,6 +342,13 @@ void rt_hw_board_init(void)
 #endif
     rt_hw_interrupt_init();
 
+    /* SPINLOCK Init */
+#ifdef HAL_SPINLOCK_MODULE_ENABLED
+    uint32_t ownerID;
+    ownerID = HAL_CPU_TOPOLOGY_GetCurrentCpuId() + 1;
+    HAL_SPINLOCK_Init(ownerID);
+#endif
+
     /* tick init */
     HAL_SetTickFreq(1000 / RT_TICK_PER_SECOND);
 
