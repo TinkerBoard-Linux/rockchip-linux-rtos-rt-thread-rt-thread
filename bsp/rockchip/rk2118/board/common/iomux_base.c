@@ -141,8 +141,10 @@ RT_WEAK  void mcu_jtag_m0_iomux_config(void)
                          PIN_CONFIG_MUX_FUNC4);
 
     /* m0 for cpu0, m1 for cpu1, default target for cpu0 */
-    GRF->SOC_CON0 |= (0x2 << GRF_SOC_CON0_GRF_JTAG_SEL_SHIFT)
-                     | (0x0 << GRF_SOC_CON0_JTAG_MCU_SWO_M0_SEL_SHIFT);
+    GRF->SOC_CON0 = (0x3 << (GRF_SOC_CON0_GRF_JTAG_SEL_SHIFT + 16))
+                    | (0x1 << (GRF_SOC_CON0_JTAG_MCU_SWO_M0_SEL_SHIFT + 16))
+                    | (0x2 << GRF_SOC_CON0_GRF_JTAG_SEL_SHIFT)
+                    | (0x0 << GRF_SOC_CON0_JTAG_MCU_SWO_M0_SEL_SHIFT);
 }
 
 /**
@@ -157,9 +159,29 @@ RT_WEAK  void mcu_jtag_m1_iomux_config(void)
                          PIN_CONFIG_MUX_FUNC2);
 
     /* m1 for cpu0, m0 for cpu1, default target for cpu0 */
-    GRF->SOC_CON0 |= (0x1 << GRF_SOC_CON0_GRF_JTAG_SEL_SHIFT)
-                     | (0x0 << GRF_SOC_CON0_JTAG_MCU_SWO_M1_SEL_SHIFT);
+    GRF->SOC_CON0 = (0x3 << (GRF_SOC_CON0_GRF_JTAG_SEL_SHIFT + 16))
+                    | (0x1 << (GRF_SOC_CON0_JTAG_MCU_SWO_M0_SEL_SHIFT + 16))
+                    | (0x1 << GRF_SOC_CON0_GRF_JTAG_SEL_SHIFT)
+                    | (0x0 << GRF_SOC_CON0_JTAG_MCU_SWO_M1_SEL_SHIFT);
 }
+
+/**
+ * @brief  Switch jtag to another cpu
+ */
+RT_WEAK  void mcu_jtag_switch(void)
+{
+    uint32_t value;
+
+    /* change to another cpu */
+    value = GRF->SOC_CON0 ^ ((0x3 << GRF_SOC_CON0_GRF_JTAG_SEL_SHIFT) | (GRF_SOC_CON0_JTAG_MCU_SWO_M0_SEL_SHIFT));
+    value |= (0x3 << (GRF_SOC_CON0_GRF_JTAG_SEL_SHIFT + 16)) | (0x1 << (GRF_SOC_CON0_JTAG_MCU_SWO_M0_SEL_SHIFT + 16));
+    GRF->SOC_CON0 = value;
+}
+
+#ifdef RT_USING_FINSH
+#include <finsh.h>
+MSH_CMD_EXPORT(mcu_jtag_switch, jtag switch);
+#endif
 
 /**
  * @brief  Config iomux for SPI2
