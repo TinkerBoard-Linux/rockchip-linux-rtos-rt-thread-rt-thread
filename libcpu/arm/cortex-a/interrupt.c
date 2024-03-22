@@ -448,6 +448,16 @@ unsigned int rt_hw_interrupt_get_priority_mask(void)
 }
 
 /**
+ * This function set the routting affinity value of a IRQ.
+ * @param vector the interrupt number
+ * @param route the routting affinity value.
+ */
+void rt_hw_interrupt_set_route(int vector, int route)
+{
+    HAL_GIC_SetIRouter(vector, route);
+}
+
+/**
  * This function will install a interrupt service routine to a interrupt.
  * @param vector the interrupt number
  * @param new_handler the interrupt service routine to be installed
