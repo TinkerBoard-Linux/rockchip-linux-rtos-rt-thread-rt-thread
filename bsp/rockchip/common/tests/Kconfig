@@ -205,7 +205,6 @@ config RT_USING_COMMON_TEST
     config RT_USING_COMMON_TEST_TIMER
         bool "Enable BSP Common TIMER TEST"
         default n
-    endif
 
     config RT_USING_COMMON_TEST_LINUX_RPMSG_LITE
         bool "Enable linux rpmsg lite test"
@@ -216,4 +215,5 @@ config RT_USING_COMMON_TEST
         bool "Enable rpmsg lite test"
         depends on RT_USING_RPMSG_LITE
         default n
+    endif
 endmenu

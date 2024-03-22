@@ -88,7 +88,7 @@ static uint32_t rpmsg_get_remote_index(uint32_t cpu_id)
     return -1;
 }
 
-#if defined(CPU0)
+#if defined(PRIMARY_CPU) /*CPU1*/
 static struct rpmsg_info_t *p_rpmsg_info[3];
 static int rpmsg_master_test_init(void)
 {
@@ -256,7 +256,8 @@ INIT_APP_EXPORT(rpmsg_master_test_init);
 MSH_CMD_EXPORT(rpmsg_master_test, rpmsg_test test for driver);
 #endif
 
-#elif defined(CPU3)
+#else
+
 static int rpmsg_remote_test(void)
 {
     uint32_t i, master_id, remote_id;
