@@ -61,6 +61,8 @@ struct rt_pwm_configuration
     rt_uint32_t delay;    /* unit:ms, which indicates timer val in freqency meter mode */
     rt_uint32_t freqency; /* unit:hz, which indicates freqency meter result */
 
+    rt_uint64_t counter_res; /* The number of effective waveforms */
+
     enum rt_pwm_aligned_mode aligned; /* aligned mode */
 };
 
@@ -92,7 +94,7 @@ rt_err_t rt_pwm_int_enable(struct rt_device_pwm *device, int channel);
 rt_err_t rt_pwm_int_disable(struct rt_device_pwm *device, int channel);
 rt_err_t rt_pwm_counter_enable(struct rt_device_pwm *device, int channel);
 rt_err_t rt_pwm_counter_disable(struct rt_device_pwm *device, int channel);
-rt_err_t rt_pwm_counter_get_result(struct rt_device_pwm *device, int channel, rt_uint32_t *cnt_res);
+rt_err_t rt_pwm_counter_get_result(struct rt_device_pwm *device, int channel, rt_uint64_t *cnt_res);
 rt_err_t rt_pwm_set_freqency_meter(struct rt_device_pwm *device, int channel, rt_uint32_t delay_ms, rt_uint32_t *freq);
 
 #endif /* __DRV_PWM_H_INCLUDE__ */

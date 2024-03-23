@@ -374,7 +374,7 @@ rt_err_t rt_pwm_counter_disable(struct rt_device_pwm *device, int channel)
     return result;
 }
 
-rt_err_t rt_pwm_counter_get_result(struct rt_device_pwm *device, int channel, rt_uint32_t *cnt_res)
+rt_err_t rt_pwm_counter_get_result(struct rt_device_pwm *device, int channel, rt_uint64_t *cnt_res)
 {
     rt_err_t result = RT_EOK;
     struct rt_pwm_configuration configuration = {0};
@@ -385,10 +385,10 @@ rt_err_t rt_pwm_counter_get_result(struct rt_device_pwm *device, int channel, rt
     }
 
     configuration.channel = channel;
-    configuration.count = 0;
+    configuration.counter_res = 0;
     result = rt_device_control(&device->parent, PWM_CMD_GET_CNT_RES, &configuration);
 
-    *cnt_res = configuration.count;
+    *cnt_res = configuration.counter_res;
 
     return result;
 }
@@ -513,7 +513,7 @@ static int pwm(int argc, char **argv)
                 }
                 else
                 {
-                    rt_kprintf("Set oneshot count of device: [%s] error\n", pwm_device);
+                    rt_kprintf("Set offset of device: [%s] error\n", pwm_device);
                     rt_kprintf("Usage: pwm offset <channel> <offset> <polarity>\n");
                 }
             }
@@ -527,7 +527,7 @@ static int pwm(int argc, char **argv)
                 }
                 else
                 {
-                    rt_kprintf("Set offset of device: [%s] error\n", pwm_device);
+                    rt_kprintf("Set oneshot count of device: [%s] error\n", pwm_device);
                     rt_kprintf("Usage: pwm oneshot <channel> <count>\n");
                 }
             }
@@ -645,11 +645,11 @@ static int pwm(int argc, char **argv)
             {
                 if(argc == 3)
                 {
-                    uint32_t cnt_res;
+                    uint64_t cnt_res;
 
                     result = rt_pwm_counter_get_result(pwm_device, atoi(argv[2]), &cnt_res);
                     result_str = (result == RT_EOK) ? "Success" : "Fail";
-                    rt_kprintf("%s to get counter result on %s at channel %d: %d\n", result_str, pwm_device, atoi(argv[2]), cnt_res);
+                    rt_kprintf("%s to get counter result on %s at channel %d: %lld\n", result_str, pwm_device, atoi(argv[2]), cnt_res);
                 }
                 else
                 {

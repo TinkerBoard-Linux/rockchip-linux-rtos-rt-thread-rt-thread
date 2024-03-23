@@ -241,7 +241,7 @@ rt_err_t rockchip_pwm_control(struct rt_device_pwm *device, int cmd, void *arg)
         clk_disable(pwm->clk_gate);
         break;
     case PWM_CMD_GET_CNT_RES:
-        ret = HAL_PWM_GetCounterRes(pPWM, config->channel, &config->count);
+        ret = HAL_PWM_GetCounterRes(pPWM, config->channel, &config->counter_res);
         break;
     case PWM_CMD_SET_FREQ:
         clk_enable(pwm->clk_gate);
