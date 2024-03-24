@@ -29,6 +29,8 @@ extern "C" {
 #endif
 
 #include <stdint.h>
+#include <sys/types.h>
+#include <string.h>
 #include <drivers/mtd_nor.h>
 #include <drivers/mtd_nand.h>
 
@@ -153,6 +155,8 @@ rt_err_t blk_init_partition(struct rt_mtd_nor_device *mtd_nor, struct rt_flash_p
 uint32_t rk_partition_init(struct rt_mtd_nor_device *mtd);
 int32_t get_rk_partition(struct rt_flash_partition **part);
 int change_part_name(int em_part_type, char *new_name);
+ssize_t read_rk_partition(char *part_name, void *buf, size_t count, off_t offset);
+void *get_addr_by_part_name(char *part_name);
 
 #ifdef __cplusplus
 }

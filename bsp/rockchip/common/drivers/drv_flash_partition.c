@@ -22,6 +22,7 @@
 #include "drv_flash_partition.h"
 
 #ifdef RT_USING_SNOR
+#include "hal_base.h"
 
 //#define PART_DEBUG
 #ifdef PART_DEBUG
@@ -468,5 +469,57 @@ int change_part_name(int em_part_type, char *new_name)
     return ret;
 }
 
+ssize_t read_rk_partition(char *part_name, void *buf, size_t count, off_t offset)
+{
+#ifdef RT_USING_XIP
+    struct rt_flash_partition *part;
+    int i;
+    unsigned long addr;
+    size_t len = -1;
+
+    for (i = 0; i < part_num; i++)
+    {
+        part = &nor_parts[i];
+
+        if (strncmp(part_name, part->name, RK_PARTITION_NAME_SIZE) == 0)
+        {
+            if (offset < part->size)
+            {
+                addr = XIP_MAP0_BASE0 + part->offset + offset;
+                len = (offset + count) > part->size ? (part->size - offset) : count;
+                //rt_kprintf("found addr: 0x%x, read len=%d\n", addr, len);
+                memcpy(buf, (const void *)addr, len);
+            }
+        }
+    }
+
+    return len;
+#else
+    return -1;
+#endif
+}
+
+void *get_addr_by_part_name(char *part_name)
+{
+#ifdef RT_USING_XIP
+    struct rt_flash_partition *part;
+    int i;
+    void  *addr = NULL;
+
+    for (i = 0; i < part_num; i++)
+    {
+        part = &nor_parts[i];
+
+        if (strncmp(part_name, part->name, RK_PARTITION_NAME_SIZE) == 0)
+        {
+            addr = (void *)(XIP_MAP0_BASE0 + part->offset);
+        }
+    }
+
+    return addr;
+#else
+    return NULL;
+#endif
+}
 
 #endif
