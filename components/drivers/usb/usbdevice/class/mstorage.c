@@ -988,7 +988,25 @@ static rt_err_t _function_enable(ufunction_t func)
     }
 
 #ifdef RT_USING_DFS_MNTTABLE
-    dfs_unmount_device(data->disk);
+    int result;
+    struct statfs buffer;
+    const char *path = dfs_filesystem_get_mounted_path(data->disk);
+    if (path != NULL)
+    {
+        result = dfs_statfs(path, &buffer);
+        if (result != RT_EOK)
+        {
+            rt_kprintf("data->disk dfs status error\n");
+            return -RT_ERROR;
+        }
+
+        result = dfs_unmount_device(data->disk);
+        if (result != RT_EOK)
+        {
+            rt_kprintf("data->disk unmount error\n");
+            return -RT_ERROR;
+        }
+    }
 #endif
 
     if(rt_device_open(data->disk, RT_DEVICE_OFLAG_RDWR) != RT_EOK)
