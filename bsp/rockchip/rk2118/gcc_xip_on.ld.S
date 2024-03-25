@@ -146,7 +146,7 @@ MEMORY
 #elif defined(RK2118_CPU_CORE1)
   CODE (rx) : ORIGIN = __FLASH_CPU1_RTT_BASE,  LENGTH = __FLASH_CPU1_RTT_SIZE
   DATA (rw) : ORIGIN = __DRAM_CPU1_RTT_BASE,  LENGTH = __DRAM_CPU1_RTT_SIZE
-  DDR (rwx) : ORIGIN = __DRAM_CPU1_RTT_BASE,  LENGTH = __DRAM_CPU1_RTT_SIZE
+  DDR (rwx) : ORIGIN = __DRAM_CPU1_RTT_BASE + __DRAM_CPU1_RTT_SIZE,  LENGTH = 0
 #else
   #error "must select core0 or core1 in menuconfig"
 #endif
@@ -172,6 +172,7 @@ SECTIONS
     SRAM_TEXT_SRC  = LOADADDR(.vectors) + SIZEOF(.vectors);
     .sram.text SRAM_TEXT_DST : AT(SRAM_TEXT_SRC)
     {
+#ifdef RK2118_CPU_CORE0
         . = ALIGN(4);
         KEEP(*(.sram.text))
         KEEP(*(.sram_code)) /* HAL sram text */
@@ -199,6 +200,7 @@ SECTIONS
         *drv_psram.o(.text .text.* .rodata .rodata*)
         *context_gcc.o(.text .text.* .rodata .rodata*)
         . = ALIGN(32);
+#endif
     }
 
     TEXT_SRC = LOADADDR(.sram.text) + SIZEOF(.sram.text);
@@ -422,8 +424,10 @@ SECTIONS
    PROVIDE(__data_end__ = ORIGIN(DATA) + LENGTH(DATA) - 1);
    PROVIDE(__device_start__ = 0x50000000);
    PROVIDE(__device_end__ = 0x50E00000 - 1);
+#ifdef RK2118_CPU_CORE0
    PROVIDE(__ddr_start__ = ORIGIN(DDR));
    PROVIDE(__ddr_end__ = ORIGIN(DDR) + LENGTH(DDR) - 1);
+#endif
    PROVIDE(__large_heap_start__ = __DRAM_NPU_BASE);
    PROVIDE(__large_heap_end__ = __DRAM_NPU_BASE + __DRAM_NPU_SIZE - 32);
 #ifdef RK2118_CPU_CORE0

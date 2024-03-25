@@ -187,7 +187,9 @@ void rt_hw_iomux_config(void)
     uart0_iomux_config();
     fspi0_iomux_config();
     dsp_jtag_iomux_config();
+#ifdef RK2118_CPU_CORE0
     mcu_jtag_m0_iomux_config();
+#endif
 #ifdef RT_USING_SDIO
     sdmmc_iomux_config();
 #endif

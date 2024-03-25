@@ -52,6 +52,9 @@ int main(void)
     HAL_DelayMs(100);
     //tfm_ns_interface_init();
     //psa_framework_version();
+#ifdef RK2118_CPU_CORE1
+    rt_kprintf("this is cpu1\n");
+#endif
     return 0;
 }
 

@@ -156,8 +156,15 @@ extern const rt_uint32_t Image$$ARM_LIB_STACK$$Base[];
 #else
 extern const rt_uint32_t __ddr_heap_begin__[];
 extern const rt_uint32_t __ddr_heap_end__[];
+extern const rt_uint32_t __heap_begin__[];
+extern const rt_uint32_t __heap_end__[];
+#ifdef RK2118_CPU_CORE0
 #define HEAP_START       (__ddr_heap_begin__)
 #define HEAP_END         (__ddr_heap_end__)
+#else
+#define HEAP_START       (__heap_begin__)
+#define HEAP_END         (__heap_end__)
+#endif
 #endif
 
 /**
@@ -199,7 +206,7 @@ void rt_hw_board_init()
     /* Update system core clock after clk_init */
     SystemCoreClockUpdate();
 
-#ifdef RT_USING_CONSOLE
+#if defined(RT_USING_CONSOLE) && defined(RK2118_CPU_CORE0)
     rt_console_set_device(RT_CONSOLE_DEVICE_NAME);
 #endif
 
