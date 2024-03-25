@@ -21,5 +21,29 @@ menu "Enable UART"
     endif
 endmenu
 
+if RT_USING_SPI
+menu "Enable SPI"
+    config RT_USING_SPI0
+        bool "Enable SPI0"
+        default n
+
+    config RT_USING_SPI1
+        bool "Enable SPI1"
+        default n
+
+    config RT_USING_SPI2
+        bool "Enable SPI2"
+        default n
+
+    config RT_USING_SPI3
+        bool "Enable SPI3"
+        default n
+
+    config RT_USING_SPI4
+        bool "Enable SPI4"
+        default n
+endmenu
+endif
+
 endmenu
 

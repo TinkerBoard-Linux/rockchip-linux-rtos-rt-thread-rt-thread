@@ -40,6 +40,10 @@
 #define HAL_WDT_DYNFREQ_FEATURE_ENABLED
 #endif
 
+#ifdef RT_USING_SPI
+#define HAL_SPI_MODULE_ENABLED
+#endif
+
 #ifdef RT_USING_32K_TICK_SRC
 #define SYSTICK_EXT_SRC      32768
 #else
