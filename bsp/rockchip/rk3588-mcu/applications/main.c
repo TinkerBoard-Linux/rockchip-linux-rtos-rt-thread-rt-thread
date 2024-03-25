@@ -32,8 +32,10 @@
 
 #define TIMER_EXT_1_IRQ               (322 + NUM_INTERRUPTS)
 
+#ifdef RT_USING_WDT
 static int wdt_int_count = 0;
 static int wdt_time_out = 8;
+#endif
 static int timer_int_count = 0;
 static float latency_sum = 0.0;
 struct TIMER_REG *timer = NULL;
@@ -42,7 +44,7 @@ static int fixed_spend = 0;
 static float latency_max = 0.0;
 
 extern void write_reg(uint32_t addr, uint32_t val);
-
+#ifdef RT_USING_WDT
 void wdt_isr(int vector, void *param)
 {
     if (++wdt_int_count <= 3)
@@ -75,7 +77,7 @@ void wdt_test(void)
     rt_thread_delay(10);
     rt_kprintf("2s: %d\n", WDT->CCVR);
 }
-
+#endif
 void tick_test(void)
 {
     rt_kprintf("begin 10s test\n");
@@ -289,7 +291,9 @@ extern void test_dcache();
 int main(void)
 {
     //struct rt_thread tcb;
+#ifdef RT_USING_WDT
     //wdt_test();
+#endif
     //tick_test();
     //irq_test();
     //benchmark();

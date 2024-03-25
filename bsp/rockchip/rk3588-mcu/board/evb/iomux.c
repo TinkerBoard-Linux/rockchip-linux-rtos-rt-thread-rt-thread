@@ -77,6 +77,12 @@
  */
 void uart_iomux_config(void)
 {
+#ifdef RT_USING_UART5
+    /* uart5_m0 */
+    HAL_PINCTRL_SetIOMUX(GPIO_BANK4,
+                         GPIO_PIN_D4 | GPIO_PIN_D5,
+                         PIN_CONFIG_MUX_FUNC10);
+#endif
 }
 
 /**
@@ -89,7 +95,7 @@ void jtag_iomux_config(void)
 /**
  * @brief  Config iomux for rk2108 evb board
  */
-RT_WEAK RT_UNUSED void rt_hw_iomux_config(void)
+RT_WEAK void rt_hw_iomux_config(void)
 {
     uart_iomux_config();
 }

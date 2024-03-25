@@ -13,6 +13,7 @@
 #include "rtconfig.h"
 
 #define HAL_MCU_CORE
+#define SOC_RK3588
 
 /* Cache maintain need the decoded addr, it must be matched with pre-loader */
 #if defined(RKMCU_RK3588_PMU)
@@ -50,6 +51,13 @@
 #define SYSTICK_EXT_SRC      PLL_INPUT_OSC_RATE
 #endif
 
+#ifdef RT_USING_PIN
+#define HAL_GPIO_MODULE_ENABLED
+#define HAL_PINCTRL_MODULE_ENABLED
+#endif
+
+#define HAL_INTMUX_MODULE_ENABLED
+#define HAL_NVIC_MODULE_ENABLED
 #define HAL_SYSTICK_MODULE_ENABLED
 #define HAL_TIMER_MODULE_ENABLED
 #define HAL_NVIC_MODULE_ENABLED
