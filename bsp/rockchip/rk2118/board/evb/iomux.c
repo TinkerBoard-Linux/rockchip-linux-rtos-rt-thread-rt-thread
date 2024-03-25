@@ -265,7 +265,11 @@ void rt_hw_iomux_config(void)
     dsp_jtag_iomux_config();
     fspi0_iomux_config();
     pwm0_iomux_config();
+#ifdef RT_USING_VOP
+    lcdc_iomux_config();
+#else
     usb_host_iomux_config();
+#endif
 }
 
 /** @} */  // IOMUX_Public_Functions
