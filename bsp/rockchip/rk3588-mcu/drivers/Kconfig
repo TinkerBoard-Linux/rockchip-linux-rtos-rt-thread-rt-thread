@@ -48,5 +48,20 @@ menu "Enable SPI"
 endmenu
 endif
 
+config RT_USING_PWM2
+    bool "Enable PWM2"
+    depends on RT_USING_PWM
+    default n
+
+config RT_USING_SARADC
+    bool "Enable Saradc"
+    depends on RT_USING_ADC
+    default n
+
+config RT_USING_I2C6
+    bool "Enable I2C6"
+    depends on RT_USING_I2C
+    default n
+
 endmenu
 
