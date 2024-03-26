@@ -20,6 +20,8 @@
 
 #include "display_pattern.h"
 
+#define ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
+
 #define MAKE_RGB_INFO(rl, ro, gl, go, bl, bo, al, ao) \
     .rgb = { { (rl), (ro) }, { (gl), (go) }, { (bl), (bo) }, { (al), (ao) } }
 
@@ -100,6 +102,147 @@ const struct util_format_info *util_format_info_find(uint32_t format)
 }
 #define MAKE_RGB24(rgb, r, g, b) \
     { .value = MAKE_RGBA(rgb, r, g, b, 0) }
+
+static void fill_tiles_yuv_planar(const struct util_format_info *info,
+                                  unsigned char *y_mem, unsigned char *u_mem,
+                                  unsigned char *v_mem, unsigned int width,
+                                  unsigned int height, unsigned int stride)
+{
+    const struct util_yuv_info *yuv = &info->yuv;
+    unsigned int cs = yuv->chroma_stride;
+    unsigned int xsub = yuv->xsub;
+    unsigned int ysub = yuv->ysub;
+    unsigned int x;
+    unsigned int y;
+
+    for (y = 0; y < height; ++y)
+    {
+        for (x = 0; x < width; ++x)
+        {
+            div_t d = div(x + y, width);
+            uint32_t rgb32 = 0x00130502 * (d.quot >> 6)
+                             + 0x000a1120 * (d.rem >> 6);
+            struct color_yuv color =
+                MAKE_YUV_601((rgb32 >> 16) & 0xff,
+                             (rgb32 >> 8) & 0xff, rgb32 & 0xff);
+
+            y_mem[x] = color.y;
+            u_mem[x / xsub * cs] = color.u;
+            v_mem[x / xsub * cs] = color.v;
+        }
+
+        y_mem += stride;
+        if ((y + 1) % ysub == 0)
+        {
+            u_mem += stride * cs / xsub;
+            v_mem += stride * cs / xsub;
+        }
+    }
+}
+
+static void fill_tiles_rgb16(const struct util_format_info *info, void *mem,
+                             unsigned int width, unsigned int height,
+                             unsigned int stride)
+{
+    const struct util_rgb_info *rgb = &info->rgb;
+    unsigned int x, y;
+
+    for (y = 0; y < height; ++y)
+    {
+        for (x = 0; x < width; ++x)
+        {
+            div_t d = div(x + y, width);
+            uint32_t rgb32 = 0x00130502 * (d.quot >> 6)
+                             + 0x000a1120 * (d.rem >> 6);
+            uint16_t color =
+                MAKE_RGBA(rgb, (rgb32 >> 16) & 0xff,
+                          (rgb32 >> 8) & 0xff, rgb32 & 0xff,
+                          255);
+
+            ((uint16_t *)mem)[x] = color;
+        }
+        mem += stride;
+    }
+}
+
+static void fill_tiles_rgb24(const struct util_format_info *info, void *mem,
+                             unsigned int width, unsigned int height,
+                             unsigned int stride)
+{
+    const struct util_rgb_info *rgb = &info->rgb;
+    unsigned int x, y;
+
+    for (y = 0; y < height; ++y)
+    {
+        for (x = 0; x < width; ++x)
+        {
+            div_t d = div(x + y, width);
+            uint32_t rgb32 = 0x00130502 * (d.quot >> 6)
+                             + 0x000a1120 * (d.rem >> 6);
+            struct color_rgb24 color =
+                MAKE_RGB24(rgb, (rgb32 >> 16) & 0xff,
+                           (rgb32 >> 8) & 0xff, rgb32 & 0xff);
+
+            ((struct color_rgb24 *)mem)[x] = color;
+        }
+        mem += stride;
+    }
+}
+
+static void fill_tiles_rgb32(const struct util_format_info *info, void *mem,
+                             unsigned int width, unsigned int height,
+                             unsigned int stride)
+{
+    const struct util_rgb_info *rgb = &info->rgb;
+    unsigned int x, y;
+
+    for (y = 0; y < height; ++y)
+    {
+        for (x = 0; x < width; ++x)
+        {
+            div_t d = div(x + y, width);
+            uint32_t rgb32 = 0x00130502 * (d.quot >> 6)
+                             + 0x000a1120 * (d.rem >> 6);
+            uint32_t alpha = ((y < height / 2) && (x < width / 2)) ? 127 : 255;
+            uint32_t color =
+                MAKE_RGBA(rgb, (rgb32 >> 16) & 0xff,
+                          (rgb32 >> 8) & 0xff, rgb32 & 0xff,
+                          alpha);
+
+            ((uint32_t *)mem)[x] = color;
+        }
+        mem += stride;
+    }
+}
+
+static void fill_tiles(const struct util_format_info *info, void *planes[3],
+                       unsigned int width, unsigned int height,
+                       unsigned int stride)
+{
+    unsigned char *u, *v;
+
+    switch (info->format)
+    {
+    case RTGRAPHIC_PIXEL_FORMAT_YUV420:
+    case RTGRAPHIC_PIXEL_FORMAT_YUV422:
+    case RTGRAPHIC_PIXEL_FORMAT_YUV444:
+        u = info->yuv.order & YUV_YCbCr ? planes[1] : planes[1] + 1;
+        v = info->yuv.order & YUV_YCrCb ? planes[1] : planes[1] + 1;
+        return fill_tiles_yuv_planar(info, planes[0], u, v,
+                                     width, height, stride);
+    case RTGRAPHIC_PIXEL_FORMAT_BGR565:
+    case RTGRAPHIC_PIXEL_FORMAT_RGB565:
+        return fill_tiles_rgb16(info, planes[0],
+                                width, height, stride);
+    case RTGRAPHIC_PIXEL_FORMAT_RGB888:
+        return fill_tiles_rgb24(info, planes[0],
+                                width, height, stride);
+    case RTGRAPHIC_PIXEL_FORMAT_ARGB888:
+    case RTGRAPHIC_PIXEL_FORMAT_ABGR888:
+        return fill_tiles_rgb32(info, planes[0],
+                                width, height, stride);
+    }
+}
 
 static void fill_smpte_yuv_planar(const struct util_yuv_info *yuv,
                                   unsigned char *y_mem, unsigned char *u_mem,
@@ -451,6 +594,163 @@ static void fill_smpte(const struct util_format_info *info, void *planes[3],
     }
 }
 
+static void fill_solid_rgb16(const struct util_rgb_info *info, void *mem,
+                             unsigned int width, unsigned int height,
+                             unsigned int stride, unsigned int value)
+{
+    unsigned int x, y;
+
+    for (y = 0; y < height; ++y)
+    {
+        for (x = 0; x < width; ++x)
+        {
+            ((uint16_t *)mem)[x] = value;
+        }
+        mem += stride;
+    }
+}
+
+static void fill_solid_rgb24(const struct util_rgb_info *rgb, void *mem,
+                             unsigned int width, unsigned int height,
+                             unsigned int stride, unsigned int value)
+{
+    struct color_rgb24 colors;
+    unsigned int x;
+    unsigned int y;
+
+    colors.value = value;
+    for (y = 0; y < height; ++y)
+    {
+        for (x = 0; x < width; ++x)
+            ((struct color_rgb24 *)mem)[x] = colors;
+        mem += stride;
+    }
+}
+
+static void fill_solid_rgb32(const struct util_rgb_info *rgb, void *mem,
+                             unsigned int width, unsigned int height,
+                             unsigned int stride, int value)
+{
+    unsigned int x;
+    unsigned int y;
+
+    for (y = 0; y < height; ++y)
+    {
+        for (x = 0; x < width; ++x)
+            ((uint32_t *)mem)[x] = value;
+        mem += stride;
+    }
+}
+
+static void fill_solid(const struct util_format_info *info, void *planes[3],
+                       unsigned int width, unsigned int height,
+                       unsigned int stride, int value)
+{
+    switch (info->format)
+    {
+    case RTGRAPHIC_PIXEL_FORMAT_YUV420:
+    case RTGRAPHIC_PIXEL_FORMAT_YUV422:
+    case RTGRAPHIC_PIXEL_FORMAT_YUV444:
+        return;
+    case RTGRAPHIC_PIXEL_FORMAT_BGR565:
+    case RTGRAPHIC_PIXEL_FORMAT_RGB565:
+        return fill_solid_rgb16(&info->rgb, planes[0],
+                                width, height, stride, value);
+    case RTGRAPHIC_PIXEL_FORMAT_RGB888:
+        return fill_solid_rgb24(&info->rgb, planes[0],
+                                width, height, stride, value);
+    case RTGRAPHIC_PIXEL_FORMAT_ARGB888:
+    case RTGRAPHIC_PIXEL_FORMAT_ABGR888:
+        return fill_solid_rgb32(&info->rgb, planes[0],
+                                width, height, stride, value);
+    }
+}
+
+static void fill_bw_rgb16(const struct util_rgb_info *info, void *mem,
+                          unsigned int width, unsigned int height,
+                          unsigned int stride)
+{
+    unsigned int x, y;
+
+    for (y = 0; y < height; ++y)
+    {
+        for (x = 0; x < width; ++x)
+        {
+            if (x % 2 == 0)
+                ((uint16_t *)mem)[x] = 0xffff;
+            if (x % 2 != 0)
+                ((uint16_t *)mem)[x] = 0x00000000;
+        }
+        mem += stride;
+    }
+}
+
+static void fill_bw_rgb24(const struct util_rgb_info *rgb, void *mem,
+                          unsigned int width, unsigned int height,
+                          unsigned int stride)
+{
+    struct color_rgb24 colors;
+    unsigned int x;
+    unsigned int y;
+
+    for (y = 0; y < height; ++y)
+    {
+        for (x = 0; x < width; ++x)
+        {
+            if (x % 2 == 0)
+                colors.value = 0xffffff;
+            if (x % 2 != 0)
+                colors.value = 0x00000000;
+            ((struct color_rgb24 *)mem)[x] = colors;
+        }
+        mem += stride;
+    }
+}
+
+static void fill_bw_rgb32(const struct util_rgb_info *rgb, void *mem,
+                          unsigned int width, unsigned int height,
+                          unsigned int stride)
+{
+    unsigned int x;
+    unsigned int y;
+
+    for (y = 0; y < height; ++y)
+    {
+        for (x = 0; x < width; ++x)
+        {
+            if (x % 2 == 0)
+                ((uint32_t *)mem)[x] = 0xffffffff;
+            if (x % 2 != 0)
+                ((uint32_t *)mem)[x] = 0x00000000;
+        }
+        mem += stride;
+    }
+}
+
+static void fill_black_white(const struct util_format_info *info, void *planes[3],
+                             unsigned int width, unsigned int height,
+                             unsigned int stride)
+{
+    switch (info->format)
+    {
+    case RTGRAPHIC_PIXEL_FORMAT_YUV420:
+    case RTGRAPHIC_PIXEL_FORMAT_YUV422:
+    case RTGRAPHIC_PIXEL_FORMAT_YUV444:
+        return;
+    case RTGRAPHIC_PIXEL_FORMAT_BGR565:
+    case RTGRAPHIC_PIXEL_FORMAT_RGB565:
+        return fill_bw_rgb16(&info->rgb, planes[0],
+                             width, height, stride);
+    case RTGRAPHIC_PIXEL_FORMAT_RGB888:
+        return fill_bw_rgb24(&info->rgb, planes[0],
+                             width, height, stride);
+    case RTGRAPHIC_PIXEL_FORMAT_ARGB888:
+    case RTGRAPHIC_PIXEL_FORMAT_ABGR888:
+        return fill_bw_rgb32(&info->rgb, planes[0],
+                             width, height, stride);
+    }
+}
+
 /*
  * util_fill_pattern - Fill a buffer with a test pattern
  * @format: Pixel format
@@ -463,15 +763,48 @@ static void fill_smpte(const struct util_format_info *info, void *planes[3],
  * Fill the buffers with the test pattern specified by the pattern parameter.
  * Supported formats vary depending on the selected pattern.
  */
-void util_fill_pattern(uint32_t format,
+void util_fill_pattern(uint32_t format, enum util_fill_pattern pattern,
                        void *planes[3], unsigned int width,
-                       unsigned int height, unsigned int stride)
+                       unsigned int height, unsigned int stride, int value)
 {
     const struct util_format_info *info;
 
     info = util_format_info_find(format);
     if (info == NULL)
         return;
-    return fill_smpte(info, planes, width, height, stride);
+
+    switch (pattern)
+    {
+    case UTIL_PATTERN_TILES:
+        return fill_tiles(info, planes, width, height, stride);
+    case UTIL_PATTERN_SMPTE:
+        return fill_smpte(info, planes, width, height, stride);
+    case UTIL_PATTERN_SOLID:
+        return fill_solid(info, planes, width, height, stride, value);
+    case UTIL_PATTERN_BW:
+        return fill_black_white(info, planes, width, height, stride);
+    default:
+        break;
+    }
+}
+
+static const char *pattern_names[] =
+{
+    [UTIL_PATTERN_TILES] = "tiles",
+    [UTIL_PATTERN_PLAIN] = "plain",
+    [UTIL_PATTERN_SMPTE] = "smpte",
+    [UTIL_PATTERN_SOLID] = "solid",
+    [UTIL_PATTERN_BW] = "bw",
+};
+
+enum util_fill_pattern util_pattern_enum(const char *name)
+{
+    unsigned int i;
+
+    for (i = 0; i < ARRAY_SIZE(pattern_names); i++)
+        if (!strcmp(pattern_names[i], name))
+            return (enum util_fill_pattern)i;
+
+    return UTIL_PATTERN_SMPTE;
 }
 #endif

@@ -56,6 +56,9 @@ static struct rt_device *g_backlight_dev;
 uint32_t rtt_framebuffer_yrgb[MAX_PLANE_CNT] = {0};
 uint32_t rtt_framebuffer_uv[MAX_PLANE_CNT] = {0};
 
+static enum util_fill_pattern pattern = UTIL_PATTERN_SMPTE;
+static int solid_value;
+
 static uint32_t framebuffer_alloc(rt_size_t size)
 {
 #if defined(RT_USING_LARGE_HEAP)
@@ -100,6 +103,7 @@ static void usage(void)
 {
     rt_kprintf("modetest [-p]\n\n");
     rt_kprintf("\t-p <plane_id>:<w>x<h>:<crtc_w>x<crtc_h>[+<x>+<y>][#<zpos>][@<format>] \tset plane\n");
+    rt_kprintf("\t-f <pattern> \tspecify fill pattern\n");
     rt_kprintf("\t-a \ttest alpha\n");
 }
 
@@ -286,7 +290,7 @@ static int set_buffers(struct plane_arg *plane,
             planes[1] = (void *)rtt_framebuffer_uv[i];
         }
 
-        util_fill_pattern(win_config[i].format, planes, win_config[i].srcW, win_config[i].srcH, pitches[0]);
+        util_fill_pattern(win_config[i].format, pattern, planes, win_config[i].srcW, win_config[i].srcH, pitches[0], solid_value);
         HAL_DCACHE_CleanByRange((uint32_t)rtt_framebuffer_yrgb[i], fb_length);
         if (is_yuv)
             HAL_DCACHE_CleanByRange((uint32_t)rtt_framebuffer_uv[i], fb_length);
@@ -319,6 +323,21 @@ static void clear_buffers(struct plane_arg *plane,
     }
 }
 
+static void parse_fill_patterns(char *arg)
+{
+    if (strstr(arg, "0x"))
+    {
+        pattern = util_pattern_enum("solid");
+        solid_value = strtoul(arg, NULL, 16);
+    }
+    else
+    {
+        pattern = util_pattern_enum(arg);
+    }
+
+    rt_kprintf("pattern: %d, solid value: 0x%x\n", pattern, solid_value);
+}
+
 static int modetest(int argc, char **argv)
 {
     rt_err_t ret = RT_EOK;
@@ -335,10 +354,13 @@ static int modetest(int argc, char **argv)
     }
 
     optind = 0;
-    while ((opt = getopt(argc, argv, "p:a")) != -1)
+    while ((opt = getopt(argc, argv, "f:p:a")) != -1)
     {
         switch (opt)
         {
+        case 'f':
+            parse_fill_patterns(optarg);
+            break;
         case 'p':
             plane_args = rt_realloc(plane_args, (plane_count + 1) * sizeof(struct plane_arg));
             if (!plane_args)
