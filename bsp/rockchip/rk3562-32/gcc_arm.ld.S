@@ -14,6 +14,7 @@ MEMORY
 }
 
 __SPINLOCK_MEM_SIZE = 0x100;
+__SHARE_RPMSG_SIZE = 0x80000;
 
 SECTIONS
 {
@@ -125,10 +126,19 @@ SECTIONS
 
     .linux_share_rpmsg (NOLOAD):
     {
-        PROVIDE(__share_rpmsg_start__ = .);
-        . += LENGTH(LINUX_RPMSG);
-        PROVIDE(__share_rpmsg_end__ = .);
+        PROVIDE(__linux_share_rpmsg_start__ = .);
+        . += LINUX_RPMSG_SIZE;
+        PROVIDE(__linux_share_rpmsg_end__ = .);
     } > LINUX_RPMSG
+
+    .share_rpmsg (NOLOAD):
+    {
+        . = ALIGN(0x1000);
+        PROVIDE(__share_rpmsg_start__ = .);
+        . += __SHARE_RPMSG_SIZE;
+        PROVIDE(__share_rpmsg_end__ = .);
+        . = ALIGN(0x1000);
+    } > SHMEM
 
     .share_lock (NOLOAD) :
     {

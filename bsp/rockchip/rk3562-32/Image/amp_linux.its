@@ -11,7 +11,7 @@
 	images {
 		amp3 {
 			description  = "bare-mental-core3";
-			data         = /incbin/("cpu3.bin");
+			data         = /incbin/("rtt3.bin");
 			type         = "firmware";
 			compression  = "none";
 			arch         = "arm";
