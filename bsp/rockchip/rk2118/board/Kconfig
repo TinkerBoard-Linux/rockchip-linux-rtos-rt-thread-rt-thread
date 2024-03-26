@@ -28,4 +28,8 @@ choice
 
 endchoice
 
+config RT_USING_HIFI4
+    bool "Enable hifi4 driver"
+    default n
+
 endmenu
