@@ -477,6 +477,7 @@ static void rockchip_vop_enable(struct display_state *state)
                      (crtc_state->mcu_timing.mcuPixelTotal + 1);
     ret = HAL_CRU_ClkSetFreq(DCLK_VOP, dclk_rate * 1000);
     RT_ASSERT(ret == HAL_OK);
+    rt_kprintf("VOP set dclk to %dKHz, get %d\n", dclk_rate, HAL_CRU_ClkGetFreq(DCLK_VOP));
 #endif
 
     HAL_VOP_Init(crtc_state->hw_base, &state->mode);
