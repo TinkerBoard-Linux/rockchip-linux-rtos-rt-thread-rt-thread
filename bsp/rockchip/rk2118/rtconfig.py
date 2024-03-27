@@ -74,7 +74,7 @@ if PLATFORM == 'gcc':
         CFLAGS += ' -O2'
 
     POST_ACTION = OBJCPY + ' -O binary $TARGET rtthread.bin\n' + SIZE + ' $TARGET \n'
-    POST_ACTION += './align_bin_size.sh rtthread.bin;python rename_rtt.py\n'
+    POST_ACTION += './align_bin_size.sh rtthread.bin;./rename_rtt.py\n'
 
     M_CFLAGS = CFLAGS + ' -mlong-calls  -Dsourcerygxx -fPIC '
     M_LFLAGS = DEVICE + ' -Wl,--gc-sections,-z,max-page-size=0x4 -shared -fPIC -e main -nostartfiles -nostdlib -static-libgcc'
