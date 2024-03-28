@@ -203,7 +203,7 @@ void rt_hw_board_init()
 
     usb_vbus_pin_enable();
 
-#ifdef RT_USING_CONSOLE
+#if defined(RT_USING_CONSOLE) && defined(RK2118_CPU_CORE0)
     rt_console_set_device(RT_CONSOLE_DEVICE_NAME);
 #endif
 

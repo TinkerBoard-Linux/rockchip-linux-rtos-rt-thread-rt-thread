@@ -256,6 +256,9 @@ void usb_host_iomux_config(void)
 
 void rt_hw_iomux_config(void)
 {
+#ifdef RK2118_CPU_CORE1
+    return;
+#endif
     uart1_iomux_config();
     sdmmc_iomux_config();
 #ifdef RT_USING_I2C0
