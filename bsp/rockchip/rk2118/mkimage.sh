@@ -29,7 +29,17 @@ fi
 echo 'Image: rtthread image is ready'
 
 if [ ! -n "$1" ] ;then
+    ./check_xip_addr.py board/common/setting.ini
+    if [ ! $? -eq 0 ] ;then
+        echo "mkimage fail"
+        exit
+    fi
     $TOOLS/firmware_merger/firmware_merger -p board/common/setting.ini $IMAGE/
 else
+    ./check_xip_addr.py $1
+    if [ ! $? -eq 0 ] ;then
+        echo "mkimage fail"
+        exit
+    fi 
     $TOOLS/firmware_merger/firmware_merger -p $1 $IMAGE/
 fi
