@@ -4,33 +4,11 @@
  */
 
 #include "rtconfig.h"
-
-/*---------------------- Flash Configuration ----------------------------------
-  <h> Flash Configuration
-    <o0> Flash Base Address <0x0-0xFFFFFFFF:8>
-    <o1> Flash Size (in Bytes) <0x0-0xFFFFFFFF:8>
-  </h>
-  -----------------------------------------------------------------------------*/
-__FLASH_BASE = 0x11000000;
-__FLASH_SIZE = 0x00400000;
-
-/*--------------------- Shared Memory Configuration ----------------------------
-  <h> RAM Configuration
-    <o0> RAM Base Address    <0x0-0xFFFFFFFF:8>
-    <o1> RAM Size (in Bytes) <0x0-0xFFFFFFFF:8>
-  </h>
- -----------------------------------------------------------------------------*/
-__SRAM_BASE = 0x30200000;
-__SRAM_SIZE = 0x00100000;
-
-/*--------------------- DDR SDRAM Configuration ----------------------------
-  <h> RAM Configuration
-    <o0> DDR SDRAM Base Address    <0x0-0xFFFFFFFF:8>
-    <o1> DDR SDRAM Size (in Bytes) <0x0-0xFFFFFFFF:8>
-  </h>
- -----------------------------------------------------------------------------*/
-__DRAM_BASE = 0xa0000000;
-__DRAM_SIZE = 0x04000000;
+#ifdef HIFI4_PROJECT_MEM_LAYOUT_FILE
+#include HIFI4_PROJECT_MEM_LAYOUT_FILE
+#else
+#include "default_mem_layout.h"
+#endif
 
 /*--------------------- Stack / Heap Configuration ----------------------------
   <h> Stack / Heap Configuration
@@ -44,114 +22,21 @@ __STACK_SIZE = 0x00000400;
  */
 __STACKSEAL_SIZE = 0;
 
-#ifdef RT_USING_UNCACHE_HEAP
-/* Uncachable memory size
-*/
-__UNCACHE_HEAP_SIZE = 0x2000;
-#else
-__UNCACHE_HEAP_SIZE = 0x0;
-#endif
-__SRAM_SIZE = __SRAM_SIZE - __UNCACHE_HEAP_SIZE;
-__UNCACHE_HEAP_BASE = __SRAM_BASE + __SRAM_SIZE;
-
-/*
- *-------------------- <<< layout of memory  >>> -------------------
- <h> flash layout
-    <o0> RK partition table
-    <o1> IDBLOCK
-    <o2> CPU0 TF-M(XIP): code
-    <o3> CPU0 RTT(XIP,NS): code
-    <o4> DSP0 HAL(NS): code
-    <o5> DSP1 HAL(NS): code
-    <o6> DSP2 HAL(NS): code
-    <o7> CPU1 RTT(XIP,NS,OPT): code
-    <o7> User data(NS,OPT): fs
- </h>
- <h> sram layout
-    <o0> CPU0 TF-M: data
-    <o1> CPU0 RTT(NS): data
-    <o2> DSP0 HAL(NS): code & data
-    <o4> DSP1 HAL(NS): code & data
-    <o6> DSP2 HAL(NS): code & data
- </h>
- <h> dram layout
-    <o0> CPU0 TF-M: data
-    <o1> CPU0 RTT(NS): data
-    <o2> DSP0 HAL(NS): code & data
-    <o4> DSP1 HAL(NS): code & data
-    <o6> DSP2 HAL(NS): code & data
-    <o8> CPU1 RTT(NS,OPT): code & data
- </h>
- */
-__FLASH_RKPART_TABLE_BASE = __FLASH_BASE;
-__FLASH_RKPART_TABLE_SIZE = 0x10000;
-__FLASH_IDBLOCK_BASE = __FLASH_RKPART_TABLE_BASE + __FLASH_RKPART_TABLE_SIZE;
-__FLASH_IDBLOCK_SIZE = 0x20000;
-__FLASH_CPU0_TFM_BASE = __FLASH_IDBLOCK_BASE + __FLASH_IDBLOCK_SIZE;
-__FLASH_CPU0_TFM_SIZE = 0x20000;
-__FLASH_CPU1_LOADER_BASE = __FLASH_CPU0_TFM_BASE + __FLASH_CPU0_TFM_SIZE;
-__FLASH_CPU1_LOADER_SIZE = 0x10000;
-__FLASH_CPU0_RTT_BASE = __FLASH_CPU1_LOADER_BASE + __FLASH_CPU1_LOADER_SIZE;
-__FLASH_CPU0_RTT_SIZE = 0x40000;
-__FLASH_DSP0_FIREWARE_BASE = __FLASH_CPU0_RTT_BASE + __FLASH_CPU0_RTT_SIZE;
-__FLASH_DSP0_FIREWARE_SIZE = 0x100000;
-__FLASH_DSP1_FIREWARE_BASE = __FLASH_DSP0_FIREWARE_BASE + __FLASH_DSP0_FIREWARE_SIZE;
-__FLASH_DSP1_FIREWARE_SIZE = 0x100000;
-__FLASH_DSP2_FIREWARE_BASE = __FLASH_DSP1_FIREWARE_BASE + __FLASH_DSP1_FIREWARE_SIZE;
-__FLASH_DSP2_FIREWARE_SIZE = 0x100000;
-__FLASH_CPU1_RTT_BASE = __FLASH_DSP2_FIREWARE_BASE + __FLASH_DSP2_FIREWARE_SIZE;
-__FLASH_CPU1_RTT_SIZE = 0x40000;
-__FLASH_USER_DATA_BASE = __FLASH_CPU1_RTT_BASE + __FLASH_CPU1_RTT_SIZE;
-__FLASH_USER_DATA_SIZE = __FLASH_BASE + __FLASH_SIZE - __FLASH_USER_DATA_BASE;
-ASSERT(__FLASH_USER_DATA_SIZE > 0x200, "no flash space for userdata")
-
-__SRAM_CPU0_TFM_BASE = __SRAM_BASE;
-__SRAM_CPU0_TFM_SIZE = 0x10000;
-__SRAM_CPU0_RTT_BASE = __SRAM_CPU0_TFM_BASE + __SRAM_CPU0_TFM_SIZE;
-__SRAM_CPU0_RTT_SIZE = 0x10000;
-__SRAM_DSP0_BASE = __SRAM_CPU0_RTT_BASE + __SRAM_CPU0_RTT_SIZE;
-__SRAM_DSP0_SIZE = 0x50000;
-__SRAM_DSP1_BASE = __SRAM_DSP0_BASE + __SRAM_DSP0_SIZE;
-__SRAM_DSP1_SIZE = 0x48000;
-__SRAM_DSP2_BASE = __SRAM_DSP1_BASE + __SRAM_DSP1_SIZE;
-__SRAM_DSP2_SIZE = 0x47000;
-__SRAM_SPI2APB_BASE = __SRAM_DSP2_BASE + __SRAM_DSP2_SIZE;
-__SRAM_SPI2APB_SIZE = __SRAM_BASE + __SRAM_SIZE - __SRAM_SPI2APB_BASE;
-ASSERT(__SRAM_SPI2APB_SIZE > 0, "no sram space for spi2apb")
-
-__DRAM_CPU0_TFM_BASE = __DRAM_BASE;
-__DRAM_CPU0_TFM_SIZE = 0x100000;
-__DRAM_CPU0_RTT_BASE = __DRAM_CPU0_TFM_BASE + __DRAM_CPU0_TFM_SIZE;
-__DRAM_CPU0_RTT_SIZE = 0x100000;
-__DRAM_NPU_BASE = __DRAM_CPU0_RTT_BASE + __DRAM_CPU0_RTT_SIZE;
-__DRAM_NPU_SIZE = 0x400000;
-__DRAM_DSP0_BASE = __DRAM_NPU_BASE + __DRAM_NPU_SIZE;
-__DRAM_DSP0_SIZE = 0x1300000;
-__DRAM_DSP1_BASE = __DRAM_DSP0_BASE + __DRAM_DSP0_SIZE;
-__DRAM_DSP1_SIZE = 0x1300000;
-__DRAM_DSP2_BASE = __DRAM_DSP1_BASE + __DRAM_DSP1_SIZE;
-__DRAM_DSP2_SIZE = 0x1300000;
-__DRAM_CPU1_LOADER_BASE = __DRAM_DSP2_BASE + __DRAM_DSP2_SIZE;
-__DRAM_CPU1_LOADER_SIZE = 0x8000;
-__DRAM_CPU1_RTT_BASE = __DRAM_CPU1_LOADER_BASE + __DRAM_CPU1_LOADER_SIZE;
-__DRAM_CPU1_RTT_SIZE = __DRAM_BASE + __DRAM_SIZE - __DRAM_CPU1_RTT_BASE;
-ASSERT(__DRAM_CPU1_RTT_SIZE > 0, "no ddr space for DSP2")
-
 MEMORY
 {
 #if defined(RK2118_CPU_CORE0)
-  CODE (rx) : ORIGIN = __FLASH_CPU0_RTT_BASE,  LENGTH = __FLASH_CPU0_RTT_SIZE
-  DATA (rw) : ORIGIN = __SRAM_CPU0_RTT_BASE,  LENGTH = __SRAM_CPU0_RTT_SIZE
-  DDR (rwx) : ORIGIN = __DRAM_CPU0_RTT_BASE,  LENGTH = __DRAM_CPU0_RTT_SIZE
+  CODE (rx) : ORIGIN = XIP_CPU0_RTT_BASE,  LENGTH = XIP_CPU0_RTT_SIZE
+  DATA (rw) : ORIGIN = SRAM_CPU0_RTT_BASE,  LENGTH = SRAM_CPU0_RTT_SIZE
+  DDR (rwx) : ORIGIN = DRAM_CPU0_RTT_BASE,  LENGTH = DRAM_CPU0_RTT_SIZE
 #elif defined(RK2118_CPU_CORE1)
-  CODE (rx) : ORIGIN = __FLASH_CPU1_RTT_BASE,  LENGTH = __FLASH_CPU1_RTT_SIZE
-  DATA (rw) : ORIGIN = __DRAM_CPU1_RTT_BASE,  LENGTH = __DRAM_CPU1_RTT_SIZE
-  DDR (rwx) : ORIGIN = __DRAM_CPU1_RTT_BASE + __DRAM_CPU1_RTT_SIZE,  LENGTH = 0
+  CODE (rx) : ORIGIN = XIP_CPU1_RTT_BASE,  LENGTH = XIP_CPU1_RTT_SIZE
+  DATA (rw) : ORIGIN = DRAM_CPU1_RTT_BASE,  LENGTH = DRAM_CPU1_RTT_SIZE
+  DDR (rwx) : ORIGIN = DRAM_CPU1_RTT_BASE + DRAM_CPU1_RTT_SIZE,  LENGTH = 0
 #else
   #error "must select core0 or core1 in menuconfig"
 #endif
 #ifdef RT_USING_UNCACHE_HEAP
-  SRAM_U (rw)  : ORIGIN = __UNCACHE_HEAP_BASE, LENGTH = __UNCACHE_HEAP_SIZE
+  SRAM_U (rw)  : ORIGIN = UNCACHE_HEAP_BASE, LENGTH = UNCACHE_HEAP_SIZE
 #endif
 }
 
@@ -400,11 +285,11 @@ SECTIONS
 #ifdef RT_USING_UNCACHE_HEAP
     .uncache.heap (NOLOAD) :
     {
-        . = ALIGN(__UNCACHE_HEAP_SIZE);
+        . = ALIGN(UNCACHE_HEAP_SIZE);
         PROVIDE(__uncache_heap_start__ = .);
-        . = . + __UNCACHE_HEAP_SIZE;
+        . = . + UNCACHE_HEAP_SIZE;
         PROVIDE(__uncache_heap_end__ = .);
-        . = ALIGN(__UNCACHE_HEAP_SIZE);
+        . = ALIGN(UNCACHE_HEAP_SIZE);
     } > SRAM_U
 #endif
 
@@ -428,10 +313,10 @@ SECTIONS
    PROVIDE(__ddr_start__ = ORIGIN(DDR));
    PROVIDE(__ddr_end__ = ORIGIN(DDR) + LENGTH(DDR) - 1);
 #endif
-   PROVIDE(__large_heap_start__ = __DRAM_NPU_BASE);
-   PROVIDE(__large_heap_end__ = __DRAM_NPU_BASE + __DRAM_NPU_SIZE - 32);
+   PROVIDE(__large_heap_start__ = DRAM_NPU_BASE);
+   PROVIDE(__large_heap_end__ = DRAM_NPU_BASE + DRAM_NPU_SIZE - 1);
 #ifdef RK2118_CPU_CORE0
-   PROVIDE(__spi2apb_buffer_start__ = __SRAM_SPI2APB_BASE);
-   PROVIDE(__spi2apb_buffer_end__ = __SRAM_SPI2APB_BASE + __SRAM_SPI2APB_SIZE - 1);
+   PROVIDE(__spi2apb_buffer_start__ = SRAM_SPI2APB_BASE);
+   PROVIDE(__spi2apb_buffer_end__ = SRAM_SPI2APB_BASE + SRAM_SPI2APB_SIZE - 1);
 #endif
 }
