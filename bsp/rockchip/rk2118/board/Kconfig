@@ -41,6 +41,8 @@ choice
     config RT_USING_BOARD_TEST1
         bool "Enable test1 board"
 
+    config RT_USING_BOARD_AMP_DEMO
+        bool "Enable amplifier terminal demo board"
 endchoice
 
 config RT_USING_HIFI4
