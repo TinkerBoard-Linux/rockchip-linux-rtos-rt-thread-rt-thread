@@ -97,12 +97,12 @@ RT_WEAK struct pwr_pwm_info_desc pwm_pwr_desc[] =
     {
         .name = "pwm0",
         .chanel = 3,
-        .invert = true,
+        .invert = false,
     },
     {
         .name = "pwm0",
         .chanel = 2,
-        .invert = true,
+        .invert = false,
     },
     { /* sentinel */ },
 };
@@ -145,7 +145,7 @@ RT_WEAK struct regulator_desc regulators[] =
 RT_WEAK const struct regulator_init regulator_inits[] =
 {
     REGULATOR_INIT("vdd_core",  PWR_ID_CORE,       900000, 1, 900000, 1),
-    REGULATOR_INIT("vdd_dsp",   PWR_ID_DSP_CORE,   900000, 1, 900000, 1),
+    REGULATOR_INIT("vdd_dsp",   PWR_ID_DSP_CORE,   1000000, 1, 900000, 1),
     { /* sentinel */ },
 };
 #endif
