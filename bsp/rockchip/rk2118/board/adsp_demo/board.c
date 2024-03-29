@@ -22,6 +22,20 @@
 
 extern const struct clk_init clk_inits[];
 
+RT_WEAK const struct clk_unused clks_unused[] =
+{
+    {0, 9, 0xffffffff}, /* disable npu */
+    {0, 12, 0x00180018}, /* disable star1 */
+    {0, 13, 0x00070007}, /* disable star1 */
+    {0, 14, 0x00700070}, /* disable usb */
+    {0, 15, 0x00020002}, /* disable usb */
+    {0, 34, 0x07c007c0}, /* disable vop and sdmmc */
+    {0, 38, 0xf0c0f0c0}, /* disable gmac and emmc */
+    {0, 39, 0x00030003}, /* disable gmac*/
+    {1, 2, 0x03000300}, /* disable osbphy */
+    { /* sentinel */ },
+};
+
 #if defined(RT_USING_UART0)
 const struct uart_board g_uart0_board =
 {
@@ -90,6 +104,8 @@ void rt_hw_board_init()
     rt_hw_usart_init();
 
     clk_init(clk_inits, true);
+    /* disable not used clks */
+    clk_disable_unused(clks_unused);
 
     /* Update system core clock after clk_init */
     SystemCoreClockUpdate();
