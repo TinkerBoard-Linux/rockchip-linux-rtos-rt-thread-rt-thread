@@ -30,6 +30,10 @@
 #include "drv_regulator.h"
 #endif
 
+#ifdef RT_USING_PWM_REMOTECTL
+#include "drv_pwm_remotectl.h"
+#endif
+
 extern const struct clk_init clk_inits[];
 
 #ifdef RT_USING_I2C
@@ -149,6 +153,17 @@ RT_WEAK const struct regulator_init regulator_inits[] =
     { /* sentinel */ },
 };
 #endif
+#endif
+
+#ifdef RT_USING_PWM_REMOTECTL
+const struct remotectl_pwm_info rtl_pwm_info_table[] =
+{
+    {
+        .name = "pwm0",
+        .channel = 1,
+    },
+    { /* sentinel */ }
+};
 #endif
 
 void usb_vbus_pin_enable()
