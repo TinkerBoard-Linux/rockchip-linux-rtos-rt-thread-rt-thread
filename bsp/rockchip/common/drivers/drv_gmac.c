@@ -201,7 +201,7 @@ static inline int is_valid_ethaddr(const rt_uint8_t *addr)
  */
 static inline void net_random_ethaddr(rt_uint8_t *addr)
 {
-    unsigned int seed = HAL_TIMER_GetCount(SYS_TIMER) | 0xffffffff;
+    unsigned int seed = HAL_TIMER_GetCount(SYS_TIMER) & 0xffffffff;
     rt_int8_t i;
 
     for (i = 0; i < 6; i++)
