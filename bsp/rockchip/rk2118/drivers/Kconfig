@@ -95,7 +95,6 @@ config RT_USING_TSADC
     default n
 
 config RT_USING_TOUCHKEY
-    select RT_USING_TOUCHKEY
     bool "Enable Touchkey"
     default n
 
