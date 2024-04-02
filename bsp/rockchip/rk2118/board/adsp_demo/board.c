@@ -83,6 +83,9 @@ void rt_hw_board_init()
     /* HAL_Init */
     HAL_Init();
 
+    /* spinlock init */
+    spinlock_init();
+
     /* hal bsp init */
     BSP_Init();
 

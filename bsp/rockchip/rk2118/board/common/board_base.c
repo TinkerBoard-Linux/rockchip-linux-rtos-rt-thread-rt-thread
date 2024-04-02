@@ -20,6 +20,9 @@
 #include "hal_base.h"
 #include "hal_bsp.h"
 #include "iomux.h"
+#ifdef RT_USING_HIFI4
+#include "core/rk_core.h"
+#endif
 
 #ifdef RT_USING_USB_DEVICE
 #include "drv_usbd.h"
@@ -156,6 +159,13 @@ void swo_console_hook(const char *str, int flush)
 }
 #endif
 
+void spinlock_init(void)
+{
+#ifdef RT_USING_HIFI4
+    HAL_SPINLOCK_Init(rk_core_id());
+#endif
+}
+
 /**
  * This function will initial Pisces board.
  */
@@ -166,6 +176,9 @@ RT_WEAK void rt_hw_board_init()
 
     /* HAL_Init */
     HAL_Init();
+
+    /* spinlock init */
+    spinlock_init();
 
     /* hal bsp init */
     BSP_Init();

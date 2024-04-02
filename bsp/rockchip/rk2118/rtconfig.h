@@ -195,6 +195,15 @@
 
 #define RT_USING_CLK_CONFIG0
 #define RT_USING_BOARD_ADSP_DEMO
+#define RT_USING_HIFI4
+
+/* RK2118 HIFI4 Project */
+
+#define HIFI4_PROJECT_HELLOWORLD_DEMO
+#define HIFI4_PROJECT_MEM_LAYOUT_FILE "components/hifi4/samples/rk2118/helloworld_demo/mem_layout.h"
+
+/* RK2118 rtt app */
+
 
 /* RT-Thread Common Test case */
 
