@@ -97,12 +97,12 @@ RT_WEAK struct pwr_pwm_info_desc pwm_pwr_desc[] =
     {
         .name = "pwm0",
         .chanel = 3,
-        .invert = false,
+        .invert = true,
     },
     {
         .name = "pwm0",
         .chanel = 2,
-        .invert = false,
+        .invert = true,
     },
     { /* sentinel */ },
 };
