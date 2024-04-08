@@ -121,6 +121,14 @@
 #define HAL_HCD_MODULE_ENABLED
 #endif
 
+#ifdef RT_USING_USBH_EHCI
+#define HAL_EHCI_MODULE_ENABLED
+#endif
+
+#ifdef RT_USING_USBH_OHCI
+#define HAL_OHCI_MODULE_ENABLED
+#endif
+
 #ifdef RT_USING_WDT
 #define HAL_WDT_MODULE_ENABLED
 #endif
