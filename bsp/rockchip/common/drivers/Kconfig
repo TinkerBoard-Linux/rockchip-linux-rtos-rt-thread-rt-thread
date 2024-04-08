@@ -754,4 +754,24 @@ choice
         default n
 endchoice
 endmenu
+
+menu "RT-Thread rockchip USB Host driver"
+
+config RT_USING_USBH_DWC2
+    bool "DWC2 HCD Support"
+    depends on RT_USING_USB_HOST
+    default n
+
+config RT_USING_USBH_EHCI
+    bool "EHCI HCD Support"
+    depends on RT_USING_USB_HOST
+    default n
+
+config RT_USING_USBH_OHCI
+    bool "OHCI HCD Support"
+    depends on RT_USING_USB_HOST
+    default n
+
+endmenu
+
 endmenu

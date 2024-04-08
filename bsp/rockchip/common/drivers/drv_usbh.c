@@ -12,7 +12,7 @@
 #include <rtthread.h>
 #include <rtdevice.h>
 
-#if defined(RT_USING_USB_HOST)
+#if defined(RT_USING_USBH_DWC2)
 #include "hal_base.h"
 #include "hal_bsp.h"
 #include "drv_clock.h"
