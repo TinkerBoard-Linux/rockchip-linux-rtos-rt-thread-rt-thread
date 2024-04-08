@@ -133,6 +133,7 @@ struct termios {
 #define B3000000 0010015
 #define B3500000 0010016
 #define B4000000 0010017
+#define B8000000 0000001   /* use B50 value */
 
 #define CSIZE  0000060
 #define CS5    0000000
