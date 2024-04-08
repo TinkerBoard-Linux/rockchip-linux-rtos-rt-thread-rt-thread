@@ -50,5 +50,6 @@ config RT_USING_HIFI4
     default n
 
 source "$RTT_DIR/components/hifi4/samples/rk2118/Kconfig"
+source "$RTT_DIR/components/hifi4/rtt/app/Kconfig"
 
 endmenu
