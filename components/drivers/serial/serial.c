@@ -1065,6 +1065,9 @@ static rt_err_t rt_serial_control(struct rt_device *dev,
                 else if (serial->config.parity == PARITY_ODD)
                     tio->c_cflag |= (PARODD | PARENB);
 
+                if (serial->config.flowcontrol == RT_SERIAL_FLOWCONTROL_CTSRTS)
+                    tio->c_cflag |= CRTSCTS;
+
                 cfsetospeed(tio, _get_speed(serial->config.baud_rate));
             }
             break;
@@ -1110,6 +1113,11 @@ static rt_err_t rt_serial_control(struct rt_device *dev,
                 }
                 else config.parity = PARITY_NONE;
 
+                if (tio->c_cflag & CRTSCTS) config.flowcontrol = RT_SERIAL_FLOWCONTROL_CTSRTS;
+                else config.flowcontrol = RT_SERIAL_FLOWCONTROL_NONE;
+
+                /* set serial configure */
+                serial->config = config;
                 serial->ops->configure(serial, &config);
             }
             break;
