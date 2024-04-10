@@ -130,8 +130,8 @@ if RT_USING_DFS
             range 0 1000000
             default 3000
             depends on RT_DFS_ELM_REENTRANT
-	
-	config RT_DFS_ELM_ENABLE_DISK_BUFFER
+
+        config RT_DFS_ELM_ENABLE_DISK_BUFFER
             bool "Enable the disk buffer for FatFs"
             default n
 
@@ -140,6 +140,11 @@ if RT_USING_DFS
                 int "Size of disk buffer in bytes"
                 default 32768
         endif
+
+        config RT_DFS_ELM_USE_EXFAT
+            bool "Enable exfat support"
+            default n
+
         endmenu
     endif
 
