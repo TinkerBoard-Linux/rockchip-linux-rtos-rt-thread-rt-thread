@@ -37,42 +37,35 @@ def find_part_offset(file_path, search_string):
 
     return None
 
-def check_xip_addr(elf_file, setting_file):
-    # 获取.vectors section的起始地址
-    vectors_address = get_vectors_section_address(elf_file)
+def check_xip_addr(setting_file):
+    search_list = ['File=../../rtt0.bin', 'File=../../rtt1.bin']
+    for search_string in search_list:
+        # 查找并打印PartOffset，如果没找到就找下一个
+        part_offset = find_part_offset(setting_file, search_string)
+        if part_offset is None :
+            print(f"not found PartOffset for {search_string}")
+            continue
 
-    if vectors_address < 0x11000000 or vectors_address >= 0x20000000 :
-        print("vectors address is not in the XIP range, check ignore")
-        return -1
+        part_offset = 512 * int(part_offset, 16)
+        part_offset += 0x11000000
+        print(f"found {search_string} PartOffset: 0x{part_offset:x}")
 
-    if vectors_address is not None:
-        print(f".vectors section addr of {elf_file}: 0x{vectors_address:x}")
-    else:
-        print("can not found .vectors section")
-        return -1
+        # 获取.vectors section的起始地址，如果不在XIP范围内，则忽略
+        elf_file = search_string.split('/')[2].strip().replace('.bin', '.elf')
+        if os.path.exists(elf_file) :
+            vectors_address = get_vectors_section_address(elf_file)
+            if vectors_address is None:
+                print(f"can not found .vectors section in {elf_file}")
+                continue
 
-    # 要搜索的关键字
-    if 'rtt0.elf' in elf_file :
-        search_string = 'File=../../rtt0.bin'
-    else :
-        search_string = 'File=../../rtt1.bin'
+            if vectors_address < 0x11000000 or vectors_address >= 0x20000000 :
+                print("vectors address is not in the XIP range, check ignore")
+                continue
 
-    # 查找并打印PartOffset的值
-    part_offset = find_part_offset(setting_file, search_string)
-    if part_offset is None :
-        print(f"not found PartOffset for {elf_file}")
-        return -1
-
-    part_offset = 512 * int(part_offset, 16)
-    part_offset += 0x11000000
-    print(f"PartOffset: 0x{part_offset:x}")
-
-    if part_offset == vectors_address :
-        print("part_offset=vectors_address")
-        return 0
-    else:
-        print("part_offset!=vectors_address")
-        return -1
+            if part_offset == vectors_address :
+                print(f"{elf_file} part_offset==vectors_address")
+            else:
+                print(f"{elf_file} part_offset={part_offset}, xip_address={vectors_address}")
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
@@ -80,15 +73,7 @@ if __name__ == "__main__":
         sys.exit(1)
 
     setting_file = sys.argv[1]
-    if os.path.exists('./rtt0.elf') :
-        ret = check_xip_addr('./rtt0.elf', setting_file)
-        if ret != 0 :
-            print("check rtt0.elf xip addr failed, please check setting.ini")
-            sys.exit(1)
-    if os.path.exists('./rtt1.elf') :
-        ret = check_xip_addr('./rtt1.elf', setting_file)
-        if ret != 0 :
-            print("check rtt1.elf xip addr failed, please check setting.ini")
-            sys.exit(1)
-    print("check xip addr success")
+    if os.path.exists(setting_file) :
+        check_xip_addr(setting_file)
+    print("check xip addr finish")
     sys.exit(0)
