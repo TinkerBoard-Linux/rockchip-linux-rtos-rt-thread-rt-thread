@@ -404,7 +404,8 @@ uint32_t rt_fspi_get_xip_mem_code_phys(struct rt_fspi_device *fspi_device)
 rt_err_t rt_fspi_set_mode(struct rt_fspi_device *fspi_device, uint32_t mode)
 {
     HAL_ASSERT(fspi_device);
-    HAL_ASSERT(fspi_device->cs_gpio.gpio && !(mode & HAL_SPI_XIP));
+    HAL_ASSERT(!fspi_device->cs_gpio.gpio || (fspi_device->cs_gpio.gpio && !(mode & HAL_SPI_XIP)));
+
     fspi_device->mode = mode;
 
     return RT_EOK;
