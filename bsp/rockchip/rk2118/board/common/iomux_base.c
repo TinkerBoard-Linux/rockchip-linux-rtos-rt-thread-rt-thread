@@ -501,6 +501,7 @@ RT_WEAK  void pdm_iomux_config(void)
  */
 RT_WEAK  void rt_hw_iomux_config(void)
 {
+    sai_mclkout_config_all();
     dsp_jtag_iomux_config();
     fspi0_iomux_config();
     uart2_iomux_config();

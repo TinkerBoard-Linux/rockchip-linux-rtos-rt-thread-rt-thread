@@ -259,6 +259,7 @@ void rt_hw_iomux_config(void)
 #ifdef RK2118_CPU_CORE1
     return;
 #endif
+    sai_mclkout_config_all();
     uart1_iomux_config();
     sdmmc_iomux_config();
 #ifdef RT_USING_I2C0

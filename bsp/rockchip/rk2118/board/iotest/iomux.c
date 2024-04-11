@@ -184,6 +184,7 @@ void i2c0_iomux_config(void)
 
 void rt_hw_iomux_config(void)
 {
+    sai_mclkout_config_all();
     uart0_iomux_config();
     fspi0_iomux_config();
     dsp_jtag_iomux_config();
