@@ -91,10 +91,6 @@ static void rk_hwcrypto_destroy(struct rt_hwcrypto_ctx *ctx);
 static rt_err_t rk_hwcrypto_clone(struct rt_hwcrypto_ctx *des, const struct rt_hwcrypto_ctx *src);
 static void rk_hwcrypto_reset(struct rt_hwcrypto_ctx *ctx);
 
-rt_err_t hal_ret2rt_ret(HAL_Status ret);
-struct rk_aligned_buf *rk_aligned_buf_get(const uint8_t *data, uint32_t data_len, uint32_t alignment);
-void rk_aligned_buf_put(struct rk_aligned_buf *aligned_buf);
-
 #if RK_CRYPTO_DEBUG
 #define rk_crypto_dbg(fmt, args...) \
     rt_kprintf("%s D [%s %d]: " fmt, CRYPTO_NAME, __func__, __LINE__, ##args)
@@ -146,7 +142,7 @@ static const struct rt_hwcrypto_ops rk_hwcrypto_ops =
     .reset      = rk_hwcrypto_reset,
 };
 
-rt_err_t hal_ret2rt_ret(HAL_Status ret)
+static rt_err_t hal_ret2rt_ret(HAL_Status ret)
 {
     struct value_map
     {
@@ -173,7 +169,27 @@ rt_err_t hal_ret2rt_ret(HAL_Status ret)
     return RT_ERROR;
 }
 
-struct rk_aligned_buf *rk_aligned_buf_get(const uint8_t *data, uint32_t data_len, uint32_t alignment)
+static rt_bool_t rk_is_force_align(const void *addr)
+{
+#ifdef XIP_MAP0_BASE0
+    if (((uint32_t)addr & 0xFF000000) == XIP_MAP0_BASE0)
+        return RT_TRUE;
+#endif
+
+#ifdef XIP_MAP1_BASE0
+    if (((uint32_t)addr & 0xFF000000) == XIP_MAP1_BASE0)
+        return RT_TRUE;
+#endif
+
+#ifdef XIP_MAP1_BASE1
+    if (((uint32_t)addr & 0xFF000000) == XIP_MAP1_BASE1)
+        return RT_TRUE;
+#endif
+
+    return RT_FALSE;
+}
+
+static struct rk_aligned_buf *rk_aligned_buf_get(const uint8_t *data, uint32_t data_len, uint32_t alignment)
 {
     uint8_t *tmp_buf = RT_NULL;
     struct rk_aligned_buf *aligned_buf = RT_NULL;
@@ -192,7 +208,7 @@ struct rk_aligned_buf *rk_aligned_buf_get(const uint8_t *data, uint32_t data_len
     rt_memset(aligned_buf, 0x00, sizeof(*aligned_buf));
 
     //Checking in/out data buffer address not alignment
-    if ((uint32_t)data % alignment)
+    if ((uint32_t)data % alignment || rk_is_force_align(data))
     {
         tmp_buf = rt_malloc_align(data_len, alignment);
         if (tmp_buf == RT_NULL)
@@ -220,7 +236,7 @@ struct rk_aligned_buf *rk_aligned_buf_get(const uint8_t *data, uint32_t data_len
     return aligned_buf;
 }
 
-void rk_aligned_buf_put(struct rk_aligned_buf *aligned_buf)
+static void rk_aligned_buf_put(struct rk_aligned_buf *aligned_buf)
 {
     if (!aligned_buf)
         return;
