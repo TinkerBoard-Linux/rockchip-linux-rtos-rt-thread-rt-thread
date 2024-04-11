@@ -149,6 +149,7 @@ static const char *hwcrypto_type2name(hwcrypto_type type)
         {HWCRYPTO_TYPE_MD5, "HASH_MD5"},
         {HWCRYPTO_TYPE_SHA1, "HASH_SHA1"},
         {HWCRYPTO_TYPE_SHA224, "HASH_SHA224"},
+        {HWCRYPTO_TYPE_SHA256, "HASH_SHA256"},
         {HWCRYPTO_TYPE_SHA384, "HASH_SHA384"},
         {HWCRYPTO_TYPE_SHA512, "HASH_SHA512"},
     };
@@ -243,7 +244,7 @@ static void hw_hash_sample(void)
     rt_kprintf("======================== Hash Test over! ========================\n");
 }
 
-static rt_err_t hw_hash_perf_one(hwcrypto_type type, const char *name)
+static rt_err_t hw_hash_perf_one(hwcrypto_type type)
 {
 #if defined(RT_USING_LARGE_HEAP)
     rt_tick_t start, end;
@@ -253,6 +254,7 @@ static rt_err_t hw_hash_perf_one(hwcrypto_type type, const char *name)
     rt_err_t ret;
     struct rt_hwcrypto_ctx *ctx = RT_NULL;
     int i = 0;
+    const char *name = hwcrypto_type2name(type);
 
     /* Populating test data */
     buffer = rt_malloc_large(buf_len);
@@ -287,7 +289,7 @@ static rt_err_t hw_hash_perf_one(hwcrypto_type type, const char *name)
     end = rt_tick_get_millisecond();
 
     uint32_t cost_ms = end - start;
-    rt_kprintf("100M %s cost %ums, perf = %uMB/s\r\n", name, cost_ms, CALC_RATE_MPBS(i * buf_len, cost_ms));
+    rt_kprintf("100M %-12s cost %ums, perf = %uMB/s\r\n", name, cost_ms, CALC_RATE_MPBS(i * buf_len, cost_ms));
 
 exit:
     rt_hwcrypto_hash_destroy(ctx);
@@ -305,10 +307,10 @@ static void hw_hash_perf_sample(void)
 {
     rt_kprintf("======================== Hash Perf Test over! ========================\n");
 
-    hw_hash_perf_one(HWCRYPTO_TYPE_SHA1,   "SHA1");
-    hw_hash_perf_one(HWCRYPTO_TYPE_MD5,    "MD5");
-    hw_hash_perf_one(HWCRYPTO_TYPE_SHA224, "SHA224");
-    hw_hash_perf_one(HWCRYPTO_TYPE_SHA256, "SHA256");
+    hw_hash_perf_one(HWCRYPTO_TYPE_SHA1);
+    hw_hash_perf_one(HWCRYPTO_TYPE_MD5);
+    hw_hash_perf_one(HWCRYPTO_TYPE_SHA224);
+    hw_hash_perf_one(HWCRYPTO_TYPE_SHA256);
 
     rt_kprintf("======================== Hash Perf Test over! ========================\n");
 }
@@ -507,7 +509,8 @@ static void hw_cryp_perf_sample_item(hwcrypto_type type)
     end = rt_tick_get_millisecond();
 
     uint32_t cost_ms = end - start;
-    rt_kprintf("100M AES ECB cost %ums, perf = %uMB/s\r\n", cost_ms, CALC_RATE_MPBS(i * buf_len, cost_ms));
+    rt_kprintf("100M %-12s cost %ums, perf = %uMB/s\r\n",
+               hwcrypto_type2name(type), cost_ms, CALC_RATE_MPBS(i * buf_len, cost_ms));
 
     rt_hwcrypto_symmetric_destroy(ctx);
 
@@ -858,7 +861,7 @@ static void hw_bignum_sample()
     }
     else
     {
-        rt_kprintf("exptmod sign Test success!, RSA4096 cost %ums\n", end1 - start);
+        rt_kprintf("exptmod sign   Test success, RSA4096 cost %5ums!\n", end1 - start);
     }
 
     memset(data, 0x00, sizeof(data));
@@ -873,7 +876,7 @@ static void hw_bignum_sample()
     }
     else
     {
-        rt_kprintf("exptmod verify Test success, RSA4096 cost %ums!\n", end2 - end1);
+        rt_kprintf("exptmod verify Test success, RSA4096 cost %5ums!\n", end2 - end1);
     }
 
     rt_kprintf("============ ExptMod Test Over ============\n");
