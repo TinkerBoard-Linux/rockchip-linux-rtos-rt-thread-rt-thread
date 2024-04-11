@@ -249,6 +249,32 @@ RT_WEAK  void uart0_iomux_config(void)
 }
 
 /**
+ * @brief  Config all SAIX_MCLK as OUTPUT
+ */
+RT_WEAK  void sai_mclkout_config_all(void)
+{
+    WRITE_REG_MASK_WE(GRF->SOC_CON1, HAL_GENMASK(7, 0), HAL_GENMASK(7, 0));
+}
+
+/**
+ * @brief  Config SAIX_MCLK as OUTPUT
+ * @param  saiId: SAIx_MCLK index [0~7].
+ */
+RT_WEAK  void sai_mclkout_config(int saiId)
+{
+    WRITE_REG_MASK_WE(GRF->SOC_CON1, HAL_BIT(saiId), HAL_BIT(saiId));
+}
+
+/**
+ * @brief  Config SAIX_MCLK as INPUT
+ * @param  saiId: SAIx_MCLK index [0~7].
+ */
+RT_WEAK  void sai_mclkin_config(int saiId)
+{
+    WRITE_REG_MASK_WE(GRF->SOC_CON1, HAL_BIT(saiId), 0);
+}
+
+/**
  * @brief  Config iomux for SAI7
  */
 RT_WEAK  void sai7_iomux_config(void)
