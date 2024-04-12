@@ -7,10 +7,6 @@
 #ifndef __IT6632X_H__
 #define __IT6632X_H__
 
-#ifndef IT6632X_I2C_DEV
-#define IT6632X_I2C_DEV   0
-#endif
-
 #define IT6632x_THREAD_STACK_SIZE       2048
 #define IT6632x_THREAD_PRIORITY         10
 
