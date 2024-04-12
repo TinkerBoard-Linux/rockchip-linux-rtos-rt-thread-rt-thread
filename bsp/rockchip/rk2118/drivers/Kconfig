@@ -91,6 +91,18 @@ menu "Enable SPI"
     config RT_USING_SPI2
         bool "Enable SPI2"
         default n
+
+    config RT_USING_SPI_SLAVE_FLEXIBLE_LENGTH
+        bool "Support stop SPI slave transmission when cs inactive"
+        default n
+
+    if RT_USING_SPI_SLAVE_FLEXIBLE_LENGTH
+    menu "Enable SPI Slave flexible length"
+        config RT_USING_SLAVE_DMA_RX_BURST_SIZE
+            int "Config DMA burst size, the master device on the opposite end needs to complete burst size aligned transmission"
+            default 1
+    endmenu
+    endif
 endmenu
 endif
 
