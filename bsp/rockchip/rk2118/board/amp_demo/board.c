@@ -152,6 +152,8 @@ void rt_hw_board_init()
     /* Initial usart deriver, and set console device */
     rt_hw_usart_init();
 
+    usb_phy_init();
+
     clk_init(clk_inits, true);
 
     /* Update system core clock after clk_init */

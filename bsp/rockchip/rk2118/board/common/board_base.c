@@ -166,6 +166,18 @@ void spinlock_init(void)
 #endif
 }
 
+RT_WEAK void usb_phy_init(void)
+{
+#ifndef RT_USING_USB
+    /* Set USB2 PHY enter suspend mode */
+    WRITE_REG_MASK_WE(USB_PHY_CON_BASE, USB_PHY_SUSPEND_MASK,
+                      USB_PHY_SUSPEND_VAL << USB_PHY_CON_SHIFT);
+
+    /* Turn off differential receiver by default to save power */
+    WRITE_REG(*(uint32_t *)(USB_INNO_PHY_BASE + 0x0100U), 0x00);
+#endif
+}
+
 /**
  * This function will initial Pisces board.
  */
@@ -199,6 +211,8 @@ RT_WEAK void rt_hw_board_init()
 
     /* Initial usart deriver, and set console device */
     rt_hw_usart_init();
+
+    usb_phy_init();
 
     clk_init(clk_inits, true);
 

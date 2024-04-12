@@ -213,6 +213,9 @@ void rt_hw_board_init()
     regulator_desc_init(regulators);
 #endif
 #endif
+
+    usb_phy_init();
+
     clk_init(clk_inits, true);
 
     /* Update system core clock after clk_init */

@@ -16,5 +16,6 @@ void mpu_init(void);
 void swo_console_hook(const char *str, int flush);
 void spinlock_init(void);
 void rt_hw_board_init(void);
+void usb_phy_init(void);
 
 #endif
