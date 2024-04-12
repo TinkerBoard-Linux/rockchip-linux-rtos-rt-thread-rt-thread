@@ -39,7 +39,7 @@
 #include "dma.h"
 #include "hal_bsp.h"
 
-#define SPI_DEBUG 0
+#define SPI_DEBUG 0 /* 1-master 2-slave */
 
 #if SPI_DEBUG
 #define spi_dbg(dev, fmt, ...) \
@@ -51,6 +51,10 @@ do { \
 do { \
 } while(0)
 #endif
+#define spi_err(dev, fmt, ...) \
+do { \
+    rt_kprintf("%s: " fmt, ((struct rt_device *)dev)->parent.name, ##__VA_ARGS__); \
+} while(0)
 
 #define ROCKCHIP_SPI_CS_0 (0)
 #define ROCKCHIP_SPI_CS_1 (1)
@@ -59,6 +63,39 @@ do { \
 #define TXBUSY (1 << 1)
 
 #define ROCKCHIP_SPI_TX_IDLE_TIMEOUT (20)
+
+static int32_t spi_dbg_hex(char *s, void *buf, uint32_t width, uint32_t len)
+{
+    uint32_t i, j;
+    unsigned char *p8 = (unsigned char *)buf;
+    unsigned short *p16 = (unsigned short *)buf;
+    uint32_t *p32 = (uint32_t *)buf;
+
+    j = 0;
+    for (i = 0; i < len; i++)
+    {
+        if (j == 0)
+        {
+            rt_kprintf("[spi] %s 0x%p+0x%lx: ", s, buf, i * width);
+        }
+
+        if (width == 4)
+            rt_kprintf("0x%08lx,", p32[i]);
+        else if (width == 2)
+            rt_kprintf("0x%04x,", p16[i]);
+        else
+            rt_kprintf("0x%02x,", p8[i]);
+
+        if (++j >= 4)
+        {
+            j = 0;
+            rt_kprintf("\n");
+        }
+    }
+    rt_kprintf("\n");
+
+    return HAL_OK;
+}
 
 struct rockchip_spi_cs
 {
@@ -109,6 +146,8 @@ static void rockchip_spi_irq(struct rockchip_spi *spi)
     /* enter interrupt */
     rt_interrupt_enter();
 
+    spi_dbg(&spi->bus.parent, "%s isr=%x\n", __func__, pSPI->pReg->ISR);
+
     status = HAL_SPI_IrqHandler(pSPI);
     if (status != HAL_BUSY)
     {
@@ -141,7 +180,7 @@ static rt_err_t rockchip_spi_configure(struct rt_spi_device *device,
         spi->dma = rt_dma_get((uint32_t)(spi->hal_dev->txDma.dmac));
         if (spi->dma == NULL)
         {
-            rt_kprintf("%s get dma failed, CPU/IT instead\n", __func__);
+            spi_err(&spi->bus.parent, "%s get dma failed, CPU/IT instead\n", __func__);
             spi->no_dma = true;
         }
     }
@@ -291,6 +330,15 @@ static rt_err_t rockchip_spi_wait_idle(struct rockchip_spi *spi, bool forever)
     timeout = rt_tick_get() + ROCKCHIP_SPI_TX_IDLE_TIMEOUT; /* some tolerance */
     do
     {
+#ifndef RT_USING_SPI_SLAVE_FLEXIBLE_LENGTH
+        /* If CS release is detected, the transmission is considered to have stopped */
+        if (HAL_SPI_IsCsInactive(pSPI))
+        {
+            ret = 0;
+            break;
+        }
+#endif
+
         ret = HAL_SPI_QueryBusState(pSPI);
         if (ret == HAL_OK)
             break;
@@ -442,12 +490,23 @@ rx_release:
  * @message: SPI message structure
  * @return: return error code
  */
-static void rockchip_spi_dma_complete(struct rockchip_spi *spi, struct rt_spi_message *message)
+static rt_uint32_t rockchip_spi_dma_complete(struct rockchip_spi *spi, struct rt_spi_message *message)
 {
+    rt_uint32_t rx_valid = message->length, tx_valid = message->length;
+
     if (message->recv_buf)
     {
-        rt_device_control(spi->dma, RT_DEVICE_CTRL_DMA_STOP,
-                          &spi->rx_dma_xfer);
+        rt_device_control(spi->dma, RT_DEVICE_CTRL_DMA_STOP, &spi->rx_dma_xfer);
+#ifdef RT_USING_SPI_SLAVE_FLEXIBLE_LENGTH
+        if (spi->state & RXBUSY)
+        {
+            if (!rt_device_control(spi->dma, RT_DEVICE_CTRL_DMA_GET_POSITION, &spi->rx_dma_xfer))
+            {
+                rx_valid = spi->rx_dma_xfer.position;
+            }
+            spi_dbg(&spi->bus.parent, "%s rx 0x%x\n", __func__, rx_valid);
+        }
+#endif
         rt_device_control(spi->dma, RT_DEVICE_CTRL_DMA_RELEASE_CHANNEL,
                           &spi->rx_dma_xfer);
 #ifdef RT_USING_CACHE
@@ -457,11 +516,22 @@ static void rockchip_spi_dma_complete(struct rockchip_spi *spi, struct rt_spi_me
 
     if (message->send_buf)
     {
-        rt_device_control(spi->dma, RT_DEVICE_CTRL_DMA_STOP,
-                          &spi->tx_dma_xfer);
+        rt_device_control(spi->dma, RT_DEVICE_CTRL_DMA_STOP, &spi->tx_dma_xfer);
+#ifdef RT_USING_SPI_SLAVE_FLEXIBLE_LENGTH
+        if (spi->state & TXBUSY)
+        {
+            if (!rt_device_control(spi->dma, RT_DEVICE_CTRL_DMA_GET_POSITION, &spi->tx_dma_xfer))
+            {
+                tx_valid = spi->tx_dma_xfer.position;
+            }
+            spi_dbg(&spi->bus.parent, "%s tx 0x%x\n", __func__, tx_valid);
+        }
+#endif
         rt_device_control(spi->dma, RT_DEVICE_CTRL_DMA_RELEASE_CHANNEL,
                           &spi->tx_dma_xfer);
     }
+
+    return HAL_MIN(tx_valid, rx_valid);
 }
 
 /**
@@ -476,8 +546,32 @@ static rt_uint32_t rockchip_spi_xfer(struct rt_spi_device *device, struct rt_spi
     struct SPI_HANDLE *pSPI = &spi->instance;
     struct rockchip_spi_cs *cs = (struct rockchip_spi_cs *)device->parent.user_data;
     struct clk_gate *pclk_gate, *sclk_gate;
-    rt_uint32_t timeout; /* ms */
+    rt_uint32_t timeout, valid = message->length;
     rt_err_t ret = RT_EOK;
+
+    /*
+     * When support transfer spi slave in flexible length, unified use of DMA
+     * as the transmission method.
+     */
+#ifdef RT_USING_SPI_SLAVE_FLEXIBLE_LENGTH
+    if (HAL_SPI_IsSlave(pSPI))
+    {
+        if (!spi->dma)
+        {
+            spi_err(&spi->bus.parent, "slave xfer in flex, enable dma firstly!\n");
+            return -RT_EINVAL;
+        }
+
+        if (!HAL_IS_CACHELINE_ALIGNED(message->send_buf) ||
+                !HAL_IS_CACHELINE_ALIGNED(message->recv_buf) ||
+                !HAL_IS_CACHELINE_ALIGNED(message->length))
+        {
+            spi_err(&spi->bus.parent, "slave xfer in flex, tx=%p/rx=%p/len=%x should be cache aligned\n",
+                    message->send_buf, message->recv_buf, message->length);
+            return -RT_EINVAL;
+        }
+    }
+#endif
 
     rt_mutex_take(&spi->spi_lock, RT_WAITING_FOREVER);
 
@@ -508,10 +602,27 @@ static rt_uint32_t rockchip_spi_xfer(struct rt_spi_device *device, struct rt_spi
         return RT_EOK;
     }
 
+    /*
+     * When support transfer spi slave in flexible length, only the minimum
+     * burst size is support.
+     */
+#ifdef RT_USING_SPI_SLAVE_FLEXIBLE_LENGTH
+#if (RT_USING_SLAVE_DMA_RX_BURST_SIZE > 0 && RT_USING_SLAVE_DMA_RX_BURST_SIZE < 8)
+    spi->dma_burst_size = HAL_SPI_IsSlave(pSPI) ? RT_USING_SLAVE_DMA_RX_BURST_SIZE : rockchip_spi_calc_burst_size(message->length);
+#else
+#error "Define the right RT_USING_SLAVE_DMA_RX_BURST_SIZE!"
+#endif
+#else /* #ifdef RT_USING_SPI_SLAVE_FLEXIBLE_LENGTH */
     spi->dma_burst_size = rockchip_spi_calc_burst_size(message->length);
+#endif
     pSPI->dmaBurstSize = spi->dma_burst_size;
     /* Configure spi mode here. */
     HAL_SPI_Configure(pSPI, message->send_buf, message->recv_buf, message->length);
+
+    spi_dbg(&spi->bus.parent, "%s slave=%d dma=%p(null-no dma) can_dma=%d(1-en) dma_burst=%d\n",
+            __func__, HAL_SPI_IsSlave(pSPI), spi->dma, HAL_SPI_CanDma(pSPI), spi->dma_burst_size);
+    spi_dbg(&spi->bus.parent, "%s xfer, tx=%p/rx=%p/len=%x\n",
+            __func__, message->send_buf, message->recv_buf, message->length);
 
     spi->error = 0;
     if (!HAL_SPI_IsSlave(pSPI))
@@ -532,7 +643,7 @@ static rt_uint32_t rockchip_spi_xfer(struct rt_spi_device *device, struct rt_spi
             ret = rt_completion_wait(&spi->done, rt_tick_from_millisecond(timeout));
             if (RT_EOK != ret)
             {
-                rt_kprintf("%s timer out \n", __func__);
+                spi_err(&spi->bus.parent, "%s timer out \n", __func__);
                 rockchip_spi_dma_handle_err(spi);
             }
             else
@@ -563,19 +674,32 @@ static rt_uint32_t rockchip_spi_xfer(struct rt_spi_device *device, struct rt_spi
             if (RT_EOK != ret)
                 goto complete;
 
+#if (SPI_DEBUG == 2)
+            spi_err(&spi->bus.parent, "slave xfer ready in dma\n");
+#endif
             /* Timeout is forever for slave. */
             rt_completion_wait(&spi->done, RT_WAITING_FOREVER);
-            rockchip_spi_dma_complete(spi, message);
+            valid = rockchip_spi_dma_complete(spi, message);
             if (message->send_buf && ret == RT_EOK)
             {
+#ifndef RT_USING_SPI_SLAVE_FLEXIBLE_LENGTH
                 rockchip_spi_wait_idle(spi, true);
+#endif
             }
         }
         else
         {
-            HAL_SPI_ItTransfer(pSPI);
+            ret = HAL_SPI_ItTransfer(pSPI);
+            if (ret)
+            {
+                spi_err(&spi->bus.parent, "input invalid, check buf/len aligned\n");
+                goto complete;
+            }
             rt_hw_interrupt_umask(spi->hal_dev->irqNum);
 
+#if (SPI_DEBUG == 2)
+            spi_err(&spi->bus.parent, "slave xfer ready in it\n");
+#endif
             /* Timeout is forever for slave. */
             rt_completion_wait(&spi->done, RT_WAITING_FOREVER);
 
@@ -585,13 +709,17 @@ static rt_uint32_t rockchip_spi_xfer(struct rt_spi_device *device, struct rt_spi
                 rockchip_spi_wait_idle(spi, true);
             }
         }
+#if (SPI_DEBUG == 2)
+        spi_err(&spi->bus.parent, "slave xfer done\n");
+#endif
     }
 
 complete:
     if (RT_EOK != ret)
     {
         spi->error = ret;
-        spi_dbg(&spi->bus.parent, "%s error: %d\n", __func__, spi->error);
+        spi_err(&spi->bus.parent, "%s error: %d\n", __func__, spi->error);
+        spi_dbg_hex("reg:", pSPI->pReg, 4, 0x54);
     }
 
     /* Disable SPI when finished. */
@@ -604,15 +732,17 @@ complete:
             HAL_SPI_SetCS(pSPI, cs->pin, false);
     }
 
+#if SPI_DEBUG
     clk_disable(sclk_gate);
     clk_disable(pclk_gate);
+#endif
 
     pm_runtime_release(PM_RUNTIME_ID_SPI);
 
     rt_mutex_release(&spi->spi_lock);
 
     /* Successful to return message length and fail to return 0. */
-    return spi->error ? 0 : message->length;
+    return spi->error ? 0 : HAL_MIN(valid, message->length);
 }
 
 static struct rt_spi_ops rockchip_spi_ops =

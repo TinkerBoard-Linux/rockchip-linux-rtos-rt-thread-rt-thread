@@ -38,14 +38,14 @@ int32_t spi_dbg_hex(char *s, void *buf, uint32_t width, uint32_t len)
     uint32_t i, j;
     unsigned char *p8 = (unsigned char *)buf;
     unsigned short *p16 = (unsigned short *)buf;
-    uint32_t *p32 = (uint32_t *)buf;
+    uint32_t *p32 = (uint32_t *)buf, next = width == 1 ? 16 : 4;
 
     j = 0;
     for (i = 0; i < len; i++)
     {
         if (j == 0)
         {
-            rt_kprintf("[SPI TEST] %s %p + 0x%lx:", s, buf, i * width);
+            rt_kprintf("[SPI TEST] %s 0x%p+0x%lx: ", s, buf, i * width);
         }
 
         if (width == 4)
@@ -55,7 +55,7 @@ int32_t spi_dbg_hex(char *s, void *buf, uint32_t width, uint32_t len)
         else
             rt_kprintf("0x%02x,", p8[i]);
 
-        if (++j >= 16)
+        if (++j >= next)
         {
             j = 0;
             rt_kprintf("\n");
@@ -71,17 +71,12 @@ static int spi_test_write(struct spi_test_data *data, const void *txbuf, size_t 
     struct rt_spi_device *spi_device = data->spi_device;
     int ret = -RT_ERROR;
 
-    /* config spi */
-    {
-        struct rt_spi_configuration cfg;
-        cfg.data_width = data->data_width;
-        cfg.mode = data->mode | data->spi_mode | data->bit_first;
-        cfg.max_hz = data->max_speed_hz;
-        rt_spi_configure(spi_device, &cfg);
-    }
-
     /* send data */
     ret = rt_spi_transfer(spi_device, txbuf, RT_NULL, n);
+    if (ret != n)
+    {
+        rt_kprintf("%s ret_length=0x%x != len=0x%x\n", __func__, ret, n);
+    }
 
     return (ret == n) ? RT_EOK : ret;
 }
@@ -90,15 +85,13 @@ static int spi_test_read(struct spi_test_data *data, void *rxbuf, size_t n)
 {
     struct rt_spi_device *spi_device = data->spi_device;
     int ret = -RT_ERROR;
-    struct rt_spi_configuration cfg;
-
-    cfg.data_width = data->data_width;
-    cfg.mode = data->mode | data->spi_mode | data->bit_first;
-    cfg.max_hz = data->max_speed_hz;
-    rt_spi_configure(spi_device, &cfg);
 
     /* send data */
     ret = rt_spi_transfer(spi_device, RT_NULL, rxbuf, n);
+    if (ret != n)
+    {
+        rt_kprintf("%s ret_length=0x%x != len=0x%x\n", __func__, ret, n);
+    }
 
     return (ret == n) ? RT_EOK : ret;
 }
@@ -108,16 +101,11 @@ static int spi_test_write_and_read(struct spi_test_data *data, const void *tx_bu
     struct rt_spi_device *spi_device = data->spi_device;
     int ret = -RT_ERROR;
 
-    /* config spi */
-    {
-        struct rt_spi_configuration cfg;
-        cfg.data_width = data->data_width;
-        cfg.mode = data->mode | data->spi_mode | data->bit_first;
-        cfg.max_hz = data->max_speed_hz;
-        rt_spi_configure(spi_device, &cfg);
-    }
-
     ret = rt_spi_transfer(spi_device, tx_buf, rx_buf, len);
+    if (ret != len)
+    {
+        rt_kprintf("%s ret_length=0x%x != len=0x%x\n", __func__, ret, len);
+    }
 
     return (ret == len) ? RT_EOK : -RT_EIO;
 }
@@ -127,15 +115,6 @@ static int __unused spi_test_write_then_read(struct spi_test_data *data, const v
 {
     struct rt_spi_device *spi_device = data->spi_device;
     int ret = -RT_ERROR;
-
-    /* config spi */
-    {
-        struct rt_spi_configuration cfg;
-        cfg.data_width = data->data_width;
-        cfg.mode = data->mode | data->spi_mode | data->bit_first;
-        cfg.max_hz = data->max_speed_hz;
-        rt_spi_configure(spi_device, &cfg);
-    }
 
     ret = rt_spi_send_then_recv(spi_device, txbuf, tx_n, rxbuf, rx_n);
 
@@ -184,14 +163,18 @@ static void spi_test_read_loop(uint32_t loops, void *rxbuf, uint32_t size)
 
     start_time = rt_tick_get();
     for (i = 0; i < loops; i++)
+    {
+        rt_memset(rxbuf, 0, size);
         spi_test_read(&g_spi_test_data, rxbuf, size);
+        spi_dbg_hex("read rx", rxbuf, 1, size);
+    }
     end_time = rt_tick_get();
     cost_time = (end_time - start_time) * 1000 / RT_TICK_PER_SECOND;
 
     bytes = size * loops * 1;
     bytes = bytes / cost_time;
     rt_kprintf("spi %s read %d*%d cost %ldms speed:%ldKB/S\n", HAL_IS_CACHELINE_ALIGNED(size) ? "DMA" : "CPU", size, loops, cost_time, bytes);
-    spi_dbg_hex("read rx", rxbuf, 4, size > 0x20 ? 0x20 : size / 4);
+    // spi_dbg_hex("read rx", rxbuf, 1, size);
 }
 
 static void spi_test_duplex_thread(void *p)
@@ -239,6 +222,7 @@ static void spi_test_duplex_thread(void *p)
 
     for (i = 0; i < loops; i++)
     {
+        rt_memset(rxbuf, 0, size);
         spi_test_write_and_read(&spi_test_data, txbuf, rxbuf, size);
         if (!random && rt_memcmp(txbuf, rxbuf, size))
         {
@@ -247,7 +231,7 @@ static void spi_test_duplex_thread(void *p)
         if (delay_ms)
             rt_thread_mdelay(delay_ms);
     }
-    rt_kprintf("%s finished\n", __func__);
+    rt_kprintf("%s %s finished\n", argv[2], __func__);
 
     rt_free_align(txbuf);
     rt_free_align(rxbuf);
@@ -276,6 +260,7 @@ void spi_test(int argc, char **argv)
     cmd = argv[1];
     if (!rt_strcmp(cmd, "config"))
     {
+        struct rt_spi_configuration cfg;
         int mode, is_msb;
 
         if (argc < 8)
@@ -299,6 +284,11 @@ void spi_test(int argc, char **argv)
         {
             data->data_width = data->data_width;
         }
+
+        cfg.data_width = data->data_width;
+        cfg.mode = data->mode | data->spi_mode | data->bit_first;
+        cfg.max_hz = data->max_speed_hz;
+        rt_spi_configure(spi_device, &cfg);
 
         rt_kprintf("spi %s, mode%d, %s, %dHz speed, data_width=%d\n",
                    mode ? "slave" : "master", data->spi_mode,
