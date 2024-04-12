@@ -22,6 +22,12 @@ struct it6632x_volume_info
 
 typedef enum
 {
+    IT6632X_RXMUTE_MUTE,
+    IT6632X_RXMUTE_UNMUTE,
+} it6632x_rxmute_mode_t;
+
+typedef enum
+{
     IT6632X_MODE_STANDBY,
     IT6632X_MODE_POWER_ON,
     IT6632X_MODE_POWER_OFF,

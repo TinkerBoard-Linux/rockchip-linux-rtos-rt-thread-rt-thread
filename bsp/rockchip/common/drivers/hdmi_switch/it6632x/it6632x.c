@@ -1993,13 +1993,23 @@ static void it6632x_thread(void *arg)
 static void it6632x_rx_mute_thread(void *arg)
 {
     it6632x_device_t *dev = (it6632x_device_t *)arg;
+    rt_uint8_t mute_state;
 
     while (1)
     {
         rt_sem_take(dev->rx_mute_sem, RT_WAITING_FOREVER);
 
+        if (rt_pin_read(IT6632X_RXMUTE_PIN) == PIN_LOW)
+        {
+            mute_state = IT6632X_RXMUTE_UNMUTE;
+        }
+        else
+        {
+            mute_state = IT6632X_RXMUTE_MUTE;
+        }
+
         if (g_it6632x_dev->rx_mute_hook != RT_NULL)
-            g_it6632x_dev->rx_mute_hook(RT_NULL);
+            g_it6632x_dev->rx_mute_hook((void *)&mute_state);
     }
 }
 
@@ -2119,6 +2129,11 @@ static void it6632x_cec_vol_change_test_hook(void *arg)
 static void it6632x_rx_mute_hook(void *arg)
 {
     rt_kprintf("it6632x_rx_mute_hook!\n");
+
+    if (*(rt_uint8_t *)arg == IT6632X_RXMUTE_MUTE)
+        rt_kprintf("it6632x_rx_mute!\n");
+    else if (*(rt_uint8_t *)arg == IT6632X_RXMUTE_UNMUTE)
+        rt_kprintf("it6632x_rx_unmute!\n");
 }
 
 void it6632x(int argc, char **argv)
