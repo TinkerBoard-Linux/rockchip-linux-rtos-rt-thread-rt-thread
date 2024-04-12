@@ -65,7 +65,7 @@ def check_xip_addr(setting_file):
             if part_offset == vectors_address :
                 print(f"{elf_file} part_offset==vectors_address")
             else:
-                print(f"{elf_file} part_offset={part_offset}, xip_address={vectors_address}")
+                print(f"{elf_file} part_offset=0x{part_offset:x}, xip_address=0x{vectors_address:x}")
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
