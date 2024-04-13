@@ -941,14 +941,17 @@ static void it6632x_power_mode(it6632x_power_mode_t mode)
     }
     switch (mode)
     {
-    case    IT6632X_MODE_STANDBY:
+    case IT6632X_MODE_STANDBY:
         u8I2cChg |= SB_Standby();
         break;
-    case    IT6632X_MODE_POWER_ON:
+    case IT6632X_MODE_POWER_ON:
         u8I2cChg |= SB_PowerOn();
         break;
-    case    IT6632X_MODE_POWER_OFF:
+    case IT6632X_MODE_POWER_OFF:
         u8I2cChg |= SB_PowerOff();
+        break;
+    case IT6632X_MODE_PASSTHROUGH:
+        u8I2cChg |= SB_PassThrough();
         break;
     default:
         rt_kprintf("NoSupport\n");
@@ -965,6 +968,8 @@ static void it6632x_audio_path_select(it6632x_audio_path_t ado_path)
 {
     rt_uint8_t  u8I2cChg = 0;
     rt_uint8_t  u8Temp;
+    rt_uint8_t  no_config = 0;
+
     SB_I2C_Read(I2C_SYS_CHANGE, 1, &u8I2cChg);
 
     if (!g_u8IteRdy)
@@ -976,84 +981,85 @@ static void it6632x_audio_path_select(it6632x_audio_path_t ado_path)
     {
         switch (ado_path)
         {
-        case IT6632X_AUDIO_PATH_PASSTHROUGH:
-            u8I2cChg |= SB_PassThrough();
-            break;
         case IT6632X_AUDIO_PATH_HDMI_0:
-            rt_kprintf("HDMI 0 \n");
+            rt_kprintf("swith ado path to HDMI 0 \n");
             g_u8SbRxSel = I2C_HDMI_SELECT_R0 | I2C_HDMI_ADO_SEL_R0 | I2C_HDMI_SEL_W_CHG;
             SB_I2C_Write(I2C_SYS_RX_SEL, 1, &g_u8SbRxSel);
             if (g_u8SbAudioMode & I2C_MODE_TX_OUT_MASK)
             {
                 SB_STA_CHANGE(g_u8SbAudioMode, I2C_MODE_TX_OUT_MASK, I2C_MODE_TX_OUT_EN);
-                SB_I2C_Write(I2C_SYS_ADO_MODE, 1, &g_u8SbAudioMode);
             }
-            u8I2cChg |= I2C_UPD_SYS_SET;
             u8Temp = I2C_ADO_MUX_SEL_HDMI;
-            SB_I2C_Write(I2C_ADO_SEL, 1, &u8Temp);
-            u8I2cChg |= I2C_UPD_ADO_SET;
             break;
         case IT6632X_AUDIO_PATH_HDMI_1:
-            rt_kprintf("HDMI 1 \n");
+            rt_kprintf("swith ado path to HDMI 1 \n");
             g_u8SbRxSel = I2C_HDMI_SELECT_R1 | I2C_HDMI_ADO_SEL_R1 | I2C_HDMI_SEL_W_CHG;
             SB_I2C_Write(I2C_SYS_RX_SEL, 1, &g_u8SbRxSel);
             if (g_u8SbAudioMode & I2C_MODE_TX_OUT_MASK)
             {
                 SB_STA_CHANGE(g_u8SbAudioMode, I2C_MODE_TX_OUT_MASK, I2C_MODE_TX_OUT_EN);
-                SB_I2C_Write(I2C_SYS_ADO_MODE, 1, &g_u8SbAudioMode);
             }
-            u8I2cChg |= I2C_UPD_SYS_SET;
             u8Temp = I2C_ADO_MUX_SEL_HDMI;
-            SB_I2C_Write(I2C_ADO_SEL, 1, &u8Temp);
-            u8I2cChg |= I2C_UPD_ADO_SET;
             break;
         case IT6632X_AUDIO_PATH_HDMI_2:
-            rt_kprintf("HDMI 2 \n");
+            rt_kprintf("swith ado path to HDMI 2 \n");
             g_u8SbRxSel = I2C_HDMI_SELECT_R2 | I2C_HDMI_ADO_SEL_R2 | I2C_HDMI_SEL_W_CHG;
             SB_I2C_Write(I2C_SYS_RX_SEL, 1, &g_u8SbRxSel);
             if (g_u8SbAudioMode & I2C_MODE_TX_OUT_MASK)
             {
                 SB_STA_CHANGE(g_u8SbAudioMode, I2C_MODE_TX_OUT_MASK, I2C_MODE_TX_OUT_EN);
-                SB_I2C_Write(I2C_SYS_ADO_MODE, 1, &g_u8SbAudioMode);
             }
-            u8I2cChg |= I2C_UPD_SYS_SET;
             u8Temp = I2C_ADO_MUX_SEL_HDMI;
-            SB_I2C_Write(I2C_ADO_SEL, 1, &u8Temp);
-            u8I2cChg |= I2C_UPD_ADO_SET;
             break;
-        case IT6632X_AUDIO_PATH_ARC:
+        case IT6632X_AUDIO_PATH_ARC_EARC:
+            rt_kprintf("swith ado path to ARC/eARC\n");
             g_u8SbAudioMode |= I2C_MODE_ADO_SYS_EN | I2C_MODE_EARC_EN | I2C_MODE_CEC_EN; // 0x38;
-            SB_I2C_Write(I2C_SYS_ADO_MODE, 1, &g_u8SbAudioMode);
-            u8I2cChg |= I2C_UPD_SYS_SET;
             u8Temp = I2C_ADO_MUX_SEL_EARC;
-            SB_I2C_Write(I2C_ADO_SEL, 1, &u8Temp);
-            u8I2cChg |= I2C_UPD_ADO_SET;
-            rt_kprintf("ARC \n");
             break;
-        case IT6632X_AUDIO_PATH_BT:
-            rt_kprintf("Other/BT Mode \n");
+        case IT6632X_AUDIO_PATH_EXT_I2S1:
+            rt_kprintf("swith ado path to ext_i2s1\n");
+            u8Temp = I2C_ADO_MUX_SEL_EXT_I2S1;
+            g_u8SbAudioMode |= I2C_MODE_TX_OUT_DIS;
+            break;
+        case IT6632X_AUDIO_PATH_EXT_I2S2:
+            rt_kprintf("swith ado path to ext_i2s2\n");
             u8Temp = I2C_ADO_MUX_SEL_EXT_I2S2;
-            SB_I2C_Write(I2C_ADO_SEL, 1, &u8Temp);
-            u8I2cChg |= I2C_UPD_ADO_SET;
             g_u8SbAudioMode |= I2C_MODE_TX_OUT_DIS;
-            SB_I2C_Write(I2C_SYS_ADO_MODE, 1, &g_u8SbAudioMode);
-            u8I2cChg |= I2C_UPD_SYS_SET;
             break;
-        case IT6632X_AUDIO_PATH_SPDIF:
-            rt_kprintf("Other/BT Mode \n");
-            u8Temp = I2C_ADO_MUX_SEL_EXT_SPDIF1;
-            SB_I2C_Write(I2C_ADO_SEL, 1, &u8Temp);
-            u8I2cChg |= I2C_UPD_ADO_SET;
+        case IT6632X_AUDIO_PATH_EXT_I2S3:
+            rt_kprintf("swith ado path to ext_i2s3\n");
+            u8Temp = I2C_ADO_MUX_SEL_EXT_I2S3;
             g_u8SbAudioMode |= I2C_MODE_TX_OUT_DIS;
-            SB_I2C_Write(I2C_SYS_ADO_MODE, 1, &g_u8SbAudioMode);
-            u8I2cChg |= I2C_UPD_SYS_SET;
+            break;
+        case IT6632X_AUDIO_PATH_EXT_SPDIF1:
+            rt_kprintf("swith ado path to ext_spdif1\n");
+            u8Temp = I2C_ADO_MUX_SEL_EXT_SPDIF1;
+            g_u8SbAudioMode |= I2C_MODE_TX_OUT_DIS;
+            break;
+        case IT6632X_AUDIO_PATH_EXT_SPDIF2:
+            rt_kprintf("swith ado path to ext_spdif2\n");
+            u8Temp = I2C_ADO_MUX_SEL_EXT_SPDIF2;
+            g_u8SbAudioMode |= I2C_MODE_TX_OUT_DIS;
+            break;
+        case IT6632X_AUDIO_PATH_EXT_SPDIF3:
+            rt_kprintf("swith ado path to ext_spdif3\n");
+            u8Temp = I2C_ADO_MUX_SEL_EXT_SPDIF3;
+            g_u8SbAudioMode |= I2C_MODE_TX_OUT_DIS;
             break;
         default:
             rt_kprintf("NoSupport\n");
+            no_config = 1;
 #ifdef IT6632X_DEBUG
             SB_I2C_Dump();
 #endif
             break;
+        }
+
+        if (!no_config)
+        {
+            u8I2cChg |= (I2C_UPD_ADO_SET | I2C_UPD_SYS_SET);
+            SB_I2C_Write(I2C_SYS_ADO_MODE, 1, &g_u8SbAudioMode);
+            SB_I2C_Write(I2C_ADO_SEL, 1, &u8Temp);
         }
     }
     else
@@ -1062,6 +1068,60 @@ static void it6632x_audio_path_select(it6632x_audio_path_t ado_path)
     }
 
     SB_SysI2cChange(u8I2cChg);
+}
+
+static void it6632x_audio_path_get(rt_uint8_t *ado_path)
+{
+    rt_uint8_t data;
+
+    SB_I2C_Read(I2C_ADO_SEL, 1, &data);
+    switch (data & 0x0f)
+    {
+    case 0:
+        SB_I2C_Read(I2C_SYS_RX_SEL, 1, &data);
+        data = data >> 4;
+        if (data == 0)
+        {
+            *ado_path = IT6632X_AUDIO_PATH_HDMI_0;
+        }
+        else if (data == 1)
+        {
+            *ado_path = IT6632X_AUDIO_PATH_HDMI_1;
+        }
+        else if (data == 2)
+        {
+            *ado_path = IT6632X_AUDIO_PATH_HDMI_2;
+        }
+        else
+        {
+            *ado_path = IT6632X_AUDIO_PATH_UNKNOW;
+        }
+        break;
+    case 1:
+        *ado_path = IT6632X_AUDIO_PATH_ARC_EARC;
+        break;
+    case 2:
+        *ado_path = IT6632X_AUDIO_PATH_EXT_I2S1;
+        break;
+    case 3:
+        *ado_path = IT6632X_AUDIO_PATH_EXT_I2S2;
+        break;
+    case 4:
+        *ado_path = IT6632X_AUDIO_PATH_EXT_I2S3;
+        break;
+    case 5:
+        *ado_path = IT6632X_AUDIO_PATH_EXT_SPDIF1;
+        break;
+    case 6:
+        *ado_path = IT6632X_AUDIO_PATH_EXT_SPDIF2;
+        break;
+    case 7:
+        *ado_path = IT6632X_AUDIO_PATH_EXT_SPDIF3;
+        break;
+    default:
+        *ado_path = IT6632X_AUDIO_PATH_UNKNOW;
+        break;
+    }
 }
 
 static void it6632x_arc_volume_set(struct it6632x_volume_info *info)
@@ -1882,6 +1942,9 @@ static rt_err_t it6632x_control(rt_device_t dev, int cmd, void *args)
     case RT_IT6632X_CTRL_AUDIO_PATH_SELECT:
         it6632x_audio_path_select(*((rt_uint8_t *)args));
         break;
+    case RT_IT6632X_CTRL_AUDIO_PATH_GET:
+        it6632x_audio_path_get((rt_uint8_t *)args);
+        break;
     case RT_IT6632X_CTRL_ARC_VOL_SET:
         it6632x_arc_volume_set((struct it6632x_volume_info *)args);
         break;
@@ -2101,14 +2164,17 @@ static void it6632x_show_usage()
 {
     rt_kprintf("Usage: \n");
     rt_kprintf("it6632x dump           -dump status \n");
-    rt_kprintf("it6632x powermode <mode>          -set mode: 1:on 2:standby 3:off\n");
-    rt_kprintf("it6632x audiopath <path>          -select path: 1:passthrough 2:hdmi0 3:hdmi1 4:hdmi2 5:earc 6:bt 7:spdif\n");
+    rt_kprintf("it6632x powermode <mode>          -set mode: 1:standby 2:passthrough 3:on 4:off\n");
+    rt_kprintf("it6632x audiopath <path>          -select path: 1:hdmi0 2:hdmi1 3:hdmi2 4:arc/earc \n");
+    rt_kprintf("                                    5:ext_i2s1 6:ext_i2s2 7:ext_i2s3 8:ext_spdif1\n");
+    rt_kprintf("                                    9:ext_spdif2 10:ext_spdif3\n");
     rt_kprintf("it6632x arcvolset <vol> <mute>    -set vol and mute/unmute status:it6632x arcvolset 50 umute\n");
     rt_kprintf("it6632x arcvolget                 -get vol and mute/unmute status\n");
     rt_kprintf("it6632x audiosystem <enable>      -enable or disable audio system \n");
     rt_kprintf("it6632x earc <enable>             -enable or disable earc \n");
     rt_kprintf("it6632x cec <enable>              -enable or disable cec \n");
-    rt_kprintf("it6632x cecsend [cmd]...          -send cec cmd,\'it6632x cecsend 54 44 42\' means logic addr 0x54,cec cmd user ctl press_volumedown\n");
+    rt_kprintf("it6632x cecsend [cmd]...          -send cec cmd,\'it6632x cecsend 54 44 42\' means logic addr 0x54\n");
+    rt_kprintf("                                   cec cmd user ctl press_volumedown\n");
     rt_kprintf("it6632x txaudio <mute>            -mute or unmute tx audio \n");
     rt_kprintf("it6632x txvideo <mute>            -mute or unmute tx video \n");
     rt_kprintf("it6632x hdcprepeat <enable>       -enable or disable hdcp repeat\n");
@@ -2214,70 +2280,23 @@ void it6632x(int argc, char **argv)
     {
         if (!strcmp(argv[1], "powermode"))
         {
-            if (!strcmp(argv[2], "on"))
-            {
-                para = IT6632X_MODE_POWER_ON;
-                rt_device_control(it6632x_dev, RT_IT6632X_CTRL_POWER_MODE_SET, (void *)&para);
-            }
-            else if (!strcmp(argv[2], "off"))
-            {
-                para = IT6632X_MODE_POWER_OFF;
-                rt_device_control(it6632x_dev, RT_IT6632X_CTRL_POWER_MODE_SET, (void *)&para);
-            }
-            else if (!strcmp(argv[2], "standby"))
-            {
-                para = IT6632X_MODE_STANDBY;
-                rt_device_control(it6632x_dev, RT_IT6632X_CTRL_POWER_MODE_SET, (void *)&para);
-            }
-            else
+            para = strtol(argv[2], RT_NULL, 10);
+            if (para >= IT6632X_MODE_POWER_MAX)
             {
                 rt_kprintf("wrong usage, check your param \n", IT6632X_DEVICE_NAME);
                 goto out;
             }
+            rt_device_control(it6632x_dev, RT_IT6632X_CTRL_POWER_MODE_SET, (void *)&para);
         }
         else if (!strcmp(argv[1], "audiopath"))
         {
-            if (!strcmp(argv[2], "passthrough"))
-            {
-                para = IT6632X_AUDIO_PATH_PASSTHROUGH;
-                rt_device_control(it6632x_dev, RT_IT6632X_CTRL_AUDIO_PATH_SELECT, (void *)&para);
-            }
-            else if (!strcmp(argv[2], "hdmi0"))
-            {
-                para = IT6632X_AUDIO_PATH_HDMI_0;
-                rt_device_control(it6632x_dev, RT_IT6632X_CTRL_AUDIO_PATH_SELECT, (void *)&para);
-            }
-            else if (!strcmp(argv[2], "hdmi1"))
-            {
-                para = IT6632X_AUDIO_PATH_HDMI_1;
-                rt_device_control(it6632x_dev, RT_IT6632X_CTRL_AUDIO_PATH_SELECT, (void *)&para);
-            }
-            else if (!strcmp(argv[2], "hdmi2"))
-            {
-                para = IT6632X_AUDIO_PATH_HDMI_2;
-                rt_device_control(it6632x_dev, RT_IT6632X_CTRL_AUDIO_PATH_SELECT, (void *)&para);
-            }
-            else if (!strcmp(argv[2], "earc"))
-            {
-                para = IT6632X_AUDIO_PATH_ARC;
-                rt_device_control(it6632x_dev, RT_IT6632X_CTRL_AUDIO_PATH_SELECT, (void *)&para);
-            }
-            else if (!strcmp(argv[2], "bt"))
-            {
-                para = IT6632X_AUDIO_PATH_BT;
-                rt_device_control(it6632x_dev, RT_IT6632X_CTRL_AUDIO_PATH_SELECT, (void *)&para);
-            }
-            else if (!strcmp(argv[2], "spdif"))
-            {
-                para = IT6632X_AUDIO_PATH_SPDIF;
-                rt_device_control(it6632x_dev, RT_IT6632X_CTRL_AUDIO_PATH_SELECT, (void *)&para);
-            }
-            else
+            para = strtol(argv[2], RT_NULL, 10);
+            if (para >= IT6632X_AUDIO_PATH_MAX)
             {
                 rt_kprintf("wrong usage, check your param \n", IT6632X_DEVICE_NAME);
                 goto out;
             }
-
+            rt_device_control(it6632x_dev, RT_IT6632X_CTRL_AUDIO_PATH_SELECT, (void *)&para);
         }
         else if (!strcmp(argv[1], "audiosystem"))
         {
