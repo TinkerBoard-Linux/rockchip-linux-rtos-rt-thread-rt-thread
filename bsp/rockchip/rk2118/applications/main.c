@@ -39,20 +39,15 @@ void test_reg_read(void)
     }
 }
 
-static double g_double = 3.14;
 int main(void)
 {
-    rt_kprintf("delay 1s test start\n");
-    rt_thread_delay(1 * RT_TICK_PER_SECOND);
-    rt_kprintf("delay 1s test end\n");
-
     //test_reg_read();
 
-    __asm volatile("vldr d7, %0" : : "m"(g_double) :);
-    HAL_DelayMs(100);
     //tfm_ns_interface_init();
     //psa_framework_version();
-#ifdef RK2118_CPU_CORE1
+#ifdef RK2118_CPU_CORE0
+    rt_kprintf("this is cpu0\n");
+#else
     rt_kprintf("this is cpu1\n");
 #endif
     return 0;
