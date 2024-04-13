@@ -2067,11 +2067,13 @@ static int rt_hw_it6632x_init(void)
 
     /* before here, IOMUX must be initialized in board_xxxx.c*/
 
+#ifdef IT6632X_USE_RESET_PIN
     //reset
     rt_pin_mode(IT6632X_RST_PIN, PIN_MODE_OUTPUT);
     rt_pin_write(IT6632X_RST_PIN, PIN_HIGH);
     rt_thread_mdelay(10);
     rt_pin_write(IT6632X_RST_PIN, PIN_LOW);
+#endif
 
     //int pin
     rt_pin_mode(IT6632X_INT_PIN, PIN_MODE_INPUT_PULLUP);
