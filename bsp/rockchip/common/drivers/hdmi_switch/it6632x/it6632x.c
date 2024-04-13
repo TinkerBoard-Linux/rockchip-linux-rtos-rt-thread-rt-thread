@@ -1789,6 +1789,7 @@ static rt_err_t it6632x_unregister_cec_vol_change_change_hook(void)
     return RT_EOK;
 }
 
+#ifdef IT6632X_USE_RXMUTE_PIN
 static rt_err_t it6632x_register_rx_mute_hook(void (*hook)(void *arg))
 {
     g_it6632x_dev->rx_mute_hook = hook;
@@ -1800,6 +1801,7 @@ static rt_err_t it6632x_unregister_rx_mute_hook(void)
     g_it6632x_dev->rx_mute_hook = RT_NULL;
     return RT_EOK;
 }
+#endif
 
 static rt_err_t it6632x_write_regs(void *write_buf, rt_uint8_t write_len)
 {
@@ -1857,6 +1859,7 @@ static void irq_callback(void *args)
     rt_sem_release(dev->isr_sem);
 }
 
+#ifdef IT6632X_USE_RXMUTE_PIN
 static void rxmute_irq_callback(void *args)
 {
     it6632x_device_t *dev;
@@ -1865,6 +1868,7 @@ static void rxmute_irq_callback(void *args)
 
     rt_sem_release(dev->rx_mute_sem);
 }
+#endif
 
 static rt_err_t it6632x_control(rt_device_t dev, int cmd, void *args)
 {
@@ -1931,12 +1935,14 @@ static rt_err_t it6632x_control(rt_device_t dev, int cmd, void *args)
     case RT_IT6632X_CTRL_UNREGISTER_CEC_VOL_CHANGE_HOOK:
         it6632x_unregister_cec_vol_change_change_hook();
         break;
+#ifdef IT6632X_USE_RXMUTE_PIN
     case RT_IT6632X_CTRL_REGISTER_RX_MUTE_HOOK:
         it6632x_register_rx_mute_hook(args);
         break;
     case RT_IT6632X_CTRL_UNREGISTER_RX_MUTE_HOOK:
         it6632x_unregister_rx_mute_hook();
         break;
+#endif
     default:
         rt_kprintf("Unsupport cmd: %d\n", cmd);
         break;
@@ -1990,6 +1996,7 @@ static void it6632x_thread(void *arg)
     }
 }
 
+#ifdef IT6632X_USE_RXMUTE_PIN
 static void it6632x_rx_mute_thread(void *arg)
 {
     it6632x_device_t *dev = (it6632x_device_t *)arg;
@@ -2012,6 +2019,7 @@ static void it6632x_rx_mute_thread(void *arg)
             g_it6632x_dev->rx_mute_hook((void *)&mute_state);
     }
 }
+#endif
 
 static int rt_hw_it6632x_init(void)
 {
@@ -2028,18 +2036,22 @@ static int rt_hw_it6632x_init(void)
     dev->isr_sem = rt_sem_create("6632x_isr_sem", 0, RT_IPC_FLAG_PRIO);
     RT_ASSERT(dev->isr_sem);
 
-    dev->rx_mute_sem = rt_sem_create("6632x_isr_sem", 0, RT_IPC_FLAG_PRIO);
+#ifdef IT6632X_USE_RXMUTE_PIN
+    dev->rx_mute_sem = rt_sem_create("it6632x_rxmute_sem", 0, RT_IPC_FLAG_PRIO);
     RT_ASSERT(dev->rx_mute_sem);
+#endif
 
     dev->int_tid = rt_thread_create("it6632x", it6632x_thread, dev,
                                     IT6632x_THREAD_STACK_SIZE, IT6632x_THREAD_PRIORITY, 10);
     RT_ASSERT(dev->int_tid != RT_NULL);
     rt_thread_startup(dev->int_tid);
 
+#ifdef IT6632X_USE_RXMUTE_PIN
     dev->rxmute_tid = rt_thread_create("rx_mute", it6632x_rx_mute_thread, dev,
                                        IT6632x_THREAD_STACK_SIZE, IT6632x_THREAD_PRIORITY, 10);
     RT_ASSERT(dev->rxmute_tid != RT_NULL);
     rt_thread_startup(dev->rxmute_tid);
+#endif
 
     /* i2c interface bus */
     struct rt_i2c_client *i2c_client;
@@ -2066,10 +2078,12 @@ static int rt_hw_it6632x_init(void)
     rt_pin_attach_irq(IT6632X_INT_PIN, PIN_IRQ_MODE_FALLING, irq_callback, (void *)dev);
     rt_pin_irq_enable(IT6632X_INT_PIN, PIN_IRQ_ENABLE);
 
+#ifdef IT6632X_USE_RXMUTE_PIN
     //rx mute pin
     rt_pin_mode(IT6632X_RXMUTE_PIN, PIN_MODE_INPUT);
     rt_pin_attach_irq(IT6632X_RXMUTE_PIN, PIN_IRQ_MODE_RISING_FALLING, rxmute_irq_callback, (void *)dev);
     rt_pin_irq_enable(IT6632X_RXMUTE_PIN, PIN_IRQ_ENABLE);
+#endif
 
     ret = rt_device_it6632x_register(dev, IT6632X_DEVICE_NAME, RT_NULL);
     RT_ASSERT(ret == RT_EOK);
@@ -2126,6 +2140,7 @@ static void it6632x_cec_vol_change_test_hook(void *arg)
         rt_kprintf("cec vol down\n");
 }
 
+#ifdef IT6632X_USE_RXMUTE_PIN
 static void it6632x_rx_mute_hook(void *arg)
 {
     rt_kprintf("it6632x_rx_mute_hook!\n");
@@ -2135,6 +2150,7 @@ static void it6632x_rx_mute_hook(void *arg)
     else if (*(rt_uint8_t *)arg == IT6632X_RXMUTE_UNMUTE)
         rt_kprintf("it6632x_rx_unmute!\n");
 }
+#endif
 
 void it6632x(int argc, char **argv)
 {
@@ -2382,7 +2398,9 @@ void it6632x(int argc, char **argv)
             }
             else if (para == 3)
             {
+#ifdef IT6632X_USE_RXMUTE_PIN
                 rt_device_control(it6632x_dev, RT_IT6632X_CTRL_REGISTER_RX_MUTE_HOOK, (void *)&it6632x_rx_mute_hook);
+#endif
             }
             else
             {
