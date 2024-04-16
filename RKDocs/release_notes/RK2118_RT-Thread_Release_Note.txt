@@ -1,0 +1,9 @@
+===========RK2118_RT-Thread SDK Release Note===========
+
+[RK2118_RT-Thead_SDK_Beta_V0.1.0_20240415.xml change log]
+1. soundbar demo: mp3 dec, howling suppression + mixer, vocal seperation
+2. rkstudio: real-time sound adjustment support
+3. driver: FIR/IIR/ASRC/USB Host support, DSP clock adjust
+4. rock2: demux, ai, ao, af, codec (mp3) 
+5. SRAM/DDR memory layout configuration method update
+6. soundbar rkplayer: udisk, remote control, hdmi repeater, bt
