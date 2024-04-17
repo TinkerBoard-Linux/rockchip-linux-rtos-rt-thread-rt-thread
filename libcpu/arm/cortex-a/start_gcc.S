@@ -127,15 +127,49 @@ normal_setup:
     /* setup stack */
     bl      stack_setup
 
-    /* clear .bss */
-    mov     r0,#0                   /* get a zero                       */
-    ldr     r1,=__bss_start         /* bss start                        */
-    ldr     r2,=__bss_end           /* bss end                          */
+    ldr      r4, =__copy_table_start__
+    ldr      r5, =__copy_table_end__
 
-bss_loop:
-    cmp     r1,r2                   /* check if data to clear           */
-    strlo   r0,[r1],#4              /* clear 4 bytes                    */
-    blo     bss_loop                /* loop until done                  */
+.L_loop0:
+    cmp      r4, r5
+    bge      .L_loop0_done
+    ldr      r1, [r4]                /* source address */
+    ldr      r2, [r4, #4]            /* destination address */
+    ldr      r3, [r4, #8]            /* word count */
+    lsls     r3, r3, #2              /* byte count */
+
+.L_loop0_0:
+    subs     r3, #4
+    ittt     ge
+    ldrge    r0, [r1, r3]
+    strge    r0, [r2, r3]
+    bge      .L_loop0_0
+
+    adds     r4, #12
+    b        .L_loop0
+
+.L_loop0_done:
+    /* clear .bss */
+    ldr      r3, =__zero_table_start__
+    ldr      r4, =__zero_table_end__
+
+.L_loop2:
+    cmp      r3, r4
+    bge      .L_loop2_done
+    ldr      r1, [r3]
+    ldr      r2, [r3, #4]
+    lsls     r2, r2, #2
+    movs     r0, #0
+
+.L_loop2_0:
+    subs     r2, #4
+    itt      ge
+    strge    r0, [r1, r2]
+    bge      .L_loop2_0
+
+    adds     r3, #8
+    b        .L_loop2
+.L_loop2_done:
 
 #ifdef RT_USING_SMP
     mrc p15, 0, r1, c1, c0, 1
