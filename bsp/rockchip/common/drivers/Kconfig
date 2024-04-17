@@ -729,7 +729,7 @@ endmenu
 menu "RT-Thread rockchip RPMSG driver"
 config RT_USING_RPMSG_LITE
     bool "Enable RPMSG LITE"
-    depends on BSP_RK3308 || BSP_RK3568 || BSP_RK3562
+    depends on BSP_RK3308 || BSP_RK3568 || BSP_RK3562 || BSP_RK3588
     default n
 
     if RT_USING_RPMSG_LITE
