@@ -78,6 +78,13 @@ void uart2_iomux_config(void)
                         GPIO_PIN_B5,   // UART2_RX_AUDIO_DEBUG
                         RMIO_UART2_RX_RM1);
 }
+void spdif_rx1_iomux_config(void)
+{
+    HAL_PINCTRL_SetRMIO(GPIO_BANK4,
+                        GPIO_PIN_D0,   // SPDIF_RX1
+                        RMIO_SPDIF_RX1);
+}
+
 
 void rt_hw_iomux_config(void)
 {
@@ -97,6 +104,7 @@ void rt_hw_iomux_config(void)
     spi0_m1_iomux_config();
     sai1_iomux_config();
     sai2_iomux_config();
+    spdif_rx1_iomux_config();
 }
 
 /** @} */  // IOMUX_Public_Functions

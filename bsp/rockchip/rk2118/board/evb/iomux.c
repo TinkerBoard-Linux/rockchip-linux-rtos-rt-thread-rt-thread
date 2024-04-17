@@ -278,6 +278,7 @@ void rt_hw_iomux_config(void)
 #else
     usb_host_iomux_config();
 #endif
+    uart2_iomux_config();
 }
 
 /** @} */  // IOMUX_Public_Functions
