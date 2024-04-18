@@ -24,6 +24,13 @@
 #include "drv_clock.h"
 #include "hal_base.h"
 
+#define RK_REMOTE_DEBUG 0
+#if RK_REMOTE_DEBUG
+#define REMOTE_DBG(...)     rt_kprintf(__VA_ARGS__)
+#else
+#define REMOTE_DBG(...)
+#endif
+
 static rt_sem_t remotectl_sem = RT_NULL;
 static struct rt_device_pwm *pwm_capture_dev;
 static struct rt_remotectl_drvdata *remote_data;
@@ -132,7 +139,7 @@ static void remotectl_parse_pwm_data(uint32_t data)
         {
             if (remote_data->code == 0xff)
             {
-                rt_kprintf("remote ctl get ir keycode 0x%0x down\n", remote_data->key.keycode);
+                REMOTE_DBG("remote ctl get ir keycode 0x%0x down\n", remote_data->key.keycode);
                 remote_data->key.press = 1;
                 rt_sem_release(remotectl_sem);
                 remote_data->count = 0;
@@ -197,7 +204,7 @@ static void remotectl_parse_pwm_data(uint32_t data)
             }
             else
             {
-                //rt_kprintf("remote ctl get ir repeat keycode %0x \n", remote_data->key.keycode);
+                REMOTE_DBG("remote ctl get ir repeat keycode %0x \n", remote_data->key.keycode);
                 if (remote_data->key.press)
                     rt_sem_release(remotectl_sem);
             }
@@ -229,6 +236,8 @@ static rt_err_t remotectl_control(rt_device_t dev, int cmd, void *args)
     case RT_REMOTECTL_GET_INFO:
         if (rt_sem_take(remotectl_sem, RT_WAITING_FOREVER) == RT_EOK)
         {
+            if (!remote_data->key.press)
+                REMOTE_DBG("remote ctl get ir keycode 0x%0x up\n", remote_data->key.keycode);
             *(struct rt_remotectl_keycode *)args = remote_data->key;
             return RT_EOK;
         }
