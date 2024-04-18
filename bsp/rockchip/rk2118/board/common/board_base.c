@@ -16,6 +16,7 @@
 #include "drv_uart.h"
 #include "drv_cache.h"
 #include "drv_heap.h"
+#include "drv_otp.h"
 #include "drv_thermal.h"
 #include "hal_base.h"
 #include "hal_bsp.h"
@@ -59,6 +60,16 @@ RT_WEAK const struct uart_board g_uart1_board =
     .name = "uart1",
 };
 #endif /* RT_USING_UART1 */
+
+#if defined(RT_USING_OTP)
+RT_WEAK const struct otp_data g_otp_data =
+{
+    .reg = OTPC,
+    .size = 0x80,
+    .nbytes = 0x2,
+    .ns_offset = 0x1c0,
+};
+#endif /* RT_USING_OTP */
 
 RT_WEAK void systick_isr(int vector, void *param)
 {
