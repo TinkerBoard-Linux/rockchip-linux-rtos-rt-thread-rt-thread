@@ -22,14 +22,16 @@ __STACK_SIZE = 0x00000400;
  */
 __STACKSEAL_SIZE = 0;
 
+__FW_MAGIC_SIZE = 0x800;
+
 MEMORY
 {
 #if defined(RK2118_CPU_CORE0)
-  CODE (rx) : ORIGIN = XIP_CPU0_RTT_BASE,  LENGTH = XIP_CPU0_RTT_SIZE
+  CODE (rx) : ORIGIN = XIP_CPU0_RTT_BASE + __FW_MAGIC_SIZE,  LENGTH = XIP_CPU0_RTT_SIZE - __FW_MAGIC_SIZE
   DATA (rw) : ORIGIN = SRAM_CPU0_RTT_BASE,  LENGTH = SRAM_CPU0_RTT_SIZE
   DDR (rwx) : ORIGIN = DRAM_CPU0_RTT_BASE,  LENGTH = DRAM_CPU0_RTT_SIZE
 #elif defined(RK2118_CPU_CORE1)
-  CODE (rx) : ORIGIN = XIP_CPU1_RTT_BASE,  LENGTH = XIP_CPU1_RTT_SIZE
+  CODE (rx) : ORIGIN = XIP_CPU1_RTT_BASE + __FW_MAGIC_SIZE,  LENGTH = XIP_CPU1_RTT_SIZE - __FW_MAGIC_SIZE
   DATA (rw) : ORIGIN = DRAM_CPU1_RTT_BASE,  LENGTH = DRAM_CPU1_RTT_SIZE
   DDR (rwx) : ORIGIN = DRAM_CPU1_RTT_BASE + DRAM_CPU1_RTT_SIZE,  LENGTH = 0
 #else
@@ -293,15 +295,17 @@ SECTIONS
     } > SRAM_U
 #endif
 
+#ifdef RK2118_CPU_CORE0
     DDR_BSS_DST = ADDR(.ddr.bss) + SIZEOF(.ddr.bss);
     .ddr.heap DDR_BSS_DST (NOLOAD) :
     {
         . = ALIGN(32);
-        PROVIDE(__ddr_heap_begin__ = .);
+        PROVIDE(__heap_begin__ = .);
         . = ORIGIN(DDR) + LENGTH(DDR);
-        PROVIDE(__ddr_heap_end__ = .);
+        PROVIDE(__heap_end__ = .);
         . = ALIGN(32);
     }
+#endif
 
    PROVIDE(__code_start__ = ORIGIN(CODE));
    PROVIDE(__code_end__ = ORIGIN(CODE) + LENGTH(CODE) - 1);
@@ -310,8 +314,8 @@ SECTIONS
    PROVIDE(__device_start__ = 0x50000000);
    PROVIDE(__device_end__ = 0x50E00000 - 1);
 #ifdef RK2118_CPU_CORE0
-   PROVIDE(__ddr_start__ = ORIGIN(DDR));
-   PROVIDE(__ddr_end__ = ORIGIN(DDR) + LENGTH(DDR) - 1);
+   PROVIDE(__ext_mem_start__ = ORIGIN(DDR));
+   PROVIDE(__ext_mem_end__ = ORIGIN(DDR) + LENGTH(DDR) - 1);
 #endif
    PROVIDE(__large_heap_start__ = DRAM_NPU_BASE);
    PROVIDE(__large_heap_end__ = DRAM_NPU_BASE + DRAM_NPU_SIZE - 1);

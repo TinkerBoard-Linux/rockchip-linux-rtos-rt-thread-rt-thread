@@ -39,6 +39,11 @@ if [ ! -d "board/$1" ]; then
 fi
 
 BOARD_NAME=$1
+if [ "$BOARD_NAME" == "evb" ]; then
+    export RTT_BUILD_XIP=N
+else
+    export RTT_BUILD_XIP=Y
+fi
 DEFCONFIG_PATH0="board/${BOARD_NAME}/defconfig"
 SETTING_INI_PATH0="board/${BOARD_NAME}/setting.ini"
 DEFCONFIG_PATH1="board/${BOARD_NAME}/cpu1_defconfig"

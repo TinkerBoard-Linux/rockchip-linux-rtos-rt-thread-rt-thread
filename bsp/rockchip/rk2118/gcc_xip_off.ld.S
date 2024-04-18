@@ -5,32 +5,11 @@
 
 #include "rtconfig.h"
 
-/*---------------------- Flash Configuration ----------------------------------
-  <h> Flash Configuration
-    <o0> Flash Base Address <0x0-0xFFFFFFFF:8>
-    <o1> Flash Size (in Bytes) <0x0-0xFFFFFFFF:8>
-  </h>
-  -----------------------------------------------------------------------------*/
-__FLASH_BASE = 0x11000000;
-__FLASH_SIZE = 0x00800000;
-
-/*--------------------- Embedded RAM Configuration ----------------------------
-  <h> RAM Configuration
-    <o0> RAM Base Address    <0x0-0xFFFFFFFF:8>
-    <o1> RAM Size (in Bytes) <0x0-0xFFFFFFFF:8>
-  </h>
- -----------------------------------------------------------------------------*/
-__SRAM_BASE = 0x10200000;
-__SRAM_SIZE = 0x00100000;
-
-/*--------------------- External DRAM Configuration ----------------------------
-  <h> RAM Configuration
-    <o0> Hyper RAM Base Address    <0x0-0xFFFFFFFF:8>
-    <o1> Hyper RAM Size (in Bytes) <0x0-0xFFFFFFFF:8>
-  </h>
- -----------------------------------------------------------------------------*/
-__DRAM_BASE = 0xa0000000;
-__DRAM_SIZE = 0x04000000;
+#ifdef HIFI4_PROJECT_MEM_LAYOUT_FILE
+#include HIFI4_PROJECT_MEM_LAYOUT_FILE
+#else
+#include "default_mem_layout.h"
+#endif
 
 /*--------------------- Stack / Heap Configuration ----------------------------
   <h> Stack / Heap Configuration
@@ -39,60 +18,44 @@ __DRAM_SIZE = 0x04000000;
   -----------------------------------------------------------------------------*/
 __STACK_SIZE = 0x00000400;
 
-/*
- *-------------------- <<< end of configuration section >>> -------------------
- */
-
-#ifdef RT_USING_UNCACHE_HEAP
-/* Uncachable memory size
-*/
-__UNCACHE_HEAP_SIZE = 0x8000;
-#else
-__UNCACHE_HEAP_SIZE = 0x0;
-#endif
-__SRAM_SIZE = __SRAM_SIZE - __UNCACHE_HEAP_SIZE;
-__UNCACHE_HEAP_BASE = __SRAM_BASE + __SRAM_SIZE;
-
 /* ARMv8-M stack sealing:
    to use ARMv8-M stack sealing set __STACKSEAL_SIZE to 8 otherwise keep 0
  */
 __STACKSEAL_SIZE = 0;
 
-/* UNSECURE_OFFSET: For cpu running in unsecure state
-*/
-__UNSECURE_OFFSET = 0x20000;
-__SRAM_I_BASE = __SRAM_BASE + __UNSECURE_OFFSET;
-__SRAM_I_SIZE = 0x70000;
-__SRAM_D_BASE = __SRAM_I_BASE + __SRAM_I_SIZE + 0x20000000;
-__SRAM_D_SIZE = 0x70000;
-
-__DRAM_I_BASE = __DRAM_BASE + __UNSECURE_OFFSET;
-__DRAM_I_SIZE = 0x20000;
-__DRAM_D_BASE = __DRAM_I_BASE + __DRAM_I_SIZE;
-__DRAM_D_SIZE = 0x20000;
+__FW_MAGIC_LEN = 0x200;
 
 MEMORY
 {
 #if defined(RK2118_CPU_CORE0)
-  CODE (rx) : ORIGIN = __SRAM_I_BASE,  LENGTH = __SRAM_I_SIZE
-  DATA (rw) : ORIGIN = __SRAM_D_BASE,  LENGTH = __SRAM_D_SIZE
+  DDR (rwx) : ORIGIN = DRAM_CPU0_RTT_BASE,  LENGTH = DRAM_CPU0_RTT_SIZE
 #elif defined(RK2118_CPU_CORE1)
-  CODE (rx) : ORIGIN = __DRAM_I_BASE,  LENGTH = __DRAM_I_SIZE
-  DATA (rw) : ORIGIN = __DRAM_D_BASE,  LENGTH = __DRAM_D_SIZE
+  DDR (rwx) : ORIGIN = DRAM_CPU1_RTT_BASE,  LENGTH = DRAM_CPU1_RTT_SIZE
 #else
   #error "must select core0 or core1 in menuconfig"
 #endif
 #ifdef RT_USING_UNCACHE_HEAP
-  SRAM_U (rw)  : ORIGIN = __UNCACHE_HEAP_BASE, LENGTH = __UNCACHE_HEAP_SIZE
+  MEM_U (rw) : ORIGIN = UNCACHE_HEAP_BASE, LENGTH = UNCACHE_HEAP_SIZE
 #endif
 }
 
 SECTIONS
 {
+    _scode = ORIGIN(DDR);
+    .vectors :
+    {
+        . = ALIGN(4);
+        PROVIDE(__vector_remap__ = .);
+        __ISR_Vector_start__ = .;
+        KEEP(*(.vectors))               /* vector table */
+        __ISR_Vector_end__ = .;
+        *startup_rk2118.o (.text .text.*)
+        . = ALIGN(4);
+    } > DDR
+
     .text :
     {
-        PROVIDE(__vector_remap__ = .);
-        KEEP(*(.vectors))
+        . = ALIGN(4);
         PROVIDE(_stext = .);
         KEEP(*(.text.entrypoint))       /* The entry point */
         *(.text)                        /* remaining code */
@@ -126,20 +89,20 @@ SECTIONS
 
         . = ALIGN(32);
         PROVIDE(_etext = .);
-    } > CODE
+    } > DDR
 
     __exidx_start = .;
     .ARM.exidx   :
     {
         *(.ARM.exidx* .gnu.linkonce.armexidx.*)
-    } > CODE
+    } > DDR
     __exidx_end = .;
 
     __rodata_start = .;
     .rodata   :
     {
         *(.rodata) *(.rodata.*)
-    } > CODE
+    } > DDR
     __rodata_end = .;
 
     .zero.table :
@@ -149,7 +112,7 @@ SECTIONS
         LONG (ADDR(.bss))
         LONG (SIZEOF(.bss) / 4)
         __zero_table_end__ = .;
-    } > CODE
+    } > DDR
 
     .copy.table :
     {
@@ -159,7 +122,7 @@ SECTIONS
         LONG (ADDR(.data))
         LONG (SIZEOF(.data) / 4)
         __copy_table_end__ = .;
-    } > CODE
+    } > DDR
 
     . = ALIGN(16);
 
@@ -169,7 +132,7 @@ SECTIONS
         KEEP(*(SORT(.ctors.*)))
         KEEP(*(.ctors))
         PROVIDE(__ctors_end__ = .);
-    } > CODE
+    } > DDR
 
     .dtors :
     {
@@ -177,9 +140,10 @@ SECTIONS
         KEEP(*(SORT(.dtors.*)))
         KEEP(*(.dtors))
         PROVIDE(__dtors_end__ = .);
-    } > CODE
+    } > DDR
 
     . = ALIGN(32);
+     _ecode = .;
 
     .data :
     {
@@ -187,7 +151,7 @@ SECTIONS
         *(.data.*)
 
         . = ALIGN(16);
-    } > DATA AT > CODE
+    } > DDR
 
     . = ALIGN(16);
 
@@ -200,18 +164,18 @@ SECTIONS
         *(COMMON)
         . = ALIGN(16);
         PROVIDE(__bss_end__ = .);
-    } > DATA
+    } > DDR
 
     .heap :
     {
         . = ALIGN(32);
         PROVIDE(__heap_begin__ = .);
-        . = ORIGIN(DATA) + LENGTH(DATA) - __STACK_SIZE - __STACKSEAL_SIZE;
+        . = ORIGIN(DDR) + LENGTH(DDR) - __STACK_SIZE - __STACKSEAL_SIZE;
         PROVIDE(__heap_end__ = .);
         . = ALIGN(32);
-    } > DATA
+    } > DDR
 
-   .stack (ORIGIN(DATA) + LENGTH(DATA) - __STACK_SIZE - __STACKSEAL_SIZE) (COPY) :
+   .stack (ORIGIN(DDR) + LENGTH(DDR) - __STACK_SIZE - __STACKSEAL_SIZE) (COPY) :
    {
         . = ALIGN(32);
         __StackLimit = .;
@@ -221,7 +185,7 @@ SECTIONS
         PROVIDE(__stack = __StackTop);
         PROVIDE(_sstack = __StackLimit);
         PROVIDE(_estack = __StackTop);
-    } > DATA
+    } > DDR
 
 #ifdef RT_USING_UNCACHE_HEAP
     .uncache.heap (NOLOAD) :
@@ -231,13 +195,23 @@ SECTIONS
         . = . + __UNCACHE_HEAP_SIZE;
         PROVIDE(__uncache_heap_end__ = .);
         . = ALIGN(__UNCACHE_HEAP_SIZE);
-    } > SRAM_U
+    } > MEM_U
 #endif
 
-   PROVIDE(__code_start__ = ORIGIN(CODE));
-   PROVIDE(__code_end__ = ORIGIN(CODE) + LENGTH(CODE) - 1);
-   PROVIDE(__data_start__ = ORIGIN(DATA));
-   PROVIDE(__data_end__ = ORIGIN(DATA) + LENGTH(DATA) - 1);
+   PROVIDE(__code_start__ = _scode);
+   PROVIDE(__code_end__ = _ecode - 1);
+   PROVIDE(__data_start__ = _ecode);
+   PROVIDE(__data_end__ = ORIGIN(DDR) + LENGTH(DDR) - 1);
    PROVIDE(__device_start__ = 0x50000000);
    PROVIDE(__device_end__ = 0x50E00000 - 1);
+#ifdef RK2118_CPU_CORE0
+   PROVIDE(__ext_mem_start__ = SRAM_CPU0_RTT_BASE);
+   PROVIDE(__ext_mem_end__ = SRAM_CPU0_RTT_BASE + SRAM_CPU0_RTT_SIZE - 1);
+#endif
+   PROVIDE(__large_heap_start__ = DRAM_NPU_BASE);
+   PROVIDE(__large_heap_end__ = DRAM_NPU_BASE + DRAM_NPU_SIZE - 1);
+#ifdef RK2118_CPU_CORE0
+   PROVIDE(__spi2apb_buffer_start__ = SRAM_SPI2APB_BASE);
+   PROVIDE(__spi2apb_buffer_end__ = SRAM_SPI2APB_BASE + SRAM_SPI2APB_SIZE - 1);
+#endif
 }

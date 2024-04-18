@@ -78,8 +78,8 @@ extern const rt_uint32_t __data_start__[];
 extern const rt_uint32_t __data_end__[];
 extern const rt_uint32_t __device_start__[];
 extern const rt_uint32_t __device_end__[];
-extern const rt_uint32_t __ddr_start__[];
-extern const rt_uint32_t __ddr_end__[];
+extern const rt_uint32_t __ext_mem_start__[];
+extern const rt_uint32_t __ext_mem_end__[];
 #ifdef RT_USING_UNCACHE_HEAP
 extern const rt_uint32_t __uncache_heap_start__[];
 extern const rt_uint32_t __uncache_heap_end__[];
@@ -89,7 +89,7 @@ extern const rt_uint32_t __spi2apb_buffer_end__[];
 RT_WEAK void mpu_init(void)
 {
     /* text section: non shared, ro, np, exec, cachable */
-    ARM_MPU_SetRegion(0, ARM_MPU_RBAR((rt_uint32_t)__code_start__, 0U, 1U, 1U, 0U), ARM_MPU_RLAR((rt_uint32_t)__code_end__, 0U));
+    ARM_MPU_SetRegion(0, ARM_MPU_RBAR((rt_uint32_t)__code_start__, 0U, 0U, 1U, 0U), ARM_MPU_RLAR((rt_uint32_t)__code_end__, 0U));
     /* data section: non shared, rw, np, exec, cachable */
     ARM_MPU_SetRegion(1, ARM_MPU_RBAR((rt_uint32_t)__data_start__, 0U, 0U, 1U, 0U), ARM_MPU_RLAR((rt_uint32_t)__data_end__, 1U));
     /* device section: shared, rw, np, xn */
@@ -109,7 +109,7 @@ RT_WEAK void mpu_init(void)
 #endif
 #ifdef RK2118_CPU_CORE0
     /* ddr section: non shared, rw, np, exec, cachable */
-    ARM_MPU_SetRegion(4, ARM_MPU_RBAR((rt_uint32_t)__ddr_start__, 0U, 0U, 1U, 0U), ARM_MPU_RLAR((rt_uint32_t)__ddr_end__, 4U));
+    ARM_MPU_SetRegion(4, ARM_MPU_RBAR((rt_uint32_t)__ext_mem_start__, 0U, 0U, 1U, 0U), ARM_MPU_RLAR((rt_uint32_t)__ext_mem_end__, 4U));
     ARM_MPU_SetMemAttr(4, ARM_MPU_ATTR(ARM_MPU_ATTR_MEMORY_(1, 1, 1, 0), ARM_MPU_ATTR_MEMORY_(1, 1, 1, 0)));
     /* spi2adb buffer: non shared, rw, np, exec, cachable */
     ARM_MPU_SetRegion(5, ARM_MPU_RBAR((rt_uint32_t)__spi2apb_buffer_start__, 0U, 0U, 1U, 0U), ARM_MPU_RLAR((rt_uint32_t)__spi2apb_buffer_end__, 5U));
