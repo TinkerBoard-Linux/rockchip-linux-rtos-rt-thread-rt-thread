@@ -62,6 +62,8 @@ void remote_control(void *args)
         {
             if (key.press == 1)
                 count++;
+            if (count == 1 && key.press == 1)
+                rt_kprintf("remotectl get ir keycode 0x%0x down\n", key.keycode);
             if (key.keycode == 0xcb && key.press == 1)                    //play key long press
             {
                 if (count == 1)
@@ -76,7 +78,7 @@ void remote_control(void *args)
                 {
                     rt_timer_delete(ir_timer);
                 }
-                rt_kprintf("remote ctl get ir keycode 0x%0x up\n", key.keycode);
+                rt_kprintf("remotectl get ir keycode 0x%0x up\n", key.keycode);
                 count = 0;
             }
         }
