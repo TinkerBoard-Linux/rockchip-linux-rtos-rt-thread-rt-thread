@@ -74,6 +74,10 @@
 #define HAL_I2STDM_MODULE_ENABLED
 #endif
 
+#ifdef RT_USING_OTP
+#define HAL_OTP_MODULE_ENABLED
+#endif
+
 #ifdef RT_USING_PDM
 #define HAL_PDM_MODULE_ENABLED
 #endif
