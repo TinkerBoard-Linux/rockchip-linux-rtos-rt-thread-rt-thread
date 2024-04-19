@@ -355,8 +355,13 @@ INIT_APP_EXPORT(rpmsg_remote_test);
 #define REMOTE_ID_3 ((uint32_t)3)
 
 // define endpoint id for test
+#ifdef HAL_AP_CORE
 #define RPMSG_RTT_REMOTE_TEST3_EPT_ID 0x3003U
 #define RPMSG_RTT_REMOTE_TEST_EPT3_NAME "rpmsg-ap3-ch0"
+#else
+#define RPMSG_RTT_REMOTE_TEST3_EPT_ID 0x3004U
+#define RPMSG_RTT_REMOTE_TEST_EPT3_NAME "rpmsg-mcu0-test"
+#endif
 
 #define RPMSG_RTT_TEST_MSG "Rockchip rpmsg linux test!"
 
@@ -399,9 +404,11 @@ rpmsg_ns_new_ept_cb rpmsg_ns_cb(uint32_t new_ept, const char *new_ept_name, uint
     uint32_t cpu_id;
     char ept_name[RL_NS_NAME_SIZE];
 
+#ifdef HAL_AP_CORE
     cpu_id = HAL_CPU_TOPOLOGY_GetCurrentCpuId();
-    strncpy(ept_name, new_ept_name, RL_NS_NAME_SIZE);
     printf("rpmsg remote: name service callback cpu_id-%ld\n", cpu_id);
+#endif
+    strncpy(ept_name, new_ept_name, RL_NS_NAME_SIZE);
     printf("rpmsg remote: new_ept-0x%lx name-%s\n", new_ept, ept_name);
 }
 
@@ -419,9 +426,12 @@ static void rpmsg_linux_test(void)
 
     rpmsg_share_mem_check();
     master_id = MASTER_ID;
+#ifdef HAL_AP_CORE
     remote_id = HAL_CPU_TOPOLOGY_GetCurrentCpuId();
     rt_kprintf("rpmsg remote: remote core cpu_id-%ld\n", remote_id);
-    rt_kprintf("rpmsg remote: shmem_base-0x%lx shmem_end-%lx\n", RPMSG_LINUX_MEM_BASE, RPMSG_LINUX_MEM_END);
+#else
+    remote_id = 4;
+#endif
 
     info = malloc(sizeof(struct rpmsg_info_t));
     if (info == NULL)
@@ -442,6 +452,7 @@ static void rpmsg_linux_test(void)
         }
     }
 
+    rt_kprintf("rpmsg remote: shmem_base-0x%lx shmem_end-%lx\n", RPMSG_LINUX_MEM_BASE, RPMSG_LINUX_MEM_END);
     info->instance = rpmsg_lite_remote_init((void *)RPMSG_LINUX_MEM_BASE, RL_PLATFORM_SET_LINK_ID(master_id, remote_id), RL_NO_FLAGS);
     rpmsg_lite_wait_for_link_up(info->instance, 10U);
     rt_kprintf("rpmsg remote: link up! link_id-0x%lx\n", info->instance->link_id);

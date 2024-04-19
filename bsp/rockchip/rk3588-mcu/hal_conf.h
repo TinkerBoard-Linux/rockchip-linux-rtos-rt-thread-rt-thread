@@ -17,7 +17,7 @@
 
 /* Cache maintain need the decoded addr, it must be matched with pre-loader */
 #if defined(RKMCU_RK3588_PMU)
-#define HAL_CACHE_DECODED_ADDR_BASE          0x200000
+#define HAL_CACHE_DECODED_ADDR_BASE          0x07b00000
 #elif defined(RKMCU_RK3588_DDR)
 #define HAL_CACHE_DECODED_ADDR_BASE          0x300000  /* Not really necessary */
 #elif defined(RKMCU_RK3588_NPU)
@@ -73,6 +73,7 @@
 #endif
 
 #define HAL_INTMUX_MODULE_ENABLED
+#define HAL_IRQ_HANDLER_MODULE_ENABLED
 #define HAL_NVIC_MODULE_ENABLED
 #define HAL_SYSTICK_MODULE_ENABLED
 #define HAL_TIMER_MODULE_ENABLED
