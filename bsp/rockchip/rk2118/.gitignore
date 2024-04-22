@@ -33,3 +33,5 @@ ncscope.*
 
 #ctag files
 tags
+
+Image/*.img
