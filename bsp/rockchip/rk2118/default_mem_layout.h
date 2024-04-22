@@ -91,4 +91,12 @@ DRAM_DSP2_BASE           =   (DRAM_DSP1_BASE + DRAM_DSP1_SIZE);
 DRAM_CPU1_LOADER_BASE    =   (DRAM_DSP2_BASE + DRAM_DSP2_SIZE);
 DRAM_CPU1_RTT_BASE       =   (DRAM_CPU1_LOADER_BASE + DRAM_CPU1_LOADER_SIZE);
 
+/* -------------------------------------------------------------------------- */
+/* DSP Stack Sizes                                                            */
+/* -------------------------------------------------------------------------- */
+/* User-modifiable sizes */
+DSP0_STACK_SIZE          = 0x00001000; /* 4 KB */
+DSP1_STACK_SIZE          = 0x00001000; /* 4 KB */
+DSP2_STACK_SIZE          = 0x00001000; /* 4 KB */
+
 #endif /* _MEM_LAYOUT_H_ */
