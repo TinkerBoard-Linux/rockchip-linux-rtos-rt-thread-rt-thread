@@ -24,6 +24,8 @@
 #define RT_HW_LCD_RESET_GPIO            GPIO_PIN_C4
 #define RT_HW_LCD_RESET_FLAG            PIN_LOW
 
+#define USB_HOST_VBUS_PIN               BANK_PIN(GPIO_BANK0, 21)
+
 #define PA_MUTE_GPIO_BANK        GPIO_BANK0
 #define PA_MUTE_GPIO             GPIO0
 #define PA_MUTE_PIN              GPIO_PIN_A5
