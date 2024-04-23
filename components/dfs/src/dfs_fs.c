@@ -42,6 +42,87 @@ typedef struct _gpt_entry {
     uint8_t  partition_name[72];               /* 0x38 */
 } __packed gpt_entry;
 
+
+/* rk_partition: ui_part_property bits filed */
+#define RK_PARTITION_NO_PARTITION_SIZE (1 << 2)
+#define RK_PARTITION_PROPERTY_SHIFT    (8)
+#define RK_PARTITION_PROPERTY_MASK     (0x3 << RK_PARTITION_PROPERTY_SHIFT)
+#define RK_PARTITION_PROPERTY_ROONLY   (PART_FLAG_RDONLY << RK_PARTITION_PROPERTY_SHIFT)
+#define RK_PARTITION_PROPERTY_WRONLY   (PART_FLAG_WRONLY << RK_PARTITION_PROPERTY_SHIFT)
+#define RK_PARTITION_PROPERTY_RDWR     (PART_FLAG_RDWR << RK_PARTITION_PROPERTY_SHIFT)
+
+/* rk_partition: partition date time */
+typedef enum
+{
+    PART_VENDOR     = 1 << 0,
+    PART_IDBLOCK    = 1 << 1,
+    PART_MISC       = 1 << 2,
+    PART_FW1        = 1 << 3,
+    PART_FW2        = 1 << 4,
+    PART_DATA       = 1 << 5,
+    PART_FONT1      = 1 << 6,
+    PART_FONT2      = 1 << 7,
+    PART_CHAR       = 1 << 8,
+    PART_MENU       = 1 << 9,
+    PART_UI         = 1 << 10,
+    PART_USER1      = 1 << 30,
+    PART_USER2      = 1 << 31
+} enum_partition_type;
+
+/* rk_partition : partition date time */
+struct rk_parttion_date_time
+{
+    uint16_t  year;
+    uint8_t   month;
+    uint8_t   day;
+    uint8_t   hour;
+    uint8_t   min;
+    uint8_t   sec;
+    uint8_t   reserve;
+};
+
+/* rk_partition: partition head file */
+struct rk_partition_header
+{
+    uint32_t    ui_fw_tag;  /* "RKFP" */
+    struct rk_parttion_date_time    dt_release_data_time;
+    uint32_t    ui_fw_ver;
+    uint32_t    ui_size;    /* size of sturct,unit of u8 */
+    uint32_t    ui_part_entry_offset;   /* unit of sector */
+    uint32_t    ui_backup_part_entry_offset;
+    uint32_t    ui_part_entry_size; /* unit of u8 */
+    uint32_t    ui_part_entry_count;
+    uint32_t    ui_fw_size; /* unit of u8 */
+    uint8_t     reserved[464];
+    uint32_t    ui_part_entry_crc;
+    uint32_t    ui_header_crc;
+};
+
+/* rk_partition: partition item */
+typedef struct rk_parttion_item
+{
+    uint8_t     sz_name[32];
+    enum_partition_type em_part_type;
+    uint32_t    ui_pt_off;  /* unit of sector */
+    uint32_t    ui_pt_sz;   /* unit of sector */
+    uint32_t    ui_data_length; /* ui_data_length low 32 */
+    uint32_t    reserved1;  /* ui_data_length high 32 */
+    uint32_t    ui_part_property;
+    uint8_t     reserved2[72];
+} STRUCT_PART_ITEM, *PSTRUCT_PART_ITEM;
+
+typedef struct rk_partition_info
+{
+    struct rk_partition_header hdr; /* 0.5KB */
+    struct rk_parttion_item part[12];   /* 1.5KB */
+} STRUCT_PART_INFO, *PSTRUCT_PART_INFO;;
+
+#define RK_PARTITION_TAG    0x50464B52
+#define RK_PARTITION_NAME_SIZE  32
+
+#define RK_PARTITION_REGISTER_TYPE_BLK (0 << 10)
+#define RK_PARTITION_REGISTER_TYPE_MTD (1 << 10)
+
 /**
  * @addtogroup FsApi
  */
@@ -219,6 +300,52 @@ static int dfs_filesystem_get_gpt_partition(struct dfs_partition *part,
         return -RT_ERROR;
 }
 
+
+/**
+ * this function will fetch the RK partition table on specified buffer.
+ *
+ * @param part the returned partition structure.
+ * @param buf the buffer contains partition table.
+ * @param sect_count the sector count in the buffer.
+ * @param pindex the index of partition table to fetch.
+ *
+ * @return RT_EOK on successful or -RT_ERROR on failed.
+ */
+static int dfs_filesystem_get_rk_partition(struct dfs_partition *part,
+                                           uint8_t         *buf,
+                                           uint8_t         sect_count,
+                                           uint32_t        pindex)
+{
+    struct rk_partition_info *part_temp = (struct rk_partition_info *)buf;
+    int part_num;
+
+    if (sect_count < 4) {
+        rt_kprintf("%s input invald, sect_count=%d\n", __func__, sect_count);
+        return -EIO;
+    }
+
+    part_num = part_temp->hdr.ui_part_entry_count;
+
+    if (pindex >= part_num) {
+        rt_kprintf("%s input invald, pindex=%d>part_num=%d\n", __func__, pindex, part_num);
+        return -EIO;
+    }
+
+    /* get partition info for gpt entry */
+    part->type = 0x0B;
+    part->offset = (uint32_t)part_temp->part[pindex].ui_pt_off;
+    if (part_temp->part[pindex].ui_pt_sz == 0xFFFFFFFF || (part_temp->part[pindex].ui_part_property & RK_PARTITION_NO_PARTITION_SIZE))
+        part->size = 0xFFFFFFFF;
+    else
+        part->size = ((uint32_t)part_temp->part[pindex].ui_pt_sz);
+    rt_kprintf("pindex=%d, name=%s, offset=%d, size=%d\n", pindex, part_temp->part[pindex].sz_name, part->offset, part->size);
+
+    if (part->size != 0)
+        return RT_EOK;
+    else
+        return -RT_ERROR;
+}
+
 /**
  * this function will fetch the partition table on specified buffer.
  *
@@ -239,6 +366,7 @@ int dfs_filesystem_get_partition(struct dfs_partition *part,
 
     uint8_t *dpt;
     uint8_t type;
+    uint32_t type2;
 
     RT_ASSERT(part != NULL);
     RT_ASSERT(buf != NULL);
@@ -248,6 +376,10 @@ int dfs_filesystem_get_partition(struct dfs_partition *part,
     type = *dpt;
     if (type == 0xee)
         return dfs_filesystem_get_gpt_partition(part, buf, sect_count, pindex);
+
+    type2 = ((uint32_t *)buf)[0];
+    if (type2 == RK_PARTITION_TAG)
+      return dfs_filesystem_get_rk_partition(part, buf, sect_count, pindex);
 
     dpt = buf + DPT_ADDRESS + pindex * DPT_ITEM_SIZE;
 
