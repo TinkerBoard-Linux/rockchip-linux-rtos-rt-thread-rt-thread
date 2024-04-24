@@ -12,6 +12,17 @@
 #include "iomux.h"
 #include "hal_base.h"
 
+#if defined(RT_USING_UART0)
+RT_WEAK void uart0_m0_iomux_config(void)
+{
+    /* UART0 M0 RX-2A0 TX-2A1 */
+    HAL_PINCTRL_SetIOMUX(GPIO_BANK2,
+                         GPIO_PIN_A0 |
+                         GPIO_PIN_A1,
+                         PIN_CONFIG_MUX_FUNC1);
+}
+#endif
+
 #if defined(RT_USING_UART1)
 RT_WEAK void uart1_m0_iomux_config(void)
 {

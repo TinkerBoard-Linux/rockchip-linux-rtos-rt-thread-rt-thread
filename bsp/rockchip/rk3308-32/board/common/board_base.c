@@ -77,6 +77,16 @@ RT_WEAK const struct tsadc_init g_tsadc_init =
 };
 #endif /* RT_USING_TSADC */
 
+#if defined(RT_USING_UART0)
+RT_WEAK const struct uart_board g_uart0_board =
+{
+    .baud_rate = UART_BR_1500000,
+    .dev_flag = ROCKCHIP_UART_SUPPORT_FLAG_DEFAULT,
+    .bufer_size = RT_SERIAL_RB_BUFSZ,
+    .name = "uart0",
+};
+#endif /* RT_USING_UART0 */
+
 #if defined(RT_USING_UART1)
 RT_WEAK const struct uart_board g_uart1_board =
 {
@@ -203,9 +213,13 @@ static struct GIC_AMP_IRQ_INIT_CFG irqsConfig[] =
 
 #ifdef AMP_LINUX_ENABLE
     GIC_AMP_IRQ_CFG_ROUTE(RPMSG_03_IRQn, 0xd0, CPU_GET_AFFINITY(3, 0)),
-#if defined(RT_USING_UART1)
+
+#if defined(RT_USING_UART0)
+    GIC_AMP_IRQ_CFG_ROUTE(UART0_IRQn, 0xd0, CPU_GET_AFFINITY(3, 0)),
+#elif defined(RT_USING_UART1)
     GIC_AMP_IRQ_CFG_ROUTE(UART1_IRQn, 0xd0, CPU_GET_AFFINITY(3, 0)),
 #endif
+
 #else // #ifdef AMP_LINUX_ENABLE
     GIC_AMP_IRQ_CFG_ROUTE(AMP0_IRQn, 0xd0, CPU_GET_AFFINITY(0, 0)),
     GIC_AMP_IRQ_CFG_ROUTE(AMP1_IRQn, 0xd0, CPU_GET_AFFINITY(1, 0)),
