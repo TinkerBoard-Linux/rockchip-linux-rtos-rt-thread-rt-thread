@@ -463,6 +463,9 @@ rt_int32_t rt_mmcsd_blk_probe(struct rt_mmcsd_card *card)
             status = dfs_filesystem_get_partition(&part, sector, 8, i);
             if (status == RT_EOK)
             {
+                /* Fix the last unassigned-part-sized partition */
+                if (part.size == 0xffffffff)
+                    part.size = card->card_capacity * 2 - part.offset;
                 /* TODO: Avoid fake MBR in GPT */
                 if (part.offset < 0 || part.size > (card->card_capacity * 2)) {
                     part.offset = 0;
