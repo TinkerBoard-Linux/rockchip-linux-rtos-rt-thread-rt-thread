@@ -271,7 +271,12 @@ void rt_hw_iomux_config(void)
     sai7_iomux_config();
     rmii_iomux_config();
     dsp_jtag_iomux_config();
+#ifdef RT_USING_SNOR
     fspi0_iomux_config();
+#endif
+#ifdef RT_USING_SDIO1
+    emmc_iomux_config();
+#endif
     pwm0_iomux_config();
 #ifdef RT_USING_VOP
     lcdc_iomux_config();

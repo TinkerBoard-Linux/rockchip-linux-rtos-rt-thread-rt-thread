@@ -34,7 +34,32 @@
 #include "drv_pwm_remotectl.h"
 #endif
 
+#ifdef RT_USING_SDIO
+#include "drv_sdio.h"
+#include <drivers/mmcsd_core.h>
+#endif
+
 extern const struct clk_init clk_inits[];
+
+#ifdef RT_USING_SDIO
+RT_WEAK struct rk_mmc_platform_data rk_mmc_table[] =
+{
+#ifdef RT_USING_SDIO1
+    {
+        .flags = MMCSD_BUSWIDTH_8 | MMCSD_MUTBLKWRITE | MMCSD_SUP_HIGHSPEED,
+        .irq = SDMMC_IRQn,
+        .base = MMC1_BASE,
+        .clk_id = CCLK_SRC_EMMC,
+        .clk_gate = CCLK_SRC_EMMC_GATE,
+        .hclk_gate = HCLK_EMMC_GATE,
+        .freq_min = 100000,
+        .freq_max = 50000000,
+        .control_id = 1,
+    },
+#endif
+    { /* sentinel */ },
+};
+#endif
 
 #ifdef RT_USING_I2C
 const struct rockchip_i2c_config rockchip_i2c_config_table[] =
