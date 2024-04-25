@@ -97,13 +97,7 @@ void rt_hw_iomux_config(void)
     i2c2_iomux_config();
     can_iomux_config();
     uart0_iomux_config();
-    sai7_iomux_config();
-    sai4_iomux_config();
-    sai5_iomux_config();
-    sai0_iomux_config();
     spi0_m1_iomux_config();
-    sai1_iomux_config();
-    sai2_iomux_config();
     spdif_rx1_iomux_config();
 }
 
