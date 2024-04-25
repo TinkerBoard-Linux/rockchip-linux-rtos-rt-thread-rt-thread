@@ -401,6 +401,13 @@ CONFIG_RT_USING_IT6632X=y
 # CONFIG_RT_USING_FTL is not set
 
 #
+# RT-Thread rockchip USB Host driver
+#
+CONFIG_RT_USING_USBH_DWC2=y
+# CONFIG_RT_USING_USBH_EHCI is not set
+# CONFIG_RT_USING_USBH_OHCI is not set
+
+#
 # RT-Thread rockchip RK2118 drivers
 #
 CONFIG_RT_USING_CRU=y
