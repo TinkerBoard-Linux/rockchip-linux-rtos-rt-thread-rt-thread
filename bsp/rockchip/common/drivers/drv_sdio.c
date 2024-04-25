@@ -545,7 +545,7 @@ static int rk_mmc_start_transfer(struct mmc_driver *mmc_drv)
     HAL_MMC_SetInterruptMask(hal_host, reg);
 
     //fixme: spin_unlock_irqrestore(&host->lock, flags);
-    ret = rt_completion_wait(&mmc_drv->transfer_completion, RT_TICK_PER_SECOND * 5);
+    ret = rt_completion_wait(&mmc_drv->transfer_completion, RT_TICK_PER_SECOND * 10);
 
     reg = HAL_MMC_GetInterruptMask(hal_host);
     reg &= ~MMC_INT_STATUS_DATA;
