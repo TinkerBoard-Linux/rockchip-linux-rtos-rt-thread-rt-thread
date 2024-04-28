@@ -405,9 +405,8 @@ struct ringbuffer_t *get_log_ringbuffer(void)
 }
 #endif
 
-#ifdef RT_USING_CONSOLE
-extern console_hook console_output_hook;
-int rt_kprintf(const char *fmt, ...)
+#ifdef RT_USING_SHARE_CONSOLE_OUT
+int rt_amp_printf(const char *fmt, ...)
 {
     va_list args;
     rt_size_t length, outlen;
@@ -449,30 +448,8 @@ int rt_kprintf(const char *fmt, ...)
     rt_ringbuffer_put_force(get_log_ringbuffer(), rt_log_buf, outlen);
 #endif
 
-#ifdef RT_USING_SHARE_CONSOLE_OUT
-    HAL_SPINLOCK_Lock(RK_PRINTF_SPINLOCK_ID);
-#endif
+    rt_kprintf("%s", rt_log_buf);
 
-#ifdef RT_USING_DEVICE
-    rt_device_t _console_device = rt_console_get_device();
-    if (_console_device == RT_NULL)
-    {
-        rt_hw_console_output(rt_log_buf);
-    }
-    else
-    {
-        rt_uint16_t old_flag = _console_device->open_flag;
-        _console_device->open_flag |= RT_DEVICE_FLAG_STREAM;
-        rt_device_write(_console_device, 0, rt_log_buf, outlen);
-        _console_device->open_flag = old_flag;
-    }
-#else
-    rt_hw_console_output(rt_log_buf);
-#endif
-
-#ifdef RT_USING_SHARE_CONSOLE_OUT
-    HAL_SPINLOCK_Unlock(RK_PRINTF_SPINLOCK_ID);
-#endif
     return RT_EOK;
 }
 #endif
