@@ -236,7 +236,15 @@ static rt_err_t rockchip_spi_configure(struct rt_spi_device *device,
         if (pSPIConfig->speed > HAL_SPI_MASTER_MAX_SCLK_OUT)
             pSPIConfig->speed = HAL_SPI_MASTER_MAX_SCLK_OUT;
 
-        if (pSPIConfig->speed > (HAL_SPI_MASTER_MAX_SCLK_OUT >> 1))
+        /*
+         * Some platforms are unable to divide the frequency to a more
+         * accurate working clock, so it's to set a higher frequency
+         * working clock and the frequency is divided internally by the
+         * controller.
+         */
+        if (spi->hal_dev->maxFreq)
+            pSPI->maxFreq = spi->hal_dev->maxFreq;
+        else if (pSPIConfig->speed > (HAL_SPI_MASTER_MAX_SCLK_OUT >> 1))
             pSPI->maxFreq = 2 * pSPIConfig->speed;
         else
             pSPI->maxFreq = 3 * HAL_SPI_MASTER_MAX_SCLK_OUT;
@@ -249,7 +257,9 @@ static rt_err_t rockchip_spi_configure(struct rt_spi_device *device,
         if (pSPIConfig->speed > HAL_SPI_SLAVE_MAX_SCLK_OUT)
             pSPIConfig->speed = HAL_SPI_SLAVE_MAX_SCLK_OUT;
 
-        if (pSPIConfig->speed > (HAL_SPI_SLAVE_MAX_SCLK_OUT >> 1))
+        if (spi->hal_dev->maxFreq)
+            pSPI->maxFreq = spi->hal_dev->maxFreq;
+        else if (pSPIConfig->speed > (HAL_SPI_SLAVE_MAX_SCLK_OUT >> 1))
             pSPI->maxFreq = 4 * pSPIConfig->speed;
         else
             pSPI->maxFreq = 4 * HAL_SPI_SLAVE_MAX_SCLK_OUT;
