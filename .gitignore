@@ -52,6 +52,7 @@ bsp/rockchip/swallow
 bsp/rockchip/pisces
 components/hifi3
 components/hifi4
+components/rknpu
 third_party/audio/audio_server/source
 applications/wearable
 .repo
