@@ -100,6 +100,10 @@ static int drv_pipe_xfer(upipe_t pipe, rt_uint8_t token, void *buffer, int nbyte
                         (pipe->ep.bInterval * RT_TICK_PER_SECOND / 1000) : 1;
                 rt_thread_delay(delay);
             }
+            else if (pipe->ep.bmAttributes == USB_EP_ATTR_BULK)
+            {
+                rt_thread_mdelay(30);
+            }
             HAL_HCD_HCHalt(&g_hcd, pipe->pipe_index);
             HAL_HCD_HCInit(&g_hcd,
                            pipe->pipe_index,
