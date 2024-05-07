@@ -40,7 +40,7 @@ fi
 
 BOARD_NAME=$1
 if [ "$BOARD_NAME" == "evb" ]; then
-    export RTT_BUILD_XIP=N
+    export RTT_BUILD_XIP=Y
 else
     export RTT_BUILD_XIP=Y
 fi
@@ -95,7 +95,7 @@ CPU0_FW_NAME="rtt0.bin"
 CPU1_FW_NAME="rtt1.bin"
 
 # Generate the image
-if [ "$build_type" != 0 ] || [ -f "$CPU1_FW_NAME" ]; then
+if [ "$build_type" != 0 ]; then
     SETTING_INI_PATH=$SETTING_INI_PATH1
 else
     SETTING_INI_PATH=$SETTING_INI_PATH0
