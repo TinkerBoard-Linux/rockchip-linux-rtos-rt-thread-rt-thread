@@ -1,8 +1,9 @@
 menu "RT-Thread board config"
 
-    config IS_FPGA
-        bool "Is FPGA Board"
-        default n
+config IS_FPGA
+    bool "Is FPGA Board"
+    default n
+
 choice
     prompt "Clock config"
     default RT_USING_CLK_CONFIG0
@@ -18,6 +19,10 @@ choice
 
 endchoice
 
+config RT_USING_DDR
+    bool "using DRAM, only available for RK2118B or RK2118G"
+    default n
+
 choice
     prompt "Board Type"
     default RT_USING_BOARD_FPGA
@@ -31,15 +36,19 @@ choice
 
     config RT_USING_BOARD_IOTEST
         bool "Enable io test board"
+        select RT_USING_DDR
 
     config RT_USING_BOARD_SOUNDBAR_CORE
         bool "Enable soundbar core board"
+        select RT_USING_DDR
 
     config RT_USING_BOARD_EVB
         bool "Enable evb board"
+        select RT_USING_DDR
 
     config RT_USING_BOARD_TEST1
         bool "Enable test1 board"
+        select RT_USING_DDR
 
     config RT_USING_BOARD_AMP_DEMO
         bool "Enable amplifier terminal demo board"

@@ -25,10 +25,12 @@ __STACKSEAL_SIZE = 0;
 
 __FW_MAGIC_LEN = 0x200;
 
+/* NPU memory manage by CPU0 */
 MEMORY
 {
 #if defined(RK2118_CPU_CORE0)
-  DDR (rwx) : ORIGIN = DRAM_CPU0_RTT_BASE,  LENGTH = DRAM_CPU0_RTT_SIZE
+  SRAM (rwx) : ORIGIN = SRAM_CPU0_RTT_BASE,  LENGTH = SRAM_CPU0_RTT_SIZE
+  DDR (rwx) : ORIGIN = DRAM_CPU0_RTT_BASE,  LENGTH = DRAM_CPU0_RTT_SIZE + DRAM_NPU_SIZE
 #elif defined(RK2118_CPU_CORE1)
   DDR (rwx) : ORIGIN = DRAM_CPU1_RTT_BASE,  LENGTH = DRAM_CPU1_RTT_SIZE
 #else
@@ -166,12 +168,12 @@ SECTIONS
         PROVIDE(__bss_end__ = .);
     } > DDR
 
-    .heap :
+    .ddr.heap :
     {
         . = ALIGN(32);
-        PROVIDE(__heap_begin__ = .);
+        PROVIDE(__ddr_heap_begin__ = .);
         . = ORIGIN(DDR) + LENGTH(DDR) - __STACK_SIZE - __STACKSEAL_SIZE;
-        PROVIDE(__heap_end__ = .);
+        PROVIDE(__ddr_heap_end__ = .);
         . = ALIGN(32);
     } > DDR
 
@@ -186,6 +188,17 @@ SECTIONS
         PROVIDE(_sstack = __StackLimit);
         PROVIDE(_estack = __StackTop);
     } > DDR
+
+#ifdef RK2118_CPU_CORE0
+    .sram.heap (NOLOAD) :
+    {
+        . = ALIGN(32);
+        PROVIDE(__sram_heap_begin__ = .);
+        . = ORIGIN(SRAM) + LENGTH(SRAM);
+        PROVIDE(__sram_heap_end__ = .);
+        . = ALIGN(32);
+    } > SRAM
+#endif
 
 #ifdef RT_USING_UNCACHE_HEAP
     .uncache.heap (NOLOAD) :

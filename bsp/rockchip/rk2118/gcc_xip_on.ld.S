@@ -24,12 +24,13 @@ __STACKSEAL_SIZE = 0;
 
 __FW_MAGIC_SIZE = 0x800;
 
+/* NPU memory manage by CPU0 */
 MEMORY
 {
 #if defined(RK2118_CPU_CORE0)
   CODE (rx) : ORIGIN = XIP_CPU0_RTT_BASE + __FW_MAGIC_SIZE,  LENGTH = XIP_CPU0_RTT_SIZE - __FW_MAGIC_SIZE
   DATA (rw) : ORIGIN = SRAM_CPU0_RTT_BASE,  LENGTH = SRAM_CPU0_RTT_SIZE
-  DDR (rwx) : ORIGIN = DRAM_CPU0_RTT_BASE,  LENGTH = DRAM_CPU0_RTT_SIZE
+  DDR (rwx) : ORIGIN = DRAM_CPU0_RTT_BASE,  LENGTH = DRAM_CPU0_RTT_SIZE + DRAM_NPU_SIZE
 #elif defined(RK2118_CPU_CORE1)
   CODE (rx) : ORIGIN = XIP_CPU1_RTT_BASE + __FW_MAGIC_SIZE,  LENGTH = XIP_CPU1_RTT_SIZE - __FW_MAGIC_SIZE
   DATA (rw) : ORIGIN = DRAM_CPU1_RTT_BASE,  LENGTH = DRAM_CPU1_RTT_SIZE
@@ -266,9 +267,9 @@ SECTIONS
     .heap HEAP_DST (NOLOAD) :
     {
         . = ALIGN(32);
-        PROVIDE(__heap_begin__ = .);
+        PROVIDE(__sram_heap_begin__ = .);
         . = ORIGIN(DATA) + LENGTH(DATA) - __STACK_SIZE - __STACKSEAL_SIZE;
-        PROVIDE(__heap_end__ = .);
+        PROVIDE(__sram_heap_end__ = .);
         . = ALIGN(32);
     }
 
@@ -300,9 +301,9 @@ SECTIONS
     .ddr.heap DDR_BSS_DST (NOLOAD) :
     {
         . = ALIGN(32);
-        PROVIDE(__heap_begin__ = .);
+        PROVIDE(__ddr_heap_begin__ = .);
         . = ORIGIN(DDR) + LENGTH(DDR);
-        PROVIDE(__heap_end__ = .);
+        PROVIDE(__ddr_heap_end__ = .);
         . = ALIGN(32);
     }
 #endif

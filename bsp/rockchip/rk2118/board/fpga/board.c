@@ -16,7 +16,6 @@
 #include "drv_clock.h"
 #include "drv_uart.h"
 #include "drv_cache.h"
-#include "drv_heap.h"
 #include "hal_base.h"
 #include "hal_bsp.h"
 #include "iomux.h"
@@ -32,22 +31,6 @@ const struct uart_board g_uart0_board =
     .name = "uart0",
 };
 #endif /* RT_USING_UART0 */
-
-#ifdef RT_USING_UNCACHE_HEAP
-extern const rt_uint32_t __uncache_heap_start__[];
-extern const rt_uint32_t __uncache_heap_end__[];
-#endif
-#ifdef __ARMCC_VERSION
-extern const rt_uint32_t Image$$ARM_LIB_HEAP$$Limit[];
-extern const rt_uint32_t Image$$ARM_LIB_STACK$$Base[];
-#define HEAP_START       Image$$ARM_LIB_HEAP$$Limit
-#define HEAP_END         Image$$ARM_LIB_STACK$$Base
-#else
-extern const rt_uint32_t __heap_begin__[];
-extern const rt_uint32_t __heap_end__[];
-#define HEAP_START       (__heap_begin__)
-#define HEAP_END         (__heap_end__)
-#endif
 
 /**
  * This function will initial Pisces board.
@@ -68,10 +51,7 @@ void rt_hw_board_init()
     HAL_SetTickFreq(1000 / RT_TICK_PER_SECOND);
     HAL_SYSTICK_Init();
 
-    rt_system_heap_init((void *)HEAP_START, (void *)HEAP_END);
-#ifdef RT_USING_UNCACHE_HEAP
-    rt_uncache_heap_init((void *)__uncache_heap_start__, (void *)__uncache_heap_end__);
-#endif
+    rt_memory_heap_init();
 
     /* Initial usart deriver, and set console device */
     rt_hw_usart_init();

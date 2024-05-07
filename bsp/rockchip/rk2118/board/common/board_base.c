@@ -133,17 +133,33 @@ RT_WEAK struct ep_id g_usb_ep_pool[] =
 };
 #endif
 
-#ifdef __ARMCC_VERSION
-extern const rt_uint32_t Image$$ARM_LIB_HEAP$$Limit[];
-extern const rt_uint32_t Image$$ARM_LIB_STACK$$Base[];
-#define HEAP_START       Image$$ARM_LIB_HEAP$$Limit
-#define HEAP_END         Image$$ARM_LIB_STACK$$Base
-#else
-extern const rt_uint32_t __heap_begin__[];
-extern const rt_uint32_t __heap_end__[];
-#define HEAP_START       (__heap_begin__)
-#define HEAP_END         (__heap_end__)
+extern const rt_uint32_t __sram_heap_begin__[];
+extern const rt_uint32_t __sram_heap_end__[];
+extern const rt_uint32_t __ddr_heap_begin__[];
+extern const rt_uint32_t __ddr_heap_end__[];
+extern const rt_uint32_t __uncache_heap_start__[];
+extern const rt_uint32_t __uncache_heap_end__[];
+
+#if defined(RK2118_CPU_CORE0) && defined(RT_USING_DDR)
+static struct rt_memheap ddr_heap;
 #endif
+
+void rt_memory_heap_init(void)
+{
+#ifdef RK2118_CPU_CORE0
+    /* system heap in sram for cpu0 */
+    rt_system_heap_init((void *)__sram_heap_begin__, (void *)__sram_heap_end__);
+#ifdef RT_USING_DDR
+    rt_memheap_init(&ddr_heap, "ddr", (void *)__ddr_heap_begin__, (rt_base_t)__ddr_heap_end__ - (rt_base_t)__ddr_heap_begin__);
+#endif
+#ifdef RT_USING_UNCACHE_HEAP
+    rt_uncache_heap_init((void *)__uncache_heap_start__, (void *)__uncache_heap_end__);
+#endif
+#else
+    /* system heap in ddr for cpu1 */
+    rt_system_heap_init((void *)__ddr_heap_begin__, (void *)__ddr_heap_end__);
+#endif
+}
 
 #ifdef RT_USING_SWO_PRINTF
 void swo_console_hook(const char *str, int flush)
@@ -204,10 +220,7 @@ RT_WEAK void rt_hw_board_init()
     rt_hw_iomux_config();
 #endif
 
-    rt_system_heap_init((void *)HEAP_START, (void *)HEAP_END);
-#ifdef RT_USING_UNCACHE_HEAP
-    rt_uncache_heap_init((void *)__uncache_heap_start__, (void *)__uncache_heap_end__);
-#endif
+    rt_memory_heap_init();
 
     /* Initial usart deriver, and set console device */
     rt_hw_usart_init();
