@@ -291,6 +291,17 @@ RT_WEAK struct rk_mmc_platform_data rk_mmc_table[] =
 #endif
     { /* sentinel */ },
 };
+
+#ifdef RT_USING_SDIO0
+static void rt_board_mmc_init(void)
+{
+    volatile int *ptr1 = CRU_BASE + CRU_EMMC_CON1_OFFSET; /* CRU eMMC sample phase reg */
+
+    /* Init eMMC sample phase to 90 degree */
+    *ptr1 = 0x02 | 0x02 << 16;
+}
+#endif
+
 #endif
 
 #ifdef RT_USING_AUDIO
@@ -517,6 +528,10 @@ void rt_hw_board_init(void)
 
 #ifdef RT_USING_CONSOLE
     rt_console_set_device(RT_CONSOLE_DEVICE_NAME);
+#endif
+
+#ifdef RT_USING_SDIO0
+    rt_board_mmc_init();
 #endif
 
 #ifdef RT_USING_HEAP
