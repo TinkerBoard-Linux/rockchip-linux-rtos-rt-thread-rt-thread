@@ -191,6 +191,24 @@ RT_WEAK void usb_phy_init(void)
 
     /* Turn off differential receiver by default to save power */
     WRITE_REG(*(uint32_t *)(USB_INNO_PHY_BASE + 0x0100U), 0x00);
+#else
+    /* Set Host Disconnect Detection to 675mV */
+    MODIFY_REG(*(uint32_t *)(USB_INNO_PHY_BASE + 0x60U), 0x3 << 0, 0x0 << 0);
+    MODIFY_REG(*(uint32_t *)(USB_INNO_PHY_BASE + 0x68U), 0x1 << 0, 0x0 << 0);
+    MODIFY_REG(*(uint32_t *)(USB_INNO_PHY_BASE + 0x64U), 0x1 << 7, 0x1 << 7);
+
+    /* Increase the disconnect detection threshold */
+    WRITE_REG(*(uint32_t *)(USB_INNO_PHY_BASE + 0xbcU), 0x10);
+    WRITE_REG(*(uint32_t *)(USB_INNO_PHY_BASE + 0x74U), 0x50);
+    WRITE_REG(*(uint32_t *)(USB_INNO_PHY_BASE + 0x184U), 0xf1);
+    WRITE_REG(*(uint32_t *)(USB_INNO_PHY_BASE + 0x194U), 0xf1);
+#ifdef RT_USING_USB_SWITCH
+    /* Set Pre-emphasize Strength to 2 */
+    WRITE_REG(*(uint32_t *)(USB_INNO_PHY_BASE + 0x0040U), 0x51);
+
+    /* Set Eye-height to 437.5mV */
+    WRITE_REG(*(uint32_t *)(USB_INNO_PHY_BASE + 0x0124U), 0x10);
+#endif
 #endif
 }
 
