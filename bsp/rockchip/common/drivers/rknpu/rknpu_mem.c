@@ -19,21 +19,12 @@
 
 void *rt_malloc_rknpu(rt_size_t size)
 {
-    if (size < RT_LARGE_MALLOC_THRRESH)
-    {
-        return rt_malloc(size);
-    }
-
-    return rt_malloc_large(size);
+    return rt_malloc(size);
 }
 RTM_EXPORT(rt_malloc_rknpu);
 
 void rt_free_rknpu(void *ptr)
 {
-#ifndef RT_USING_MEMHEAP_AS_HEAP
-#error "RT_USING_MEMHEAP_AS_HEAP not enabled which is needed by rknpu!"
-#endif
-
     rt_free(ptr);
 }
 RTM_EXPORT(rt_free_rknpu);

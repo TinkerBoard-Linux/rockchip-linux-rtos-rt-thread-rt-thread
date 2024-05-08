@@ -145,7 +145,7 @@ static int rknpu_job_wait(struct rknpu_job *job)
     do
     {
         ret = rt_event_recv(&subcore_data->job_done_wq,
-                            job->flags & RKNPU_JOB_DONE || rknpu_dev->soft_reseting,
+                            RKNPU_JOB_DONE || rknpu_dev->soft_reseting,
                             RT_EVENT_FLAG_OR | RT_EVENT_FLAG_CLEAR,
                             args->timeout * RT_TICK_PER_SECOND / 1000, 0);
 
@@ -427,7 +427,7 @@ static void rknpu_job_done(struct rknpu_job *job, int ret, int core_index)
     {
         job->flags |= RKNPU_JOB_DONE;
         job->ret = ret;
-        rt_event_send(&subcore_data->job_done_wq, job->flags);
+        rt_event_send(&subcore_data->job_done_wq, RKNPU_JOB_DONE);
     }
 
     rknpu_job_next(rknpu_dev, core_index);

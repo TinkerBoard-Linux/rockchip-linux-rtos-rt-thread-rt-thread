@@ -167,7 +167,6 @@ endchoice
 
 config RT_USING_RKNPU
     bool "Enable RKNPU"
-    depends on RT_USING_MEMHEAP_AS_HEAP && RT_USING_LARGE_HEAP
     default n
 
 
