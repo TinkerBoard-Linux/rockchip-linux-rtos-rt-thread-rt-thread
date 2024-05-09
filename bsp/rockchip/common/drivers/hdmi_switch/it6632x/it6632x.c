@@ -992,24 +992,38 @@ static void it6632x_audio_path_select(it6632x_audio_path_t ado_path)
             u8Temp = I2C_ADO_MUX_SEL_HDMI;
             break;
         case IT6632X_AUDIO_PATH_HDMI_1:
-            rt_kprintf("swith ado path to HDMI 1 \n");
-            g_u8SbRxSel = I2C_HDMI_SELECT_R1 | I2C_HDMI_ADO_SEL_R1 | I2C_HDMI_SEL_W_CHG;
-            SB_I2C_Write(I2C_SYS_RX_SEL, 1, &g_u8SbRxSel);
-            if (g_u8SbAudioMode & I2C_MODE_TX_OUT_MASK)
+            if (g_u8ChipId != SB_I2C_IT66320)
             {
-                SB_STA_CHANGE(g_u8SbAudioMode, I2C_MODE_TX_OUT_MASK, I2C_MODE_TX_OUT_EN);
+                rt_kprintf("swith ado path to HDMI 1 \n");
+                g_u8SbRxSel = I2C_HDMI_SELECT_R1 | I2C_HDMI_ADO_SEL_R1 | I2C_HDMI_SEL_W_CHG;
+                SB_I2C_Write(I2C_SYS_RX_SEL, 1, &g_u8SbRxSel);
+                if (g_u8SbAudioMode & I2C_MODE_TX_OUT_MASK)
+                {
+                    SB_STA_CHANGE(g_u8SbAudioMode, I2C_MODE_TX_OUT_MASK, I2C_MODE_TX_OUT_EN);
+                }
+                u8Temp = I2C_ADO_MUX_SEL_HDMI;
             }
-            u8Temp = I2C_ADO_MUX_SEL_HDMI;
+            else
+            {
+                no_config = 1;
+            }
             break;
         case IT6632X_AUDIO_PATH_HDMI_2:
-            rt_kprintf("swith ado path to HDMI 2 \n");
-            g_u8SbRxSel = I2C_HDMI_SELECT_R2 | I2C_HDMI_ADO_SEL_R2 | I2C_HDMI_SEL_W_CHG;
-            SB_I2C_Write(I2C_SYS_RX_SEL, 1, &g_u8SbRxSel);
-            if (g_u8SbAudioMode & I2C_MODE_TX_OUT_MASK)
+            if (g_u8ChipId != SB_I2C_IT66320)
             {
-                SB_STA_CHANGE(g_u8SbAudioMode, I2C_MODE_TX_OUT_MASK, I2C_MODE_TX_OUT_EN);
+                rt_kprintf("swith ado path to HDMI 2 \n");
+                g_u8SbRxSel = I2C_HDMI_SELECT_R2 | I2C_HDMI_ADO_SEL_R2 | I2C_HDMI_SEL_W_CHG;
+                SB_I2C_Write(I2C_SYS_RX_SEL, 1, &g_u8SbRxSel);
+                if (g_u8SbAudioMode & I2C_MODE_TX_OUT_MASK)
+                {
+                    SB_STA_CHANGE(g_u8SbAudioMode, I2C_MODE_TX_OUT_MASK, I2C_MODE_TX_OUT_EN);
+                }
+                u8Temp = I2C_ADO_MUX_SEL_HDMI;
             }
-            u8Temp = I2C_ADO_MUX_SEL_HDMI;
+            else
+            {
+                no_config = 1;
+            }
             break;
         case IT6632X_AUDIO_PATH_ARC_EARC:
             rt_kprintf("swith ado path to ARC/eARC\n");
