@@ -116,6 +116,17 @@ void sdmmc_iomux_config(void)
                          GPIO_PIN_D2 |  // SDMMC_D3
                          GPIO_PIN_D3,   // SDMMC_D2
                          PIN_CONFIG_MUX_FUNC1);
+
+    HAL_PINCTRL_SetParam(GPIO_BANK3,
+                         GPIO_PIN_D1 |  // SDMMC_CMD
+                         GPIO_PIN_C7 |  // SDMMC_D0
+                         GPIO_PIN_C6 |  // SDMMC_D1
+                         GPIO_PIN_D2 |  // SDMMC_D3
+                         GPIO_PIN_D3,   // SDMMC_D2
+                         PIN_CONFIG_PUL_UP |
+                         PIN_CONFIG_DRV_LEVEL1);
+
+    //*((unsigned long *)0x50180134) = 0x40004;
 }
 
 /**
@@ -275,10 +286,10 @@ void rt_hw_iomux_config(void)
 #endif
     sai_mclkout_config_all();
     uart1_iomux_config();
-    sdmmc_iomux_config();
 #ifdef RT_USING_I2C0
     i2c0_iomux_config();
 #endif
+    // conflict with SDMMC_D1/2/3
     mcu_jtag_m0_iomux_config();
     uart0_iomux_config();
     sai4_iomux_config();
@@ -298,6 +309,10 @@ void rt_hw_iomux_config(void)
     usb_host_iomux_config();
 #endif
     uart2_iomux_config();
+#ifdef RT_USING_SDIO0
+    // conflict with JTAG_MCU_SWO/TMSTCK
+    sdmmc_iomux_config();
+#endif
 }
 
 /** @} */  // IOMUX_Public_Functions

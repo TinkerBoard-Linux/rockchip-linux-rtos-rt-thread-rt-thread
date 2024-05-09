@@ -38,11 +38,30 @@
 #include <drivers/mmcsd_core.h>
 #endif
 
+#ifdef RT_USING_SDIO
+#include "drv_sdio.h"
+#include <drivers/mmcsd_core.h>
+#endif
+
 extern const struct clk_init clk_inits[];
 
 #ifdef RT_USING_SDIO
 RT_WEAK struct rk_mmc_platform_data rk_mmc_table[] =
 {
+#ifdef RT_USING_SDIO0
+    {
+        .flags = MMCSD_BUSWIDTH_4 | MMCSD_MUTBLKWRITE | MMCSD_SUP_SDIO_IRQ | MMCSD_SUP_HIGHSPEED,
+        .irq = SDIO_IRQn,
+        .base = MMC0_BASE,
+        .clk_id = CLK_SDMMC,
+        .clk_gate = CLK_SDMMC_GATE,
+        .hclk_gate = HCLK_SDMMC_GATE,
+        .freq_min = 100000,
+        .freq_max = 50000000,
+        .control_id = 0,
+        .is_pwr_gpio = false,
+    },
+#endif
 #ifdef RT_USING_SDIO1
     {
         .flags = MMCSD_BUSWIDTH_8 | MMCSD_MUTBLKWRITE | MMCSD_SUP_HIGHSPEED,
