@@ -25,6 +25,8 @@ if GetDepend(['RT_WLAN_CFG_ENABLE']):
 if GetDepend(['RT_WLAN_WORK_THREAD_ENABLE']):
     src += ['wlan_workqueue.c']
 
-group   = DefineGroup('DeviceDrivers', src, depend = ['RT_USING_WIFI'], CPPPATH = CPPPATH)
+LOCAL_CCFLAGS = ' -Wno-unused-variable -Wno-maybe-uninitialized -Wno-array-parameter -Wno-unused-function'
+
+group   = DefineGroup('DeviceDrivers', src, depend = ['RT_USING_WIFI'], CPPPATH = CPPPATH, LOCAL_CCFLAGS = LOCAL_CCFLAGS)
 
 Return('group')

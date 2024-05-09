@@ -68,11 +68,14 @@ typedef enum
 #define SHARED_ENABLED  0x00008000
 #define WPA_SECURITY    0x00200000
 #define WPA2_SECURITY   0x00400000
+#define WPA3_SECURITY   0x01000000
 #define WPS_ENABLED     0x10000000
 #define WEP_ENABLED     0x0001
 #define TKIP_ENABLED    0x0002
 #define AES_ENABLED     0x0004
 #define WSEC_SWFLAG     0x0008
+
+#define ENTERPRISE_ENABLED 0x02000000
 
 #define RT_WLAN_FLAG_STA_ONLY    (0x1 << 0)
 #define RT_WLAN_FLAG_AP_ONLY     (0x1 << 1)
@@ -106,6 +109,16 @@ typedef enum
     SECURITY_WPA2_AES_PSK   = (WPA2_SECURITY | AES_ENABLED),                    /* WPA2 Security with AES                  */
     SECURITY_WPA2_TKIP_PSK  = (WPA2_SECURITY | TKIP_ENABLED),                   /* WPA2 Security with TKIP                 */
     SECURITY_WPA2_MIXED_PSK = (WPA2_SECURITY | AES_ENABLED | TKIP_ENABLED),     /* WPA2 Security with AES & TKIP           */
+    SECURITY_WPA2_SHA256_PSK= (WPA2_SECURITY | WSEC_SWFLAG),                    /* WPA2 Security with SHA256 			   */
+    SECURITY_WPA3_SAE       = (WPA3_SECURITY | AES_ENABLED),                    /* WPA3 Security with AES				   */
+
+    SECURITY_WPA_TKIP_ENT   = ( ENTERPRISE_ENABLED | WPA_SECURITY  | TKIP_ENABLED ),               /**< WPA Enterprise Security with TKIP                     */
+    SECURITY_WPA_AES_ENT    = ( ENTERPRISE_ENABLED | WPA_SECURITY  | AES_ENABLED ),                /**< WPA Enterprise Security with AES                      */
+    SECURITY_WPA_MIXED_ENT  = ( ENTERPRISE_ENABLED | WPA_SECURITY  | AES_ENABLED | TKIP_ENABLED ), /**< WPA Enterprise Security with AES & TKIP               */
+    SECURITY_WPA2_TKIP_ENT  = ( ENTERPRISE_ENABLED | WPA2_SECURITY | TKIP_ENABLED ),               /**< WPA2 Enterprise Security with TKIP                    */
+    SECURITY_WPA2_AES_ENT   = ( ENTERPRISE_ENABLED | WPA2_SECURITY | AES_ENABLED ),                /**< WPA2 Enterprise Security with AES                     */
+    SECURITY_WPA2_MIXED_ENT = ( ENTERPRISE_ENABLED | WPA2_SECURITY | AES_ENABLED | TKIP_ENABLED ), /**< WPA2 Enterprise Security with AES & TKIP              */
+
     SECURITY_WPS_OPEN       = WPS_ENABLED,                                      /* WPS with open security                  */
     SECURITY_WPS_SECURE     = (WPS_ENABLED | AES_ENABLED),                      /* WPS with AES security                   */
     SECURITY_UNKNOWN        = -1,                                               /* May be returned by scan function if security is unknown.

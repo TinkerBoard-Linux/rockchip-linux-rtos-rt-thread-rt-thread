@@ -569,6 +569,7 @@ menuconfig RT_USING_WIFI
                 bool "Auto connect Enable"
                 select RT_WLAN_CFG_ENABLE
                 select RT_WLAN_WORK_THREAD_ENABLE
+                select RT_USING_SYSTEM_WORKQUEUE
                 default y
 
             if RT_WLAN_AUTO_CONNECT_ENABLE

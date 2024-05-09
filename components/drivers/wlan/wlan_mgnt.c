@@ -679,8 +679,13 @@ rt_err_t rt_wlan_set_mode(const char *dev_name, rt_wlan_mode_t mode)
     device = rt_device_find(dev_name);
     if (device == RT_NULL)
     {
+#if !defined(RT_CYPRESS_WIFI) && !defined(RT_AMPAK_WIFI)
         RT_WLAN_LOG_E("not find device, set mode failed! name:%s", dev_name);
         return -RT_EIO;
+#else
+        extern void rthw_wlan_set_netif_info(int idx, rt_device_t *dev, rt_uint8_t *dev_addr);
+        rthw_wlan_set_netif_info(mode -1, &device, NULL);
+#endif
     }
 
     MGNT_LOCK();
