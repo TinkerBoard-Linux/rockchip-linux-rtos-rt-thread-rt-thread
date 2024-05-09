@@ -346,7 +346,17 @@
 
 /* PBUF_LINK_HLEN: the number of bytes that should be allocated for a
    link level header. */
+#if 0
 #define PBUF_LINK_HLEN              16
+#else
+//Cloud add for mhd driver using
+#define MHD_MAX_BUS_HEADER_LENGTH    (12)
+#define MHD_MAX_SDPCM_HEADER_LENGTH  (30)
+#define MHD_ETHERNET_SIZE            (14)
+#define MHD_PHYSICAL_HEADER          (MHD_MAX_BUS_HEADER_LENGTH + MHD_MAX_SDPCM_HEADER_LENGTH + MHD_ETHERNET_SIZE)
+#define PBUF_LINK_HLEN               MHD_PHYSICAL_HEADER
+#define LWIP_NETIF_TX_SINGLE_PBUF    (1)
+#endif
 
 #ifdef RT_LWIP_ETH_PAD_SIZE
 #define ETH_PAD_SIZE                RT_LWIP_ETH_PAD_SIZE
