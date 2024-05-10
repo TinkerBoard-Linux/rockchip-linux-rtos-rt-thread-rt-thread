@@ -782,6 +782,9 @@ int dfs_unmount_device(rt_device_t dev)
     for (iter = &filesystem_table[0];
             iter < &filesystem_table[DFS_FILESYSTEMS_MAX]; iter++)
     {
+        if (iter->dev_id == NULL)
+            continue;
+
         /* check if the PATH is mounted */
         if (strcmp(iter->dev_id->parent.name, dev->parent.name) == 0)
         {
