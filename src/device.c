@@ -314,7 +314,7 @@ RTM_EXPORT(rt_device_close);
  * @note the unit of size/pos is a block for block device.
  */
 #ifdef RT_DEVICE_BUF_UNALIGNED_SUPPORT
-static int device_align_buffer[128];
+static ALIGN(128) int device_align_buffer[128];
 static struct rt_mutex *device_buffer_mutex;
 
 static rt_err_t device_buffer_mutex_init(void)
