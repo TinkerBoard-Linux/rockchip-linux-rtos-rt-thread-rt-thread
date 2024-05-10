@@ -58,6 +58,11 @@ void rt_hw_board_init()
     /* hal bsp init */
     BSP_Init();
 
+    /* Initialize cmbacktrace early to ensure that rt_assert_hook can take effect as soon as possible. */
+#ifdef RT_USING_CMBACKTRACE
+    rt_cm_backtrace_init();
+#endif
+
     /* System tick init */
     rt_hw_interrupt_install(SysTick_IRQn, systick_isr, RT_NULL, "tick");
     HAL_SetTickFreq(1000 / RT_TICK_PER_SECOND);

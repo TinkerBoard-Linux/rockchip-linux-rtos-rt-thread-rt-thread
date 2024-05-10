@@ -10,6 +10,7 @@
 
 #ifndef __BOARD_BASE_H__
 #define __BOARD_BASE_H__
+#include <rtconfig.h>
 
 void systick_isr(int vector, void *param);
 void mpu_init(void);
@@ -18,5 +19,8 @@ void spinlock_init(void);
 void rt_hw_board_init(void);
 void usb_phy_init(void);
 void rt_memory_heap_init(void);
+#ifdef RT_USING_CMBACKTRACE
+int rt_cm_backtrace_init(void);
+#endif
 
 #endif
