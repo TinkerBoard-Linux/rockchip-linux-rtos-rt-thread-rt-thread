@@ -199,7 +199,7 @@ static rt_err_t rockchip_spi_configure(struct rt_spi_device *device,
     else
     {
         rt_mutex_release(&spi->spi_lock);
-        return RT_EINVAL;
+        return -RT_EINVAL;
     }
     /* CPOL */
     if (configuration->mode & RT_SPI_CPOL)
@@ -267,6 +267,7 @@ static rt_err_t rockchip_spi_configure(struct rt_spi_device *device,
         clk_set_rate(spi->hal_dev->clkId, pSPI->maxFreq);
         pSPI->maxFreq = clk_get_rate(spi->hal_dev->clkId);
     }
+    pSPI->config.configured = false;
 
     spi_dbg(pSPI, "SPI SCLK %dHz, speed %dHz\n", pSPI->maxFreq, pSPIConfig->speed);
     rt_mutex_release(&spi->spi_lock);
@@ -336,6 +337,11 @@ static rt_err_t rockchip_spi_wait_idle(struct rockchip_spi *spi, bool forever)
     struct SPI_HANDLE *pSPI = &spi->instance;
     rt_err_t ret = RT_EBUSY;
     uint32_t timeout;
+
+    if (HAL_SPI_QueryBusState(pSPI) == HAL_OK)
+    {
+        return 0;
+    }
 
     timeout = rt_tick_get() + ROCKCHIP_SPI_TX_IDLE_TIMEOUT; /* some tolerance */
     do
@@ -555,13 +561,15 @@ static rt_uint32_t rockchip_spi_xfer(struct rt_spi_device *device, struct rt_spi
     struct rockchip_spi *spi = device->bus->parent.user_data;
     struct SPI_HANDLE *pSPI = &spi->instance;
     struct rockchip_spi_cs *cs = (struct rockchip_spi_cs *)device->parent.user_data;
-    struct clk_gate *pclk_gate, *sclk_gate;
     rt_uint32_t timeout, valid = message->length;
     rt_err_t ret = RT_EOK;
+#ifndef RT_USING_SPI_PM_PERFORMANCE
+    struct clk_gate *pclk_gate, *sclk_gate;
+#endif
 
     /*
-     * When support transfer spi slave in flexible length, unified use of DMA
-     * as the transmission method.
+     * Check parameter:
+     *   1. spi slave(flexible length): Only support dma transfer, defining the burst size.
      */
 #ifdef RT_USING_SPI_SLAVE_FLEXIBLE_LENGTH
     if (HAL_SPI_IsSlave(pSPI))
@@ -581,35 +589,33 @@ static rt_uint32_t rockchip_spi_xfer(struct rt_spi_device *device, struct rt_spi
             return -RT_EINVAL;
         }
     }
+#if (RT_USING_SLAVE_DMA_RX_BURST_SIZE >= 8)
+#error "Define the right RT_USING_SLAVE_DMA_RX_BURST_SIZE!"
+#endif
 #endif
 
     rt_mutex_take(&spi->spi_lock, RT_WAITING_FOREVER);
 
+#ifndef RT_USING_SPI_PM_PERFORMANCE
+    pm_runtime_request(PM_RUNTIME_ID_SPI);
+
     pclk_gate = spi->pclk_gate;
     sclk_gate = spi->sclk_gate;
 
-    pm_runtime_request(PM_RUNTIME_ID_SPI);
-
     clk_enable(pclk_gate);
     clk_enable(sclk_gate);
+#endif
+
+    if (!HAL_SPI_IsSlave(pSPI))
+    {
+        if (message->cs_take)
+            HAL_SPI_SetCS(pSPI, cs->pin, true);
+    }
 
     if (message->send_buf == NULL && message->recv_buf == NULL)
     {
-        if (message->cs_take)
-        {
-            HAL_SPI_SetCS(pSPI, cs->pin, true);
-        }
-        if (message->cs_release)
-        {
-            HAL_SPI_SetCS(pSPI, cs->pin, false);
-        }
-
-        clk_disable(sclk_gate);
-        clk_disable(pclk_gate);
-        pm_runtime_release(PM_RUNTIME_ID_SPI);
-        rt_mutex_release(&spi->spi_lock);
-
-        return RT_EOK;
+        ret = RT_EOK;
+        goto out;
     }
 
     /*
@@ -617,16 +623,12 @@ static rt_uint32_t rockchip_spi_xfer(struct rt_spi_device *device, struct rt_spi
      * burst size is support.
      */
 #ifdef RT_USING_SPI_SLAVE_FLEXIBLE_LENGTH
-#if (RT_USING_SLAVE_DMA_RX_BURST_SIZE > 0 && RT_USING_SLAVE_DMA_RX_BURST_SIZE < 8)
     spi->dma_burst_size = HAL_SPI_IsSlave(pSPI) ? RT_USING_SLAVE_DMA_RX_BURST_SIZE : rockchip_spi_calc_burst_size(message->length);
-#else
-#error "Define the right RT_USING_SLAVE_DMA_RX_BURST_SIZE!"
-#endif
 #else /* #ifdef RT_USING_SPI_SLAVE_FLEXIBLE_LENGTH */
     spi->dma_burst_size = rockchip_spi_calc_burst_size(message->length);
 #endif
     pSPI->dmaBurstSize = spi->dma_burst_size;
-    /* Configure spi mode here. */
+
     HAL_SPI_Configure(pSPI, message->send_buf, message->recv_buf, message->length);
 
     spi_dbg(&spi->bus.parent, "%s slave=%d dma=%p(null-no dma) can_dma=%d(1-en) dma_burst=%d\n",
@@ -637,10 +639,6 @@ static rt_uint32_t rockchip_spi_xfer(struct rt_spi_device *device, struct rt_spi
     spi->error = 0;
     if (!HAL_SPI_IsSlave(pSPI))
     {
-        /* cs only for master */
-        if (message->cs_take)
-            HAL_SPI_SetCS(pSPI, cs->pin, true);
-
         /* Use poll mode for master while less fifo length. */
         if (spi->dma && HAL_SPI_CanDma(pSPI))
         {
@@ -702,7 +700,16 @@ static rt_uint32_t rockchip_spi_xfer(struct rt_spi_device *device, struct rt_spi
             ret = HAL_SPI_ItTransfer(pSPI);
             if (ret)
             {
-                spi_err(&spi->bus.parent, "input invalid, check buf/len aligned\n");
+                if (spi->dma)
+                {
+                    spi_err(&spi->bus.parent, "input invalid, check buf/len aligned!\n");
+                    spi_err(&spi->bus.parent, "len=%d\n", message->length);
+                }
+                else
+                {
+                    spi_err(&spi->bus.parent, "input invalid, enable dma firstly!\n");
+                }
+
                 goto complete;
             }
             rt_hw_interrupt_umask(spi->hal_dev->irqNum);
@@ -725,7 +732,7 @@ static rt_uint32_t rockchip_spi_xfer(struct rt_spi_device *device, struct rt_spi
     }
 
 complete:
-    if (RT_EOK != ret)
+    if ((ret != RT_EOK) && (ret != HAL_INVAL))
     {
         spi->error = ret;
         spi_err(&spi->bus.parent, "%s error: %d\n", __func__, spi->error);
@@ -735,6 +742,7 @@ complete:
     /* Disable SPI when finished. */
     HAL_SPI_Stop(pSPI);
 
+out:
     /* cs only for master */
     if (!HAL_SPI_IsSlave(pSPI))
     {
@@ -742,12 +750,13 @@ complete:
             HAL_SPI_SetCS(pSPI, cs->pin, false);
     }
 
-#if SPI_DEBUG
+#ifndef RT_USING_SPI_PM_PERFORMANCE
+#if (SPI_DEBUG == 0)
     clk_disable(sclk_gate);
     clk_disable(pclk_gate);
 #endif
-
     pm_runtime_release(PM_RUNTIME_ID_SPI);
+#endif
 
     rt_mutex_release(&spi->spi_lock);
 
@@ -802,6 +811,10 @@ static rt_err_t rockchip_spi_probe(struct rockchip_spi *spi, char *bus_name)
         rt_spi_bus_attach_device(&spi->rt_spi_dev[1], dev_name, bus_name, (void *)&spi->rt_spi_cs[1]);
         rt_free(dev_name);
     }
+#ifdef RT_USING_SPI_PM_PERFORMANCE
+    clk_enable(spi->pclk_gate);
+    clk_enable(spi->sclk_gate);
+#endif
 
     return ret;
 }
@@ -847,6 +860,10 @@ int rockchip_rt_hw_spi_init(void)
 
 #ifdef RT_USING_SPI2
     rockchip_spi_probe(&s_spi2, "spi2");
+#endif
+
+#ifdef RT_USING_SPI_PM_PERFORMANCE
+    pm_runtime_request(PM_RUNTIME_ID_SPI);
 #endif
 
     return 0;

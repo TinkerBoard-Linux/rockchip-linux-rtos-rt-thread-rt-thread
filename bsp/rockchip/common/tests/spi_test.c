@@ -75,10 +75,10 @@ static int spi_test_write(struct spi_test_data *data, const void *txbuf, size_t 
     ret = rt_spi_transfer(spi_device, txbuf, RT_NULL, n);
     if (ret != n)
     {
-        rt_kprintf("%s ret_length=0x%x != len=0x%x\n", __func__, ret, n);
+        rt_kprintf("%s ret=%d != len=%d\n", __func__, ret, n);
     }
 
-    return (ret == n) ? RT_EOK : ret;
+    return ret;
 }
 
 static int spi_test_read(struct spi_test_data *data, void *rxbuf, size_t n)
@@ -90,10 +90,10 @@ static int spi_test_read(struct spi_test_data *data, void *rxbuf, size_t n)
     ret = rt_spi_transfer(spi_device, RT_NULL, rxbuf, n);
     if (ret != n)
     {
-        rt_kprintf("%s ret_length=0x%x != len=0x%x\n", __func__, ret, n);
+        rt_kprintf("%s ret=%d != len=%d\n", __func__, ret, n);
     }
 
-    return (ret == n) ? RT_EOK : ret;
+    return ret;
 }
 
 static int spi_test_write_and_read(struct spi_test_data *data, const void *tx_buf, void *rx_buf, size_t len)
@@ -104,10 +104,10 @@ static int spi_test_write_and_read(struct spi_test_data *data, const void *tx_bu
     ret = rt_spi_transfer(spi_device, tx_buf, rx_buf, len);
     if (ret != len)
     {
-        rt_kprintf("%s ret_length=0x%x != len=0x%x\n", __func__, ret, len);
+        rt_kprintf("%s ret=%d != len=%d\n", __func__, ret, len);
     }
 
-    return (ret == len) ? RT_EOK : -RT_EIO;
+    return ret;
 }
 
 static int __unused spi_test_write_then_read(struct spi_test_data *data, const void *txbuf, size_t tx_n,
@@ -145,27 +145,42 @@ static void spi_test_show_usage()
 static void spi_test_write_loop(uint32_t loops, void *txbuf, uint32_t size)
 {
     uint32_t i, bytes, start_time, end_time, cost_time;
+    int ret = 0;
 
     start_time = rt_tick_get();
     for (i = 0; i < loops; i++)
-        spi_test_write(&g_spi_test_data, txbuf, size);
+    {
+        ret = spi_test_write(&g_spi_test_data, txbuf, size);
+        if (ret != size)
+        {
+            rt_kprintf("%s failed, ret=%d\n", __func__, ret);
+            break;
+        }
+    }
     end_time = rt_tick_get();
     cost_time = (end_time - start_time) * 1000 / RT_TICK_PER_SECOND;
 
     bytes = size * loops * 1;
     bytes = bytes / cost_time;
-    rt_kprintf("spi %s write %d*%d cost %ldms speed:%ldKB/S\n", HAL_IS_CACHELINE_ALIGNED(size) ? "DMA" : "CPU", size, loops, cost_time, bytes);
+    if (ret > 0)
+        rt_kprintf("spi %s write %d*%d cost %ldms speed:%ldKB/S\n", HAL_IS_CACHELINE_ALIGNED(size) ? "DMA" : "CPU", size, loops, cost_time, bytes);
 }
 
 static void spi_test_read_loop(uint32_t loops, void *rxbuf, uint32_t size)
 {
     uint32_t i, bytes, start_time, end_time, cost_time;
+    int ret = 0;
 
     start_time = rt_tick_get();
     for (i = 0; i < loops; i++)
     {
         rt_memset(rxbuf, 0, size);
-        spi_test_read(&g_spi_test_data, rxbuf, size);
+        ret = spi_test_read(&g_spi_test_data, rxbuf, size);
+        if (ret != size)
+        {
+            rt_kprintf("%s failed, ret=%d\n", __func__, ret);
+            break;
+        }
         spi_dbg_hex("read rx", rxbuf, 1, size);
     }
     end_time = rt_tick_get();
@@ -173,7 +188,8 @@ static void spi_test_read_loop(uint32_t loops, void *rxbuf, uint32_t size)
 
     bytes = size * loops * 1;
     bytes = bytes / cost_time;
-    rt_kprintf("spi %s read %d*%d cost %ldms speed:%ldKB/S\n", HAL_IS_CACHELINE_ALIGNED(size) ? "DMA" : "CPU", size, loops, cost_time, bytes);
+    if (ret > 0)
+        rt_kprintf("spi %s read %d*%d cost %ldms speed:%ldKB/S\n", HAL_IS_CACHELINE_ALIGNED(size) ? "DMA" : "CPU", size, loops, cost_time, bytes);
     // spi_dbg_hex("read rx", rxbuf, 1, size);
 }
 
@@ -184,6 +200,7 @@ static void spi_test_duplex_thread(void *p)
     char *txbuf = NULL, *rxbuf = NULL;
     struct spi_test_data spi_test_data;
     bool random;
+    int ret = 0;
 
     memcpy(&spi_test_data, &g_spi_test_data, sizeof(spi_test_data));
 
@@ -223,7 +240,12 @@ static void spi_test_duplex_thread(void *p)
     for (i = 0; i < loops; i++)
     {
         rt_memset(rxbuf, 0, size);
-        spi_test_write_and_read(&spi_test_data, txbuf, rxbuf, size);
+        ret = spi_test_write_and_read(&spi_test_data, txbuf, rxbuf, size);
+        if (ret != size)
+        {
+            rt_kprintf("%s failed, ret=%d\n", __func__, ret);
+            break;
+        }
         if (!random && rt_memcmp(txbuf, rxbuf, size))
         {
             spi_dbg_hex("duplex_thread rx", rxbuf, 4, size > 0x20 ? 0x20 : size / 4);
@@ -231,7 +253,8 @@ static void spi_test_duplex_thread(void *p)
         if (delay_ms)
             rt_thread_mdelay(delay_ms);
     }
-    rt_kprintf("%s %s finished\n", argv[2], __func__);
+    if (ret > 0)
+        rt_kprintf("%s %s finished\n", argv[2], __func__);
 
     rt_free_align(txbuf);
     rt_free_align(rxbuf);
@@ -244,7 +267,7 @@ void spi_test(int argc, char **argv)
     char *cmd, *txbuf = NULL, *rxbuf = NULL;
     uint32_t bytes, start_time, end_time, cost_time;
     uint32_t loops = 0, size = 0, temp;
-    int i;
+    int i, ret = 0;
 
     if (argc < 3)
         goto out;
@@ -354,11 +377,18 @@ void spi_test(int argc, char **argv)
 
         start_time = rt_tick_get();
         for (i = 0; i < loops; i++)
-            spi_test_write_and_read(&g_spi_test_data, txbuf, rxbuf, size);
+        {
+            ret = spi_test_write_and_read(&g_spi_test_data, txbuf, rxbuf, size);
+            if (ret != size)
+            {
+                rt_kprintf("spi duplex failed, ret=%d\n", ret);
+                break;
+            }
+        }
         end_time = rt_tick_get();
         cost_time = (end_time - start_time) * 1000 / RT_TICK_PER_SECOND;
 
-        if (rt_memcmp(txbuf, rxbuf, size))
+        if (ret >= 0 && rt_memcmp(txbuf, rxbuf, size))
         {
             spi_dbg_hex("loop rx", rxbuf, 4, size > 0x20 ? 0x20 : size / 4);
             rt_kprintf("spi loop test fail\n");
@@ -366,7 +396,8 @@ void spi_test(int argc, char **argv)
 
         bytes = size * loops;
         bytes = bytes / cost_time;
-        rt_kprintf("spi loop %d*%d cost %ldms speed:%ldKB/S\n", size, loops, cost_time, bytes);
+        if (ret >= 0)
+            rt_kprintf("spi loop %d*%d cost %ldms speed:%ldKB/S\n", size, loops, cost_time, bytes);
 
         rt_free_align(txbuf);
         rt_free_align(rxbuf);
@@ -536,13 +567,13 @@ int _at_spi_test(void)
     for (size = 1024; size < 1036; size++)
     {
         ret = spi_test_write(&g_spi_test_data, buffer, size);
-        if (ret)
+        if (ret != size)
         {
             rt_kprintf("spi_test_write %d fail %d\n", size, ret);
             goto out;
         }
         ret = spi_test_read(&g_spi_test_data, buffer, size);
-        if (ret)
+        if (ret != size)
         {
             rt_kprintf("spi_test_read %d fail %d\n", size, ret);
             goto out;
