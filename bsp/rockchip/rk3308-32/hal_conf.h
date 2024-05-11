@@ -140,7 +140,7 @@
 /* HAL_DBG SUB CONFIG */
 #define HAL_DBG_USING_RTT_SERIAL
 #define HAL_DBG_ON
-#define HAL_DBG_INFO_ON
+//#define HAL_DBG_INFO_ON
 #define HAL_DBG_WRN_ON
 #define HAL_DBG_ERR_ON
 #define HAL_ASSERT_ON
