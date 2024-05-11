@@ -16,7 +16,7 @@
 
 #include <rtdevice.h>
 #include <rtthread.h>
-#if defined(RT_USING_COMMON_TEST_DISPLAY) || defined(RT_USING_SPI_SCREEN_TEST)
+#if defined(RT_USING_COMMON_TEST_DISPLAY) || defined(RT_USING_SPI_SCREEN_TEST) || defined(RT_USING_COMMON_MODETEST)
 
 #include "display_pattern.h"
 

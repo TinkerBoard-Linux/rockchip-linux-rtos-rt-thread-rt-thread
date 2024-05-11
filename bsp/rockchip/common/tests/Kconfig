@@ -55,6 +55,11 @@ config RT_USING_COMMON_TEST
         depends on RT_USING_VOP
         default n
 
+    config RT_USING_COMMON_MODETEST
+        bool "Enable BSP Common Modetest"
+        depends on RT_USING_VOP
+        default n
+
     config RT_USING_SPI_SCREEN_TEST
         bool "Enable BSP Common SPI Screen TEST"
         depends on RT_USING_SPI_SCREEN

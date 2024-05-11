@@ -10,6 +10,7 @@
   * Change Logs:
   * Date           Author          Notes
   * 2023-11-11     Damon Ding      first implementation
+  * 2024-05-11     Damon Ding      add config RT_USING_COMMON_MODETEST
   *
   ******************************************************************************
   */
@@ -18,7 +19,7 @@
 #include <rthw.h>
 #include <rtthread.h>
 
-#ifdef RT_USING_COMMON_TEST_DISPLAY
+#ifdef RT_USING_COMMON_MODETEST
 #include <getopt.h>
 #include <stdint.h>
 #include <string.h>
