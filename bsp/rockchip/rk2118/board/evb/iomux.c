@@ -217,6 +217,20 @@ void emmc_iomux_config(void)
                          GPIO_PIN_B1 |  // EMMC_CMD
                          GPIO_PIN_B3,   // EMMC_CLK
                          PIN_CONFIG_MUX_FUNC1);
+
+    HAL_PINCTRL_SetParam(GPIO_BANK1,
+                         GPIO_PIN_A0 |  // EMMC_D5
+                         GPIO_PIN_A1 |  // EMMC_D3
+                         GPIO_PIN_A2 |  // EMMC_D4
+                         GPIO_PIN_A3 |  // EMMC_D0
+                         GPIO_PIN_A4 |  // EMMC_D1
+                         GPIO_PIN_A6 |  // EMMC_D2
+                         GPIO_PIN_A7 |  // EMMC_D7
+                         GPIO_PIN_B0 |  // EMMC_D6
+                         GPIO_PIN_B1 |  // EMMC_CMD
+                         GPIO_PIN_B3,   // EMMC_CLK
+                         PIN_CONFIG_PUL_UP |
+                         PIN_CONFIG_DRV_LEVEL1);
 }
 
 /**
