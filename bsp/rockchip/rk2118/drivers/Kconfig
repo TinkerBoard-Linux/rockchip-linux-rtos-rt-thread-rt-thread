@@ -2,6 +2,8 @@ source "$BSP_DIR/../common/drivers/Kconfig"
 
 menu "RT-Thread rockchip RK2118 drivers"
 
+source "$BSP_DIR/drivers/Kconfig.audio"
+
 config RT_USING_CRU
     bool "Enable CRU"
     default n
@@ -12,15 +14,31 @@ config RT_USING_DMA
 
 if RT_USING_DMA
 config RT_USING_DMA_PL330
-    bool "Enable PL330 DMA Controller"
-    default n
+    bool
 
 config RT_USING_DMA0
     bool "Enable PL330 DMA0 Controller"
+    select RT_USING_DMA_PL330
     default n
 
 config RT_USING_DMA1
     bool "Enable PL330 DMA1 Controller"
+    select RT_USING_DMA_PL330
+    default n
+
+config RT_USING_DMA2
+    bool "Enable PL330 DMA2 Controller"
+    select RT_USING_DMA_PL330
+    default n
+
+config RT_USING_DMA3
+    bool "Enable PL330 DMA3 Controller"
+    select RT_USING_DMA_PL330
+    default n
+
+config RT_USING_DMA4
+    bool "Enable PL330 DMA4 Controller"
+    select RT_USING_DMA_PL330
     default n
 endif
 

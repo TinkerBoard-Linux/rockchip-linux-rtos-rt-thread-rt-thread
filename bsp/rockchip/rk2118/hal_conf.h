@@ -70,10 +70,6 @@
 #define HAL_I2C_MODULE_ENABLED
 #endif
 
-#ifdef RT_USING_I2STDM
-#define HAL_I2STDM_MODULE_ENABLED
-#endif
-
 #ifdef RT_USING_OTP
 #define HAL_OTP_MODULE_ENABLED
 #endif
@@ -108,6 +104,10 @@
 #define HAL_PWR_MODULE_ENABLED
 #endif
 
+#ifdef RT_USING_SAI
+#define HAL_SAI_MODULE_ENABLED
+#endif
+
 #ifdef RT_USING_SDIO
 #define HAL_SDIO_MODULE_ENABLED
 #endif
@@ -121,6 +121,14 @@
 #define HAL_FSPI_XIP_ENABLE
 #define HAL_SRAM_SECTION_ENABLED
 #endif
+#endif
+
+#ifdef RT_USING_SPDIFRX
+#define HAL_SPDIFRX_MODULE_ENABLED
+#endif
+
+#ifdef RT_USING_SPDIFTX
+#define HAL_SPDIFTX_MODULE_ENABLED
 #endif
 
 #ifdef RT_USING_SPI
@@ -149,10 +157,6 @@
 
 #ifdef RT_USING_USB_HOST
 #define HAL_HCD_MODULE_ENABLED
-#endif
-
-#ifdef RT_USING_VAD
-#define HAL_VAD_MODULE_ENABLED
 #endif
 
 #ifdef RT_USING_VOP
