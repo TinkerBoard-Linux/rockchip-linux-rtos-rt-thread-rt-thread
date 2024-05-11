@@ -80,6 +80,30 @@ DEFINE_ROCKCHIP_PL330(0);
 DEFINE_ROCKCHIP_PL330(1);
 #endif /* RT_USING_DMA1 */
 
+#if defined(RT_USING_DMA2)
+DEFINE_ROCKCHIP_PL330(2);
+#endif /* RT_USING_DMA2 */
+
+#if defined(RT_USING_DMA3)
+DEFINE_ROCKCHIP_PL330(3);
+#endif /* RT_USING_DMA3 */
+
+#if defined(RT_USING_DMA4)
+DEFINE_ROCKCHIP_PL330(4);
+#endif /* RT_USING_DMA4 */
+
+#if defined(RT_USING_DMA5)
+DEFINE_ROCKCHIP_PL330(5);
+#endif /* RT_USING_DMA5 */
+
+#if defined(RT_USING_DMA6)
+DEFINE_ROCKCHIP_PL330(6);
+#endif /* RT_USING_DMA6 */
+
+#if defined(RT_USING_DMA7)
+DEFINE_ROCKCHIP_PL330(7);
+#endif /* RT_USING_DMA7 */
+
 static struct rt_dma_pl330 *rk_pl330_table[] =
 {
 #if defined(RT_USING_DMA0)
@@ -87,6 +111,24 @@ static struct rt_dma_pl330 *rk_pl330_table[] =
 #endif
 #if defined(RT_USING_DMA1)
     &rk_pl3301,
+#endif
+#if defined(RT_USING_DMA2)
+    &rk_pl3302,
+#endif
+#if defined(RT_USING_DMA3)
+    &rk_pl3303,
+#endif
+#if defined(RT_USING_DMA4)
+    &rk_pl3304,
+#endif
+#if defined(RT_USING_DMA5)
+    &rk_pl3305,
+#endif
+#if defined(RT_USING_DMA6)
+    &rk_pl3306,
+#endif
+#if defined(RT_USING_DMA7)
+    &rk_pl3307,
 #endif
 };
 
