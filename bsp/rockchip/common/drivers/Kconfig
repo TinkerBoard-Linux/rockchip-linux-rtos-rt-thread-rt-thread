@@ -253,6 +253,9 @@ choice
 
     config RT_USING_PANEL_FX070_DHM11BOE
         bool "FX070_DHM11BOE RGB panel, resolution is 1024x600"
+
+    config RT_USING_PANEL_Q7050ITH2641AA1T
+        bool "Q7050ITH2641AA1T RGB panel, resolution is 1024x600"
 endchoice
 
 choice

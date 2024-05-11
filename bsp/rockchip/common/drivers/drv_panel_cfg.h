@@ -46,6 +46,8 @@
 #include "panel_cfg/fx070_dhm11boe_panel_cfg.h"
 #elif defined(RT_USING_PANEL_K350C4516T)
 #include "panel_cfg/k350c4516t_panel_cfg.h"
+#elif defined(RT_USING_PANEL_Q7050ITH2641AA1T)
+#include "panel_cfg/q7050ith2641aa1t_panel_cfg.h"
 #endif
 
 #if defined(RT_USING_PANEL_KGM281G44PVAA)
