@@ -134,6 +134,13 @@ static int drv_pipe_xfer(upipe_t pipe, rt_uint8_t token, void *buffer, int nbyte
             }
             return -1;
         }
+        else if (urb_state == URB_IDLE && hc_state == HC_IDLE)
+        {
+            RT_DEBUG_LOG(RT_DEBUG_USB, ("urb_idle and hc_idle, reinit hcd\n"));
+            HAL_HCD_Init(&g_hcd);
+            HAL_HCD_Start(&g_hcd);
+            connect_status = RT_FALSE;
+        }
         else if (urb_state != URB_NOTREADY && urb_state != URB_NYET)
         {
             RT_DEBUG_LOG(RT_DEBUG_USB, ("ok\n"));
