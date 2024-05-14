@@ -410,7 +410,7 @@ static void print_call_stack(uint32_t sp) {
     cur_depth = cm_backtrace_call_stack(call_stack_buf, CMB_CALL_STACK_MAX_DEPTH, sp);
 
     for (i = 0; i < cur_depth; i++) {
-        sprintf(call_stack_info + i * (8 + 1), "%08lx", (unsigned long)call_stack_buf[i]);
+        rt_sprintf(call_stack_info + i * (8 + 1), "%08lx", (unsigned long)call_stack_buf[i]);
         call_stack_info[i * (8 + 1) + 8] = ' ';
     }
 
