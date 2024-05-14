@@ -25,10 +25,12 @@ struct hid_s
     uep_t ep_in;
     uep_t ep_out;
     int status;
-    rt_uint8_t protocol;
-    rt_uint8_t report_buf[MAX_REPORT_SIZE];
+    USB_DMA_ALIGN rt_uint8_t protocol;
+    USB_DMA_ALIGN rt_uint8_t report_buf[MAX_REPORT_SIZE];
     struct rt_messagequeue hid_mq;
 };
+
+USB_DMA_ALIGN static struct uhid_descriptor hid_desc_buf;
 
 /* CustomHID_ConfigDescriptor */
 ALIGN(4)
@@ -458,7 +460,6 @@ static rt_err_t _interface_handler(ufunction_t func, ureq_t setup)
 
     struct hid_s *data = (struct hid_s *) func->user_data;
 
-
     switch (setup->bRequest)
     {
     case USB_REQ_GET_DESCRIPTOR:
@@ -468,8 +469,8 @@ static rt_err_t _interface_handler(ufunction_t func, ureq_t setup)
         }
         else if((setup->wValue >> 8) == USB_DESC_TYPE_HID)
         {
-
-            rt_usbd_ep0_write(func->device, (void *)(&_hid_comm_desc.hid_desc), sizeof(struct uhid_descriptor));
+            rt_memcpy((void *)&hid_desc_buf, (void*)(&_hid_comm_desc.hid_desc), sizeof(struct uhid_descriptor));
+            rt_usbd_ep0_write(func->device, (void *)&hid_desc_buf, sizeof(struct uhid_descriptor));
         }
         break;
     case USB_HID_REQ_GET_REPORT:
@@ -531,7 +532,7 @@ static rt_err_t _function_enable(ufunction_t func)
 //
     if(data->ep_out->buffer == RT_NULL)
     {
-        data->ep_out->buffer        = rt_malloc(HID_RX_BUFSIZE);
+        data->ep_out->buffer = rt_malloc_align(RT_ALIGN(HID_RX_BUFSIZE, USB_DMA_ALIGN_SIZE), USB_DMA_ALIGN_SIZE);
     }
     data->ep_out->request.buffer    = data->ep_out->buffer;
     data->ep_out->request.size      = EP_MAXPACKET(data->ep_out);
@@ -561,7 +562,7 @@ static rt_err_t _function_disable(ufunction_t func)
 
     if(data->ep_out->buffer != RT_NULL)
     {
-        rt_free(data->ep_out->buffer);
+        rt_free_align(data->ep_out->buffer);
         data->ep_out->buffer = RT_NULL;
     }
 
@@ -597,7 +598,7 @@ static rt_err_t _hid_descriptor_config(uhid_comm_desc_t hid, rt_uint8_t cintf_nr
 static rt_size_t _hid_write(rt_device_t dev, rt_off_t pos, const void *buffer, rt_size_t size)
 {
     struct hid_s *hiddev = (struct hid_s *)dev;
-    struct hid_report report;
+    USB_DMA_ALIGN struct hid_report report;
     if (hiddev->func->device->state == USB_STATE_CONFIGURED)
     {
         report.report_id = pos;

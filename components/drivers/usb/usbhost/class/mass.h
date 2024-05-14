@@ -29,7 +29,7 @@ struct ustor
 {
     upipe_t pipe_in;
     upipe_t pipe_out;
-    rt_uint32_t capicity[2];
+    USB_DMA_ALIGN rt_uint32_t capicity[2];
 
     struct rt_device dev[MAX_PARTITION_COUNT];
     rt_uint8_t dev_cnt;

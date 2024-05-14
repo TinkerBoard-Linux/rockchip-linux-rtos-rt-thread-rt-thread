@@ -60,7 +60,7 @@
 ALIGN(RT_ALIGN_SIZE)
 static rt_uint8_t vcom_thread_stack[VCOM_TASK_STK_SIZE];
 static struct rt_thread vcom_thread;
-static struct ucdc_line_coding line_coding;
+USB_DMA_ALIGN static struct ucdc_line_coding line_coding;
 
 #define CDC_TX_BUFSIZE    1024
 #define CDC_BULKIN_MAXSIZE (CDC_TX_BUFSIZE / 8)
@@ -377,7 +377,7 @@ static rt_err_t _ep_cmd_handler(ufunction_t func, rt_size_t size)
  */
 static rt_err_t _cdc_get_line_coding(udevice_t device, ureq_t setup)
 {
-    struct ucdc_line_coding data;
+    USB_DMA_ALIGN struct ucdc_line_coding data;
     rt_uint16_t size;
 
     RT_ASSERT(device != RT_NULL);
@@ -495,7 +495,7 @@ static rt_err_t _function_enable(ufunction_t func)
     _vcom_reset_state(func);
 
     data = (struct vcom*)func->user_data;
-    data->ep_out->buffer = rt_malloc(CDC_RX_BUFSIZE);
+    data->ep_out->buffer = rt_malloc_align(RT_ALIGN(CDC_RX_BUFSIZE, USB_DMA_ALIGN_SIZE), USB_DMA_ALIGN_SIZE);
     RT_ASSERT(data->ep_out->buffer != RT_NULL);
 
     data->ep_out->request.buffer = data->ep_out->buffer;
@@ -527,7 +527,7 @@ static rt_err_t _function_disable(ufunction_t func)
     data = (struct vcom*)func->user_data;
     if(data->ep_out->buffer != RT_NULL)
     {
-        rt_free(data->ep_out->buffer);
+        rt_free_align(data->ep_out->buffer);
         data->ep_out->buffer = RT_NULL;
     }
 
@@ -851,7 +851,7 @@ static void vcom_tx_thread_entry(void* parameter)
     rt_uint32_t res;
     struct ufunction *func = (struct ufunction *)parameter;
     struct vcom *data = (struct vcom*)func->user_data;
-    rt_uint8_t ch[CDC_BULKIN_MAXSIZE];
+    USB_DMA_ALIGN rt_uint8_t ch[CDC_BULKIN_MAXSIZE];
 
     while (1)
     {

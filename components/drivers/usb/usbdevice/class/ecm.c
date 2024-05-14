@@ -36,7 +36,7 @@ struct rt_ecm_eth
     rt_uint8_t              host_addr[MAX_ADDR_LEN];
     rt_uint8_t              dev_addr[MAX_ADDR_LEN];
 
-    ALIGN(4)
+    USB_DMA_ALIGN
     rt_uint8_t              rx_pool[512];
     ALIGN(4)
     rt_size_t               rx_size;

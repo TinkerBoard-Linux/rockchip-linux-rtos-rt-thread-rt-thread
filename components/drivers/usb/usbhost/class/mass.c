@@ -33,7 +33,7 @@ static rt_err_t _pipe_check(struct uhintf* intf, upipe_t pipe)
     rt_err_t ret;
     ustor_t stor;
     int size = 0;
-    struct ustorage_csw csw;
+    USB_DMA_ALIGN struct ustorage_csw csw;
 
     if(intf == RT_NULL || pipe == RT_NULL)
     {
@@ -98,7 +98,7 @@ static rt_err_t rt_usb_bulk_only_xfer(struct uhintf* intf,
     rt_size_t size;
     rt_err_t ret;
     upipe_t pipe;
-    struct ustorage_csw csw;
+    USB_DMA_ALIGN struct ustorage_csw csw;
     ustor_t stor;
 
     RT_ASSERT(cmd != RT_NULL);
@@ -189,7 +189,7 @@ static rt_err_t rt_usb_bulk_only_xfer(struct uhintf* intf,
 rt_err_t rt_usbh_storage_get_max_lun(struct uhintf* intf, rt_uint8_t* max_lun)
 {
     struct uinstance* device;
-    struct urequest setup;
+    USB_DMA_ALIGN struct urequest setup;
     int timeout = USB_TIMEOUT_BASIC;
 
     if(intf == RT_NULL)
@@ -238,7 +238,7 @@ rt_err_t rt_usbh_storage_get_max_lun(struct uhintf* intf, rt_uint8_t* max_lun)
  */
 rt_err_t rt_usbh_storage_reset(struct uhintf* intf)
 {
-    struct urequest setup;
+    USB_DMA_ALIGN struct urequest setup;
     struct uinstance* device;
     int timeout = USB_TIMEOUT_BASIC;
 
@@ -287,7 +287,7 @@ rt_err_t rt_usbh_storage_reset(struct uhintf* intf)
 rt_err_t rt_usbh_storage_read10(struct uhintf* intf, rt_uint8_t *buffer,
     rt_uint32_t sector, rt_size_t count, int timeout)
 {
-    struct ustorage_cbw cmd;
+    USB_DMA_ALIGN struct ustorage_cbw cmd;
 
     /* parameter check */
     if(intf == RT_NULL)
@@ -333,7 +333,7 @@ rt_err_t rt_usbh_storage_read10(struct uhintf* intf, rt_uint8_t *buffer,
 rt_err_t rt_usbh_storage_write10(struct uhintf* intf, rt_uint8_t *buffer,
     rt_uint32_t sector, rt_size_t count, int timeout)
 {
-    struct ustorage_cbw cmd;
+    USB_DMA_ALIGN struct ustorage_cbw cmd;
 
     /* parameter check */
     if(intf == RT_NULL)
@@ -376,7 +376,7 @@ rt_err_t rt_usbh_storage_write10(struct uhintf* intf, rt_uint8_t *buffer,
  */
 rt_err_t rt_usbh_storage_request_sense(struct uhintf* intf, rt_uint8_t* buffer)
 {
-    struct ustorage_cbw cmd;
+    USB_DMA_ALIGN struct ustorage_cbw cmd;
     int timeout = USB_TIMEOUT_LONG;
 
     /* parameter check */
@@ -412,7 +412,7 @@ rt_err_t rt_usbh_storage_request_sense(struct uhintf* intf, rt_uint8_t* buffer)
  */
 rt_err_t rt_usbh_storage_test_unit_ready(struct uhintf* intf)
 {
-    struct ustorage_cbw cmd;
+    USB_DMA_ALIGN struct ustorage_cbw cmd;
     int timeout = USB_TIMEOUT_LONG;
 
     /* parameter check */
@@ -448,7 +448,7 @@ rt_err_t rt_usbh_storage_test_unit_ready(struct uhintf* intf)
  */
 rt_err_t rt_usbh_storage_inquiry(struct uhintf* intf, rt_uint8_t* buffer)
 {
-    struct ustorage_cbw cmd;
+    USB_DMA_ALIGN struct ustorage_cbw cmd;
     int timeout = USB_TIMEOUT_LONG;
 
     /* parameter check */
@@ -485,7 +485,7 @@ rt_err_t rt_usbh_storage_inquiry(struct uhintf* intf, rt_uint8_t* buffer)
  */
 rt_err_t rt_usbh_storage_get_capacity(struct uhintf* intf, rt_uint8_t* buffer)
 {
-    struct ustorage_cbw cmd;
+    USB_DMA_ALIGN struct ustorage_cbw cmd;
     int timeout = USB_TIMEOUT_LONG;
 
     /* parameter check */

@@ -949,7 +949,7 @@ exit:
  */
 static rt_err_t _interface_handler(ufunction_t func, ureq_t setup)
 {
-    rt_uint8_t lun = 0;
+    USB_DMA_ALIGN rt_uint8_t lun = 0;
 
     RT_ASSERT(func != RT_NULL);
     RT_ASSERT(func->device != RT_NULL);
@@ -1049,16 +1049,16 @@ static rt_err_t _function_enable(ufunction_t func)
         return -RT_ERROR;
     }
 
-    data->ep_in->buffer = (rt_uint8_t*)rt_malloc(data->geometry.bytes_per_sector);
+    data->ep_in->buffer = (rt_uint8_t*)rt_malloc_align(RT_ALIGN(data->geometry.bytes_per_sector, USB_DMA_ALIGN_SIZE), USB_DMA_ALIGN_SIZE);
     if(data->ep_in->buffer == RT_NULL)
     {
         rt_kprintf("no memory\n");
         return -RT_ENOMEM;
     }
-    data->ep_out->buffer = (rt_uint8_t*)rt_malloc(data->geometry.bytes_per_sector);
+    data->ep_out->buffer = (rt_uint8_t*)rt_malloc_align(RT_ALIGN(data->geometry.bytes_per_sector, USB_DMA_ALIGN_SIZE), USB_DMA_ALIGN_SIZE);
     if(data->ep_out->buffer == RT_NULL)
     {
-        rt_free(data->ep_in->buffer);
+        rt_free_align(data->ep_in->buffer);
         rt_kprintf("no memory\n");
         return -RT_ENOMEM;
     }
@@ -1089,13 +1089,13 @@ static rt_err_t _function_disable(ufunction_t func)
     data = (struct mstorage*)func->user_data;
     if(data->ep_in->buffer != RT_NULL)
     {
-        rt_free(data->ep_in->buffer);
+        rt_free_align(data->ep_in->buffer);
         data->ep_in->buffer = RT_NULL;
     }
 
     if(data->ep_out->buffer != RT_NULL)
     {
-        rt_free(data->ep_out->buffer);
+        rt_free_align(data->ep_out->buffer);
         data->ep_out->buffer = RT_NULL;
     }
     if(data->disk != RT_NULL)

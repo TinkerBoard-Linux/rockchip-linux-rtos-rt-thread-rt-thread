@@ -53,20 +53,20 @@ struct rt_rndis_eth
     struct rt_timer timer;
 #endif /* RNDIS_DELAY_LINK_UP */
 
-    ALIGN(4)
+    USB_DMA_ALIGN
     rt_uint8_t rx_pool[512];
-    ALIGN(4)
+    USB_DMA_ALIGN
     rt_uint8_t tx_pool[512];
-
+    USB_DMA_ALIGN
     rt_uint32_t cmd_pool[2];
-    ALIGN(4)
+    USB_DMA_ALIGN
     char rx_buffer[sizeof(struct rndis_packet_msg) + USB_ETH_MTU + 14];
     rt_size_t rx_offset;
     rt_size_t rx_length;
     rt_bool_t rx_flag;
     rt_bool_t rx_frist;
 
-    ALIGN(4)
+    USB_DMA_ALIGN
     char tx_buffer[sizeof(struct rndis_packet_msg) + USB_ETH_MTU + 14];
     struct rt_semaphore tx_buffer_free;
 
@@ -289,7 +289,7 @@ const static rt_uint32_t oid_supported_list[] =
     OID_802_3_MAC_OPTIONS,
 };
 
-static rt_uint8_t rndis_message_buffer[RNDIS_MESSAGE_BUFFER_SIZE];
+USB_DMA_ALIGN static rt_uint8_t rndis_message_buffer[RNDIS_MESSAGE_BUFFER_SIZE];
 
 static void _rndis_response_available(ufunction_t func)
 {
@@ -314,7 +314,7 @@ static rt_err_t _rndis_init_response(ufunction_t func, rndis_init_msg_t msg)
     struct rt_rndis_response * response;
 
     response = rt_malloc(sizeof(struct rt_rndis_response));
-    resp = rt_malloc(sizeof(struct rndis_init_cmplt));
+    resp = rt_malloc_align(RT_ALIGN(sizeof(struct rndis_init_cmplt), USB_DMA_ALIGN_SIZE), USB_DMA_ALIGN_SIZE);
 
     if( (response == RT_NULL) || (resp == RT_NULL) )
     {
@@ -324,7 +324,7 @@ static rt_err_t _rndis_init_response(ufunction_t func, rndis_init_msg_t msg)
             rt_free(response);
 
         if(resp != RT_NULL)
-            rt_free(resp);
+            rt_free_align(resp);
 
         return -RT_ENOMEM;
     }
@@ -360,7 +360,7 @@ static rndis_query_cmplt_t _create_resp(rt_size_t size)
 {
     rndis_query_cmplt_t resp;
 
-    resp = rt_malloc(sizeof(struct rndis_query_cmplt) + size);
+    resp = rt_malloc_align(RT_ALIGN(sizeof(struct rndis_query_cmplt) + size, USB_DMA_ALIGN_SIZE), USB_DMA_ALIGN_SIZE);
 
     if(resp == RT_NULL)
     {
@@ -528,7 +528,7 @@ static rt_err_t _rndis_query_response(ufunction_t func,rndis_query_msg_t msg)
             rt_free(response);
 
         if(resp != RT_NULL)
-            rt_free(resp);
+            rt_free_align(resp);
 
         return -RT_ENOMEM;
     }
@@ -557,7 +557,7 @@ static rt_err_t _rndis_set_response(ufunction_t func,rndis_set_msg_t msg)
     struct rt_rndis_response * response;
 
     response = rt_malloc(sizeof(struct rt_rndis_response));
-    resp = rt_malloc(sizeof(struct rndis_set_cmplt));
+    resp = rt_malloc_align(RT_ALIGN(sizeof(struct rndis_set_cmplt), USB_DMA_ALIGN_SIZE), USB_DMA_ALIGN_SIZE);
 
     if( (response == RT_NULL) || (resp == RT_NULL) )
     {
@@ -567,7 +567,7 @@ static rt_err_t _rndis_set_response(ufunction_t func,rndis_set_msg_t msg)
             rt_free(response);
 
         if(resp != RT_NULL)
-            rt_free(resp);
+            rt_free_align(resp);
 
         return -RT_ENOMEM;
     }
@@ -672,7 +672,7 @@ static rt_err_t _rndis_keepalive_response(ufunction_t func,rndis_keepalive_msg_t
     struct rt_rndis_response * response;
 
     response = rt_malloc(sizeof(struct rt_rndis_response));
-    resp = rt_malloc(sizeof(struct rndis_keepalive_cmplt));
+    resp = rt_malloc_align(RT_ALIGN(sizeof(struct rndis_keepalive_cmplt), USB_DMA_ALIGN_SIZE), USB_DMA_ALIGN_SIZE);
 
     if( (response == RT_NULL) || (resp == RT_NULL) )
     {
@@ -682,7 +682,7 @@ static rt_err_t _rndis_keepalive_response(ufunction_t func,rndis_keepalive_msg_t
             rt_free(response);
 
         if(resp != RT_NULL)
-            rt_free(resp);
+            rt_free_align(resp);
 
         return -RT_ENOMEM;
     }
@@ -799,7 +799,7 @@ static rt_err_t _rndis_get_encapsulated_response(ufunction_t func, ureq_t setup)
         rt_hw_interrupt_enable(level);
     }
 
-    rt_free((void *)response->buffer);
+    rt_free_align((void *)response->buffer);
     rt_free(response);
 
     if(!rt_list_isempty(&((rt_rndis_eth_t)func->user_data)->response_list))
@@ -980,7 +980,7 @@ static rt_err_t _function_enable(ufunction_t func)
             response = (struct rt_rndis_response *)((rt_rndis_eth_t)func->user_data)->response_list.next;
 
             rt_list_remove(&response->list);
-            rt_free((void *)response->buffer);
+            rt_free_align((void *)response->buffer);
             rt_free(response);
         }
 
@@ -1018,7 +1018,7 @@ static rt_err_t _function_disable(ufunction_t func)
             LOG_D("remove resp chain list!");
 
             rt_list_remove(&response->list);
-            rt_free((void *)response->buffer);
+            rt_free_align((void *)response->buffer);
             rt_free(response);
         }
 
@@ -1258,7 +1258,7 @@ static rt_err_t _rndis_indicate_status_msg(ufunction_t func, rt_uint32_t status)
     struct rt_rndis_response * response;
 
     response = rt_malloc(sizeof(struct rt_rndis_response));
-    resp = rt_malloc(sizeof(struct rndis_indicate_status_msg));
+    resp = rt_malloc_align(RT_ALIGN(sizeof(struct rndis_indicate_status_msg), USB_DMA_ALIGN_SIZE), USB_DMA_ALIGN_SIZE);
 
     if( (response == RT_NULL) || (resp == RT_NULL) )
     {
@@ -1268,7 +1268,7 @@ static rt_err_t _rndis_indicate_status_msg(ufunction_t func, rt_uint32_t status)
             rt_free(response);
 
         if(resp != RT_NULL)
-            rt_free(resp);
+            rt_free_align(resp);
 
         return -RT_ENOMEM;
     }

@@ -241,7 +241,7 @@ static rt_err_t _get_descriptor(struct udevice* device, ureq_t setup)
  */
 static rt_err_t _get_interface(struct udevice* device, ureq_t setup)
 {
-    rt_uint8_t value;
+    USB_DMA_ALIGN rt_uint8_t value;
     uintf_t intf;
     ufunction_t func;
 
@@ -334,7 +334,7 @@ static rt_err_t _set_interface(struct udevice* device, ureq_t setup)
  */
 static rt_err_t _get_config(struct udevice* device, ureq_t setup)
 {
-    rt_uint8_t value;
+    USB_DMA_ALIGN rt_uint8_t value;
 
     /* parameter check */
     RT_ASSERT(device != RT_NULL);
@@ -500,7 +500,7 @@ static rt_err_t _request_interface(struct udevice* device, ureq_t setup)
 static rt_err_t _standard_request(struct udevice* device, ureq_t setup)
 {
     udcd_t dcd;
-    rt_uint16_t value = 0;
+    USB_DMA_ALIGN rt_uint16_t value = 0;
 
     /* parameter check */
     RT_ASSERT(device != RT_NULL);
@@ -707,7 +707,7 @@ static rt_err_t _vendor_request(udevice_t device, ureq_t setup)
                     usb_comp_id_desc_size = sizeof(struct usb_os_header_comp_id_descriptor) +
                     (sizeof(struct usb_os_function_comp_id_descriptor)-sizeof(rt_list_t))*rt_list_len(&device->os_comp_id_desc->func_desc);
 
-                    usb_comp_id_desc = (rt_uint8_t *)rt_malloc(usb_comp_id_desc_size);
+                    usb_comp_id_desc = (rt_uint8_t *)rt_malloc_align(RT_ALIGN(usb_comp_id_desc_size, USB_DMA_ALIGN_SIZE), USB_DMA_ALIGN_SIZE);
                     RT_ASSERT(usb_comp_id_desc != RT_NULL);
                     device->os_comp_id_desc->head_desc.dwLength = usb_comp_id_desc_size;
                     pusb_comp_id_desc = usb_comp_id_desc;

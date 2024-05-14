@@ -15,7 +15,7 @@ struct winusb_device
 {
     struct rt_device parent;
     void (*cmd_handler)(rt_uint8_t *buffer,rt_size_t size);
-    rt_uint8_t cmd_buff[256];
+    USB_DMA_ALIGN rt_uint8_t cmd_buff[256];
     uep_t ep_out;
     uep_t ep_in;
 };

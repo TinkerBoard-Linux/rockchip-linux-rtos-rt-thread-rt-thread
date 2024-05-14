@@ -29,7 +29,7 @@ static rt_list_t _protocal_list;
 */
 rt_err_t rt_usbh_hid_set_idle(struct uhintf* intf, int duration, int report_id)
 {
-    struct urequest setup;
+    USB_DMA_ALIGN struct urequest setup;
     struct uinstance* device;
     int timeout = USB_TIMEOUT_BASIC;
 
@@ -65,7 +65,7 @@ rt_err_t rt_usbh_hid_set_idle(struct uhintf* intf, int duration, int report_id)
 rt_err_t rt_usbh_hid_get_report(struct uhintf* intf, rt_uint8_t type,
     rt_uint8_t id, rt_uint8_t *buffer, rt_size_t size)
 {
-    struct urequest setup;
+    USB_DMA_ALIGN struct urequest setup;
     struct uinstance* device;
     int timeout = USB_TIMEOUT_BASIC;
 
@@ -108,7 +108,7 @@ rt_err_t rt_usbh_hid_get_report(struct uhintf* intf, rt_uint8_t type,
 */
 rt_err_t rt_usbh_hid_set_report(struct uhintf* intf, rt_uint8_t *buffer, rt_size_t size)
 {
-    struct urequest setup;
+    USB_DMA_ALIGN struct urequest setup;
     struct uinstance* device;
     int timeout = USB_TIMEOUT_BASIC;
 
@@ -141,7 +141,7 @@ rt_err_t rt_usbh_hid_set_report(struct uhintf* intf, rt_uint8_t *buffer, rt_size
  */
 rt_err_t rt_usbh_hid_set_protocal(struct uhintf* intf, int protocol)
 {
-    struct urequest setup;
+    USB_DMA_ALIGN struct urequest setup;
     struct uinstance* device;
     int timeout = USB_TIMEOUT_BASIC;
 
@@ -177,7 +177,7 @@ rt_err_t rt_usbh_hid_set_protocal(struct uhintf* intf, int protocol)
 rt_err_t rt_usbh_hid_get_report_descriptor(struct uhintf* intf,
     rt_uint8_t *buffer, rt_size_t size)
 {
-    struct urequest setup;
+    USB_DMA_ALIGN struct urequest setup;
     struct uinstance* device;
     int timeout = USB_TIMEOUT_BASIC;
 

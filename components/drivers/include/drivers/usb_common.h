@@ -19,6 +19,15 @@ extern "C" {
 
 #include <rtthread.h>
 
+#if defined(RT_USING_CACHE)
+#include <hal_base.h>
+#define USB_DMA_ALIGN                   ALIGN(CACHE_LINE_SIZE)
+#define USB_DMA_ALIGN_SIZE              CACHE_LINE_SIZE
+#else
+#define USB_DMA_ALIGN                   ALIGN(4)
+#define USB_DMA_ALIGN_SIZE              4
+#endif
+
 #define RT_DEBUG_USB                    0x00
 #define USB_DYNAMIC                     0x00
 

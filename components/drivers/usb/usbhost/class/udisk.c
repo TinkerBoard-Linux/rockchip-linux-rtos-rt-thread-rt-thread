@@ -188,7 +188,8 @@ rt_err_t rt_udisk_run(struct uhintf* intf)
     rt_err_t ret;
     char dname[8];
     char sname[8];
-    rt_uint8_t max_lun, *sector, sense[18], inquiry[36];
+    USB_DMA_ALIGN rt_uint8_t max_lun, sense[18], inquiry[36];
+    rt_uint8_t *sector;
     struct dfs_partition part[MAX_PARTITION_COUNT];
     ustor_t stor;
 
@@ -278,7 +279,7 @@ rt_err_t rt_udisk_run(struct uhintf* intf)
         stor->capicity[0], stor->capicity[1]));
 
     /* get the first sector to read partition table */
-    sector = (rt_uint8_t*) rt_malloc (SECTOR_SIZE * 8);
+    sector = (rt_uint8_t*)rt_malloc_align(RT_ALIGN(SECTOR_SIZE * 8, USB_DMA_ALIGN_SIZE), USB_DMA_ALIGN_SIZE);
     if (sector == RT_NULL)
     {
         rt_kprintf("allocate partition sector buffer failed\n");
@@ -295,7 +296,7 @@ rt_err_t rt_udisk_run(struct uhintf* intf)
     {
         rt_kprintf("read parition table error\n");
 
-        rt_free(sector);
+        rt_free_align(sector);
         return -RT_ERROR;
     }
 
@@ -389,7 +390,7 @@ rt_err_t rt_udisk_run(struct uhintf* intf)
         }
     }
 
-    rt_free(sector);
+    rt_free_align(sector);
 
     return RT_EOK;
 }
