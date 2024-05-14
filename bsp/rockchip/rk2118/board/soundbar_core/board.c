@@ -79,7 +79,7 @@ void rt_hw_board_init()
 
     usb_phy_init();
 
-    clk_init(clk_inits, true);
+    clk_init(clk_inits, false);
 
     /* Update system core clock after clk_init */
     SystemCoreClockUpdate();
