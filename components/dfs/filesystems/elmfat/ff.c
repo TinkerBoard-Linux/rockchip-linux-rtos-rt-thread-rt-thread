@@ -231,7 +231,7 @@
 
 
 /* Post process on fatal error in the file operations */
-#define ABORT(fs, res)		{ fp->err = (BYTE)(res); LEAVE_FF(fs, res); }
+#define ABORT(fs, res)		{ fp->err = (BYTE)(res); if (fs->fs_type) LEAVE_FF(fs, res) else return -1; }
 
 
 /* Re-entrancy related */
