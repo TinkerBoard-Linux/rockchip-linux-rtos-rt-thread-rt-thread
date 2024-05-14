@@ -457,7 +457,7 @@ int rt_hw_fspi_device_register(struct rt_fspi_device *fspi_device)
     /* fspi_controller initial */
     host_name = rt_malloc(RT_NAME_MAX);
     rt_memset(host_name, 0, RT_NAME_MAX);
-    sprintf(host_name, "%s%d", "fspi", fspi_device->host_id);
+    rt_sprintf(host_name, "%s%d", "fspi", fspi_device->host_id);
     ctrl = (struct rt_fspi_controller *)rt_device_find(host_name);
     if (!ctrl)
     {
