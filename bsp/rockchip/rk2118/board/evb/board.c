@@ -229,6 +229,10 @@ void rt_hw_board_init()
 #endif
 #endif
 
+#ifdef RT_USING_SDIO
+    rt_board_mmc_init();
+#endif
+
     usb_phy_init();
 
     clk_init(clk_inits, false);

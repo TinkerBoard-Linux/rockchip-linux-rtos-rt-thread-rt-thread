@@ -31,6 +31,16 @@
 
 extern const struct clk_init clk_inits[];
 
+#ifdef RT_USING_SDIO
+void rt_board_mmc_init(void)
+{
+    volatile int *ptr1 = (volatile int *)MMC0_BASE + 0x134; /* sdmmc sample phase reg */
+
+    /* Init SDMMC sample phase to 0 degree */
+    *ptr1 = 0x0 | 0x6 << 16;
+}
+#endif /* RT_USING_SDIO */
+
 #if defined(RT_USING_TSADC)
 RT_WEAK const struct tsadc_init g_tsadc_init =
 {
@@ -258,6 +268,10 @@ RT_WEAK void rt_hw_board_init()
 
     /* Initial usart deriver, and set console device */
     rt_hw_usart_init();
+
+#ifdef RT_USING_SDIO
+    rt_board_mmc_init();
+#endif
 
     usb_phy_init();
 

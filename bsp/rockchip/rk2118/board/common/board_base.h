@@ -22,5 +22,6 @@ void rt_memory_heap_init(void);
 #ifdef RT_USING_CMBACKTRACE
 int rt_cm_backtrace_init(void);
 #endif
+void rt_board_mmc_init(void);
 
 #endif
