@@ -42,6 +42,8 @@ static rt_err_t _get_device_descriptor(struct udevice* device, ureq_t setup)
 
     RT_DEBUG_LOG(RT_DEBUG_USB, ("_get_device_descriptor\n"));
 
+    device->dcd->ep0.request.req_wlength = setup->wLength;
+
     /* device descriptor wLength should less than USB_DESC_LENGTH_DEVICE*/
     size = (setup->wLength > USB_DESC_LENGTH_DEVICE) ?
            USB_DESC_LENGTH_DEVICE : setup->wLength;
@@ -72,6 +74,7 @@ static rt_err_t _get_config_descriptor(struct udevice* device, ureq_t setup)
     RT_DEBUG_LOG(RT_DEBUG_USB, ("_get_config_descriptor\n"));
 
     cfg_desc = &device->curr_cfg->cfg_desc;
+    device->dcd->ep0.request.req_wlength = setup->wLength;
     size = (setup->wLength > cfg_desc->wTotalLength) ?
            cfg_desc->wTotalLength : setup->wLength;
 
@@ -2011,7 +2014,8 @@ rt_err_t rt_usbd_ep0_in_handler(udcd_t dcd)
     else
     {
         /* last packet is MPS multiple, so send ZLP packet */
-        if ((remain == 0) && (dcd->ep0.request.size > 0))
+        if ((remain == 0) && (dcd->ep0.request.size > 0) &&
+            (dcd->ep0.request.req_wlength % mps > 0))
         {
             dcd->ep0.request.size = 0;
             dcd_ep_write(dcd, EP0_IN_ADDR, RT_NULL, 0);

@@ -112,6 +112,7 @@ struct uio_request
     rt_uint8_t* buffer;
     rt_size_t size;
     rt_size_t remain_size;
+    rt_size_t req_wlength;
 };
 typedef struct uio_request* uio_request_t;
 
