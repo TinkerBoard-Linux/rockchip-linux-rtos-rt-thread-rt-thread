@@ -803,6 +803,10 @@ menu "Using USB"
                     config RT_WINUSB_GUID
                     string "Guid for winusb"
                     default "{6860DC3C-C05F-4807-8807-1CA861CC1D66}"
+                    config RT_USB_WINUSB_TRANSLEN
+                        int "winusb transfer length"
+                        default 16384
+                        range 512 65536
                 endif
                 if RT_USB_DEVICE_MSTORAGE
                     config RT_USB_MSTORAGE_DISK_NAME

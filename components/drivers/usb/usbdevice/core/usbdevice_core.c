@@ -800,6 +800,7 @@ static rt_err_t _data_notify(udevice_t device, struct ep_msg* ep_msg)
     uep_t ep;
     ufunction_t func;
     rt_size_t size = 0;
+    rt_uint32_t maxpacket;
 
     RT_ASSERT(device != RT_NULL);
     RT_ASSERT(ep_msg != RT_NULL);
@@ -816,14 +817,20 @@ static rt_err_t _data_notify(udevice_t device, struct ep_msg* ep_msg)
         return -RT_ERROR;
     }
 
+#if defined(RT_USB_DEVICE_WINUSB)
+    maxpacket = RT_USB_WINUSB_TRANSLEN;
+#else
+    maxpacket = EP_MAXPACKET(ep);
+#endif
+
     if(EP_ADDRESS(ep) & USB_DIR_IN)
     {
         size = ep_msg->size;
-        if(ep->request.remain_size >= EP_MAXPACKET(ep))
+        if(ep->request.remain_size >= maxpacket)
         {
-            dcd_ep_write(device->dcd, EP_ADDRESS(ep), ep->request.buffer, EP_MAXPACKET(ep));
-            ep->request.remain_size -= EP_MAXPACKET(ep);
-            ep->request.buffer += EP_MAXPACKET(ep);
+            dcd_ep_write(device->dcd, EP_ADDRESS(ep), ep->request.buffer, maxpacket);
+            ep->request.remain_size -= maxpacket;
+            ep->request.buffer += maxpacket;
         }
         else if(ep->request.remain_size > 0)
         {
@@ -860,7 +867,7 @@ static rt_err_t _data_notify(udevice_t device, struct ep_msg* ep_msg)
         }
         else
         {
-            dcd_ep_read_prepare(device->dcd, EP_ADDRESS(ep), ep->request.buffer, ep->request.remain_size > EP_MAXPACKET(ep) ? EP_MAXPACKET(ep) : ep->request.remain_size);
+            dcd_ep_read_prepare(device->dcd, EP_ADDRESS(ep), ep->request.buffer, ep->request.remain_size > maxpacket ? maxpacket : ep->request.remain_size);
         }
     }
 
@@ -985,10 +992,12 @@ static rt_size_t rt_usbd_ep_write(udevice_t device, uep_t ep, void *buffer, rt_s
     RT_ASSERT(ep != RT_NULL);
 
     rt_enter_critical();
-#ifndef RT_USB_DEVICE_MSTORAGE
-    maxpacket = EP_MAXPACKET(ep);
-#else
+#if defined(RT_USB_DEVICE_MSTORAGE)
     maxpacket = RT_USB_MSTORAGE_BUFLEN;
+#elif defined(RT_USB_DEVICE_WINUSB)
+    maxpacket = RT_USB_WINUSB_TRANSLEN;
+#else
+    maxpacket = EP_MAXPACKET(ep);
 #endif
     if(ep->request.remain_size >= maxpacket)
     {
@@ -1016,10 +1025,12 @@ static rt_size_t rt_usbd_ep_read_prepare(udevice_t device, uep_t ep, void *buffe
     RT_ASSERT(buffer != RT_NULL);
     RT_ASSERT(ep->ep_desc != RT_NULL);
 
-#ifndef RT_USB_DEVICE_MSTORAGE
-    maxpacket = EP_MAXPACKET(ep);
-#else
+#if defined(RT_USB_DEVICE_MSTORAGE)
     maxpacket = RT_USB_MSTORAGE_BUFLEN;
+#elif defined(RT_USB_DEVICE_WINUSB)
+    maxpacket = RT_USB_WINUSB_TRANSLEN;
+#else
+    maxpacket = EP_MAXPACKET(ep);
 #endif
 
     return dcd_ep_read_prepare(device->dcd, EP_ADDRESS(ep), buffer, size > maxpacket ? maxpacket : size);
