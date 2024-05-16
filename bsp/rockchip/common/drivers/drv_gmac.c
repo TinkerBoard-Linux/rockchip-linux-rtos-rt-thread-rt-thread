@@ -501,7 +501,7 @@ rt_err_t rt_rockchip_eth_tx(rt_device_t dev, struct pbuf *p)
         return RT_EOK;
 
     /* lock ETH device */
-    rt_sem_take(&eth ->sem_lock, RT_WAITING_FOREVER);
+    rt_sem_take(&eth->sem_lock, RT_WAITING_FOREVER);
 
     /* copy data to tx buffer */
     ptr = (rt_uint8_t *)HAL_GMAC_GetTXBuffer(pGMAC);
@@ -518,7 +518,7 @@ rt_err_t rt_rockchip_eth_tx(rt_device_t dev, struct pbuf *p)
     }
 
     /* unlock ETH device */
-    rt_sem_release(&eth ->sem_lock);
+    rt_sem_release(&eth->sem_lock);
 
     return status;
 }
@@ -536,7 +536,7 @@ struct pbuf *rt_rockchip_eth_rx(rt_device_t dev)
         return RT_NULL;
 
     /* lock ETH device */
-    rt_sem_take(&eth ->sem_lock, RT_WAITING_FOREVER);
+    rt_sem_take(&eth->sem_lock, RT_WAITING_FOREVER);
 
     ptr = HAL_GMAC_Recv(pGMAC, &size);
     if (size > 0 && ptr)
@@ -556,13 +556,13 @@ struct pbuf *rt_rockchip_eth_rx(rt_device_t dev)
     {
         rk_gmac_dbg(&eth->parent, "GMAC recv failed: %d\n", size);
         /* unlock ETH device */
-        rt_sem_release(&eth ->sem_lock);
+        rt_sem_release(&eth->sem_lock);
 
         return RT_NULL;
     }
 
     /* unlock ETH device */
-    rt_sem_release(&eth ->sem_lock);
+    rt_sem_release(&eth->sem_lock);
 
     return p;
 }
@@ -870,9 +870,9 @@ void dump_desc_stat(void)
         rt_kprintf("[%2d] des0: 0x%8x, des1: %0x%8x, des2: %0x%8x, des3: %0x%8x\n",
                    i,
                    eth->rx_desc[i].des0,
-                   eth->rx_desc[i].des0,
-                   eth->rx_desc[i].des0,
-                   eth->rx_desc[i].des0);
+                   eth->rx_desc[i].des1,
+                   eth->rx_desc[i].des2,
+                   eth->rx_desc[i].des3);
     }
 
     for (i = 0; i < ETH_TXBUFNB; i++)
@@ -880,9 +880,9 @@ void dump_desc_stat(void)
         rt_kprintf("[%2d] des0: 0x%8x, des1: %0x%8x, des2: %0x%8x, des3: %0x%8x\n",
                    i,
                    eth->tx_desc[i].des0,
-                   eth->tx_desc[i].des0,
-                   eth->tx_desc[i].des0,
-                   eth->tx_desc[i].des0);
+                   eth->tx_desc[i].des1,
+                   eth->tx_desc[i].des2,
+                   eth->tx_desc[i].des3);
     }
 }
 
