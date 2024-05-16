@@ -53,6 +53,11 @@ menu "Enable GMAC"
     config RT_USING_GMAC0
         bool "Enable GMAC0"
         default n
+
+    config RT_USING_GMAC_PTP
+        bool "Enable GMAC PTP"
+        select RT_USING_LWIP_PTP
+        default n
     endif
 endmenu
 

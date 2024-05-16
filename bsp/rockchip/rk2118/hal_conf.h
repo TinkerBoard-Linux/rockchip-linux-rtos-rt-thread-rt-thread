@@ -152,6 +152,9 @@
 
 #ifdef RT_USING_GMAC
 #define HAL_GMAC_MODULE_ENABLED
+#ifdef RT_USING_GMAC_PTP
+#define HAL_GMAC_PTP_FEATURE_ENABLED
+#endif
 #endif
 
 #ifdef RT_USING_USB_DEVICE
