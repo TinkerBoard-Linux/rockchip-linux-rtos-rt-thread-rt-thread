@@ -185,7 +185,7 @@ static int rockchip_sfc_delay_lines_tuning(struct SPI_NOR *nor, struct rt_fspi_d
     uint8_t id_temp[SNOR_ID_LENGTH_MAX];
     uint16_t cell_max = (uint16_t)rt_fspi_get_max_dll_cells(fspi_device);
     uint16_t right, left = 0, final;
-    uint16_t step = HAL_FSPI_DLL_TRANING_STEP;
+    uint16_t step = HAL_SNOR_IsDtr(nor) ? 1 : HAL_FSPI_DLL_TRANING_STEP;
     bool dll_valid = false;
 
     xip_dbg('a');
@@ -239,9 +239,18 @@ static int rockchip_sfc_delay_lines_tuning(struct SPI_NOR *nor, struct rt_fspi_d
     if (dll_valid && (right - left) >= HAL_FSPI_DLL_TRANING_VALID_WINDOW)
     {
         if (left == 0 && right < cell_max)
-            final = left + (right - left) * 2 / 5;
+        {
+            /*
+             * When the dll windows is incomplete, it's better to minus 5 dll
+             * cells to match with data tuning, and using 2/5 windows to match
+             * the middle of eye diagram.
+             */
+            final = (right - 5) * 2 / 5;
+        }
         else
-            final = left + (right - left) / 2;
+        {
+            final = (right + left) / 2;
+        }
     }
     else
     {
