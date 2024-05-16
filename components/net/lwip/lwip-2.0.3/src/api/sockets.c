@@ -938,6 +938,330 @@ lwip_recvfrom(int s, void *mem, size_t len, int flags,
   return off;
 }
 
+#ifdef RT_USING_LWIP_PTP
+int
+lwip_ptp_recvfrom(int s, void *mem, size_t len, int flags,
+              struct sockaddr *from, socklen_t *fromlen)
+{
+  struct lwip_sock *sock;
+  void             *buf = NULL;
+  struct pbuf      *p;
+  u16_t            buflen, copylen;
+  int              off = 0;
+  u8_t             done = 0;
+  err_t            err;
+#ifdef RT_USING_LWIP_PTP
+  struct ptp_timestamp_buf *ptp_buf = (struct ptp_timestamp_buf *)mem;
+#endif
+
+  LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_ptp_recvfrom(%d, %p, %"SZT_F", 0x%x, ..)\n", s, mem, len, flags));
+  sock = get_socket(s);
+  if (!sock) {
+    return -1;
+  }
+
+  do {
+    LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_ptp_recvfrom: top while sock->lastdata=%p\n", sock->lastdata));
+    /* Check if there is data left from the last recv operation. */
+    if (sock->lastdata) {
+      buf = sock->lastdata;
+    } else {
+      /* If this is non-blocking call, then check first */
+      if (((flags & MSG_DONTWAIT) || netconn_is_nonblocking(sock->conn)) &&
+          (sock->rcvevent <= 0)) {
+        if (off > 0) {
+          /* already received data, return that */
+          sock_set_errno(sock, 0);
+          return off;
+        }
+        LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_ptp_recvfrom(%d): returning EWOULDBLOCK\n", s));
+        set_errno(EWOULDBLOCK);
+        return -1;
+      }
+
+      /* No data was left from the previous operation, so we try to get
+         some from the network. */
+      if (NETCONNTYPE_GROUP(netconn_type(sock->conn)) == NETCONN_TCP) {
+        err = netconn_recv_tcp_pbuf(sock->conn, (struct pbuf **)&buf);
+      } else {
+        err = netconn_recv(sock->conn, (struct netbuf **)&buf);
+      }
+      LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_ptp_recvfrom: netconn_recv err=%d, netbuf=%p\n",
+        err, buf));
+
+      if (err != ERR_OK) {
+        if (off > 0) {
+          if (err == ERR_CLSD) {
+            /* closed but already received data, ensure select gets the FIN, too */
+            event_callback(sock->conn, NETCONN_EVT_RCVPLUS, 0);
+          }
+          /* already received data, return that */
+          sock_set_errno(sock, 0);
+          return off;
+        }
+        /* We should really do some error checking here. */
+        LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_ptp_recvfrom(%d): buf == NULL, error is \"%s\"!\n",
+          s, lwip_strerr(err)));
+        sock_set_errno(sock, err_to_errno(err));
+        if (err == ERR_CLSD) {
+          return 0;
+        } else {
+          return -1;
+        }
+      }
+      LWIP_ASSERT("buf != NULL", buf != NULL);
+      sock->lastdata = buf;
+    }
+
+    if (NETCONNTYPE_GROUP(netconn_type(sock->conn)) == NETCONN_TCP) {
+      p = (struct pbuf *)buf;
+    } else {
+      p = ((struct netbuf *)buf)->p;
+    }
+    buflen = p->tot_len;
+    LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_ptp_recvfrom: buflen=%"U16_F" len=%"SZT_F" off=%d sock->lastoffset=%"U16_F"\n",
+      buflen, len, off, sock->lastoffset));
+
+    buflen -= sock->lastoffset;
+
+    if (len > buflen) {
+      copylen = buflen;
+    } else {
+      copylen = (u16_t)len;
+    }
+
+#ifdef RT_USING_LWIP_PTP
+    ptp_buf->time_sec = p->time_sec;
+    ptp_buf->time_nsec = p->time_nsec;
+
+    /* copy the contents of the received buffer into
+    the supplied memory pointer mem */
+    pbuf_copy_partial(p, (u8_t*)ptp_buf->pbuf + off, copylen, sock->lastoffset);
+#endif
+
+    off += copylen;
+
+    if (NETCONNTYPE_GROUP(netconn_type(sock->conn)) == NETCONN_TCP) {
+      LWIP_ASSERT("invalid copylen, len would underflow", len >= copylen);
+      len -= copylen;
+      if ((len <= 0) ||
+          (p->flags & PBUF_FLAG_PUSH) ||
+          (sock->rcvevent <= 0) ||
+          ((flags & MSG_PEEK) != 0)) {
+        done = 1;
+      }
+    } else {
+      done = 1;
+    }
+
+    /* Check to see from where the data was.*/
+    if (done) {
+#if !SOCKETS_DEBUG
+      if (from && fromlen)
+#endif /* !SOCKETS_DEBUG */
+      {
+        u16_t port;
+        ip_addr_t tmpaddr;
+        ip_addr_t *fromaddr;
+        union sockaddr_aligned saddr;
+        LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_ptp_recvfrom(%d): addr=", s));
+        if (NETCONNTYPE_GROUP(netconn_type(sock->conn)) == NETCONN_TCP) {
+          fromaddr = &tmpaddr;
+          netconn_getaddr(sock->conn, fromaddr, &port, 0);
+        } else {
+          port = netbuf_fromport((struct netbuf *)buf);
+          fromaddr = netbuf_fromaddr((struct netbuf *)buf);
+        }
+
+#if LWIP_IPV4 && LWIP_IPV6
+        /* Dual-stack: Map IPv4 addresses to IPv4 mapped IPv6 */
+        if (NETCONNTYPE_ISIPV6(netconn_type(sock->conn)) && IP_IS_V4(fromaddr)) {
+          ip4_2_ipv4_mapped_ipv6(ip_2_ip6(fromaddr), ip_2_ip4(fromaddr));
+          IP_SET_TYPE(fromaddr, IPADDR_TYPE_V6);
+        }
+#endif /* LWIP_IPV4 && LWIP_IPV6 */
+
+        IPADDR_PORT_TO_SOCKADDR(&saddr, fromaddr, port);
+        ip_addr_debug_print(SOCKETS_DEBUG, fromaddr);
+        LWIP_DEBUGF(SOCKETS_DEBUG, (" port=%"U16_F" len=%d\n", port, off));
+#if SOCKETS_DEBUG
+        if (from && fromlen)
+#endif /* SOCKETS_DEBUG */
+        {
+          if (*fromlen > saddr.sa.sa_len) {
+            *fromlen = saddr.sa.sa_len;
+          }
+          MEMCPY(from, &saddr, *fromlen);
+        }
+      }
+    }
+
+    /* If we don't peek the incoming message... */
+    if ((flags & MSG_PEEK) == 0) {
+      /* If this is a TCP socket, check if there is data left in the
+         buffer. If so, it should be saved in the sock structure for next
+         time around. */
+      if ((NETCONNTYPE_GROUP(netconn_type(sock->conn)) == NETCONN_TCP) && (buflen - copylen > 0)) {
+        sock->lastdata = buf;
+        sock->lastoffset += copylen;
+        LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_ptp_recvfrom: lastdata now netbuf=%p\n", buf));
+      } else {
+        sock->lastdata = NULL;
+        sock->lastoffset = 0;
+        LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_ptp_recvfrom: deleting netbuf=%p\n", buf));
+        if (NETCONNTYPE_GROUP(netconn_type(sock->conn)) == NETCONN_TCP) {
+          pbuf_free((struct pbuf *)buf);
+        } else {
+          netbuf_delete((struct netbuf *)buf);
+        }
+        buf = NULL;
+      }
+    }
+  } while (!done);
+
+  sock_set_errno(sock, 0);
+  return off;
+}
+
+int
+lwip_ptp_recv(int s, void *mem, size_t len, int flags)
+{
+  return lwip_ptp_recvfrom(s, mem, len, flags, NULL, NULL);
+}
+
+int
+lwip_ptp_send(int s, const void *data, size_t size, int flags)
+{
+  struct lwip_sock *sock;
+
+  LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_ptp_send(%d, data=%p, size=%"SZT_F", flags=0x%x)\n",
+                              s, data, size, flags));
+
+  sock = get_socket(s);
+  if (!sock) {
+    return -1;
+  }
+
+  if (NETCONNTYPE_GROUP(netconn_type(sock->conn)) != NETCONN_TCP) {
+#if (LWIP_UDP || LWIP_RAW)
+    return lwip_ptp_sendto(s, data, size, flags, NULL, 0);
+#else /* (LWIP_UDP || LWIP_RAW) */
+    sock_set_errno(sock, err_to_errno(ERR_ARG));
+    return -1;
+#endif /* (LWIP_UDP || LWIP_RAW) */
+  }
+  /* error happen */
+  return -2;
+}
+
+int
+lwip_ptp_sendto(int s, const void *data, size_t size, int flags,
+       const struct sockaddr *to, socklen_t tolen)
+{
+  struct lwip_sock *sock;
+  err_t err;
+  u16_t short_size;
+  u16_t remote_port;
+  struct netbuf buf;
+#ifdef RT_USING_LWIP_PTP
+  struct ptp_timestamp_buf *ptp_buf = (struct ptp_timestamp_buf *)data;
+#endif
+
+  sock = get_socket(s);
+  if (!sock) {
+    return -1;
+  }
+
+  if (NETCONNTYPE_GROUP(netconn_type(sock->conn)) == NETCONN_TCP) {
+#if LWIP_TCP
+    return lwip_ptp_send(s, data, size, flags);
+#else /* LWIP_TCP */
+    LWIP_UNUSED_ARG(flags);
+    sock_set_errno(sock, err_to_errno(ERR_ARG));
+    return -1;
+#endif /* LWIP_TCP */
+  }
+
+  /* @todo: split into multiple sendto's? */
+  LWIP_ASSERT("lwip_ptp_sendto: size must fit in u16_t", size <= 0xffff);
+  short_size = (u16_t)size;
+  LWIP_ERROR("lwip_ptp_sendto: invalid address", (((to == NULL) && (tolen == 0)) ||
+             (IS_SOCK_ADDR_LEN_VALID(tolen) &&
+             IS_SOCK_ADDR_TYPE_VALID(to) && IS_SOCK_ADDR_ALIGNED(to))),
+             sock_set_errno(sock, err_to_errno(ERR_ARG)); return -1;);
+  LWIP_UNUSED_ARG(tolen);
+
+  /* initialize a buffer */
+  buf.p = buf.ptr = NULL;
+#if LWIP_CHECKSUM_ON_COPY
+  buf.flags = 0;
+#endif /* LWIP_CHECKSUM_ON_COPY */
+  if (to) {
+    SOCKADDR_TO_IPADDR_PORT(to, &buf.addr, remote_port);
+  } else {
+    remote_port = 0;
+    ip_addr_set_any(NETCONNTYPE_ISIPV6(netconn_type(sock->conn)), &buf.addr);
+  }
+  netbuf_fromport(&buf) = remote_port;
+
+
+  LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_ptp_sendto(%d, data=%p, short_size=%"U16_F", flags=0x%x to=",
+              s, data, short_size, flags));
+  ip_addr_debug_print(SOCKETS_DEBUG, &buf.addr);
+  LWIP_DEBUGF(SOCKETS_DEBUG, (" port=%"U16_F"\n", remote_port));
+
+  /* make the buffer point to the data that should be sent */
+#if LWIP_NETIF_TX_SINGLE_PBUF
+  /* Allocate a new netbuf and copy the data into it. */
+  if (netbuf_alloc(&buf, short_size) == NULL) {
+    err = ERR_MEM;
+  } else {
+#if LWIP_CHECKSUM_ON_COPY
+    if (NETCONNTYPE_GROUP(netconn_type(sock->conn)) != NETCONN_RAW) {
+    #ifdef RT_USING_LWIP_PTP
+      u16_t chksum = LWIP_CHKSUM_COPY(buf.p->payload, ptp_buf->pbuf, short_size);
+    #endif
+      netbuf_set_chksum(&buf, chksum);
+    } else
+#endif /* LWIP_CHECKSUM_ON_COPY */
+    {
+    #ifdef RT_USING_LWIP_PTP
+      MEMCPY(buf.p->payload, ptp_buf->pbuf, short_size);
+    #endif
+    }
+    err = ERR_OK;
+  }
+#else /* LWIP_NETIF_TX_SINGLE_PBUF */
+#ifdef RT_USING_LWIP_PTP
+  err = netbuf_ref(&buf, ptp_buf->pbuf, short_size);
+#endif
+#endif /* LWIP_NETIF_TX_SINGLE_PBUF */
+  if (err == ERR_OK) {
+#if LWIP_IPV4 && LWIP_IPV6
+    /* Dual-stack: Unmap IPv4 mapped IPv6 addresses */
+    if (IP_IS_V6_VAL(buf.addr) && ip6_addr_isipv4mappedipv6(ip_2_ip6(&buf.addr))) {
+      unmap_ipv4_mapped_ipv6(ip_2_ip4(&buf.addr), ip_2_ip6(&buf.addr));
+      IP_SET_TYPE_VAL(buf.addr, IPADDR_TYPE_V4);
+    }
+#endif /* LWIP_IPV4 && LWIP_IPV6 */
+
+    /* send the data */
+    err = netconn_send(sock->conn, &buf);
+  }
+
+#ifdef RT_USING_LWIP_PTP
+  ptp_buf->time_sec = buf.p->time_sec;
+  ptp_buf->time_nsec = buf.p->time_nsec;
+#endif
+
+  /* deallocated the buffer */
+  netbuf_free(&buf);
+
+  sock_set_errno(sock, err_to_errno(err));
+  return (err == ERR_OK ? short_size : -1);
+}
+#endif
+
 int
 lwip_read(int s, void *mem, size_t len)
 {

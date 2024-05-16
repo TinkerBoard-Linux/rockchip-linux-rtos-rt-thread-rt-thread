@@ -498,6 +498,15 @@ int lwip_send(int s, const void *dataptr, size_t size, int flags);
 int lwip_sendmsg(int s, const struct msghdr *message, int flags);
 int lwip_sendto(int s, const void *dataptr, size_t size, int flags,
     const struct sockaddr *to, socklen_t tolen);
+#ifdef RT_USING_LWIP_PTP
+int lwip_ptp_recv(int s, void *mem, size_t len, int flags);
+int lwip_ptp_recvfrom(int s, void *mem, size_t len, int flags,
+      struct sockaddr *from, socklen_t *fromlen);
+int lwip_ptp_send(int s, const void *dataptr, size_t size, int flags);
+int lwip_ptp_sendto(int s, const void *dataptr, size_t size, int flags,
+    const struct sockaddr *to, socklen_t tolen);
+#endif
+
 int lwip_socket(int domain, int type, int protocol);
 int lwip_write(int s, const void *dataptr, size_t size);
 int lwip_writev(int s, const struct iovec *iov, int iovcnt);

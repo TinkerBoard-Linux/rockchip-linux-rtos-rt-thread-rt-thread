@@ -1,3 +1,8 @@
+config RT_USING_LWIP_PTP
+    bool "Enable lwIP ptp feature"
+    depends on RT_USING_LWIP203
+    default n
+
 menuconfig RT_USING_LWIP
     bool "LwIP: light weight TCP/IP stack"
     select RT_USING_DEVICE

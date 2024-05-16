@@ -170,8 +170,23 @@ struct pbuf {
    * the stack itself, or pbuf->next pointers from a chain.
    */
   u16_t ref;
+
+#ifdef RT_USING_LWIP_PTP
+  /**
+   * a field that contains the timestamp that this packet was received.
+   */
+  s32_t time_sec;
+  s32_t time_nsec;
+#endif
 };
 
+#ifdef RT_USING_LWIP_PTP
+struct ptp_timestamp_buf {
+    char *pbuf;
+    s32_t time_sec;
+    s32_t time_nsec;
+};
+#endif
 
 /** Helper struct for const-correctness only.
  * The only meaning of this one is to provide a const payload pointer

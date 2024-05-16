@@ -846,6 +846,11 @@ udp_sendto_if_src_chksum(struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *d
   /* @todo: must this be increased even if error occurred? */
   MIB2_STATS_INC(mib2.udpoutdatagrams);
 
+#ifdef RT_USING_LWIP_PTP
+  p->time_sec = q->time_sec;
+  p->time_nsec = q->time_nsec;
+#endif
+
   /* did we chain a separate header pbuf earlier? */
   if (q != p) {
     /* free the header pbuf */
