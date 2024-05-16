@@ -22,6 +22,10 @@
 #ifdef RT_USB_DEVICE_MSTORAGE
 #define MSTRORAGE_INTF_STR_INDEX 11
 
+#ifndef min
+#define min(a, b) (((a) < (b)) ? (a) : (b))
+#endif
+
 enum STAT
 {
     STAT_CBW,
@@ -465,7 +469,8 @@ static rt_size_t _read_capacity(ufunction_t func, ustorage_cbw_t cbw)
 static rt_size_t _read_10(ufunction_t func, ustorage_cbw_t cbw)
 {
     struct mstorage *data;
-    rt_size_t size;
+    rt_size_t size, sector_count;
+    rt_uint32_t req_size;
 
     RT_ASSERT(func != RT_NULL);
     RT_ASSERT(func->device != RT_NULL);
@@ -479,14 +484,19 @@ static rt_size_t _read_10(ufunction_t func, ustorage_cbw_t cbw)
     RT_ASSERT(data->count < data->geometry.sector_count);
 
     data->csw_response.data_reside = data->cb_data_size;
-    size = rt_device_read(data->disk, data->block, data->ep_in->buffer, 1);
+    req_size = min(data->csw_response.data_reside, RT_USB_MSTORAGE_BUFLEN);
+    if (req_size >= data->geometry.bytes_per_sector)
+        sector_count = req_size / data->geometry.bytes_per_sector;
+    else
+        sector_count = 1;
+    size = rt_device_read(data->disk, data->block, data->ep_in->buffer, sector_count);
     if(size == 0)
     {
         rt_kprintf("read data error\n");
     }
 
     data->ep_in->request.buffer = data->ep_in->buffer;
-    data->ep_in->request.size = data->geometry.bytes_per_sector;
+    data->ep_in->request.size = req_size;
     data->ep_in->request.req_type = UIO_REQUEST_WRITE;
     rt_usbd_io_request(func->device, data->ep_in, &data->ep_in->request);
     data->status = STAT_SEND;
@@ -505,6 +515,7 @@ static rt_size_t _read_10(ufunction_t func, ustorage_cbw_t cbw)
 static rt_size_t _write_10(ufunction_t func, ustorage_cbw_t cbw)
 {
     struct mstorage *data;
+    rt_uint32_t req_size;
 
     RT_ASSERT(func != RT_NULL);
     RT_ASSERT(func->device != RT_NULL);
@@ -522,9 +533,10 @@ static rt_size_t _write_10(ufunction_t func, ustorage_cbw_t cbw)
                                 data->count, data->block, data->geometry.sector_count));
 
     data->csw_response.data_reside = data->cb_data_size;
+    req_size = min(data->csw_response.data_reside, RT_USB_MSTORAGE_BUFLEN);
 
     data->ep_out->request.buffer = data->ep_out->buffer;
-    data->ep_out->request.size = data->geometry.bytes_per_sector;
+    data->ep_out->request.size = req_size;
     data->ep_out->request.req_type = UIO_REQUEST_READ_FULL;
     rt_usbd_io_request(func->device, data->ep_out, &data->ep_out->request);
     data->status = STAT_RECEIVE;
@@ -597,6 +609,8 @@ static rt_size_t _reboot_loader(ufunction_t func,
 static rt_err_t _ep_in_handler(ufunction_t func, rt_size_t size)
 {
     struct mstorage *data;
+    rt_size_t sector_count, actual_count;
+    rt_uint32_t req_size;
 
     RT_ASSERT(func != RT_NULL);
     RT_ASSERT(func->device != RT_NULL);
@@ -653,11 +667,17 @@ static rt_err_t _ep_in_handler(ufunction_t func, rt_size_t size)
         break;
      case STAT_SEND:
         data->csw_response.data_reside -= data->ep_in->request.size;
-        data->count--;
-        data->block++;
+        actual_count = data->ep_in->request.size / data->geometry.bytes_per_sector;
+        data->count -= actual_count;
+        data->block += actual_count;
         if(data->count > 0 && data->csw_response.data_reside > 0)
         {
-            if(rt_device_read(data->disk, data->block, data->ep_in->buffer, 1) == 0)
+            req_size = min(data->csw_response.data_reside, RT_USB_MSTORAGE_BUFLEN);
+            if (req_size >= data->geometry.bytes_per_sector)
+                sector_count = req_size / data->geometry.bytes_per_sector;
+            else
+                sector_count = 1;
+            if(rt_device_read(data->disk, data->block, data->ep_in->buffer, sector_count) == 0)
             {
                 rt_kprintf("disk read error\n");
                 rt_usbd_ep_set_stall(func->device, data->ep_in);
@@ -665,7 +685,7 @@ static rt_err_t _ep_in_handler(ufunction_t func, rt_size_t size)
             }
 
             data->ep_in->request.buffer = data->ep_in->buffer;
-            data->ep_in->request.size = data->geometry.bytes_per_sector;
+            data->ep_in->request.size = req_size;
             data->ep_in->request.req_type = UIO_REQUEST_WRITE;
             rt_usbd_io_request(func->device, data->ep_in, &data->ep_in->request);
         }
@@ -848,7 +868,8 @@ static rt_err_t _ep_out_handler(ufunction_t func, rt_size_t size)
 {
     struct mstorage *data;
     struct scsi_cmd* cmd;
-    rt_size_t len;
+    rt_size_t len, sector_count;
+    rt_uint32_t req_size;
     struct ustorage_cbw* cbw;
 
     RT_ASSERT(func != RT_NULL);
@@ -901,16 +922,20 @@ static rt_err_t _ep_out_handler(ufunction_t func, rt_size_t size)
 
         data->size -= size;
         data->csw_response.data_reside -= size;
-
-        rt_device_write(data->disk, data->block, data->ep_out->buffer, 1);
+        if (size >= data->geometry.bytes_per_sector)
+            sector_count = size / data->geometry.bytes_per_sector;
+        else
+            sector_count = 1;
+        rt_device_write(data->disk, data->block, data->ep_out->buffer, sector_count);
 
         if(data->csw_response.data_reside != 0)
         {
+            req_size = min(data->csw_response.data_reside, RT_USB_MSTORAGE_BUFLEN);
             data->ep_out->request.buffer = data->ep_out->buffer;
-            data->ep_out->request.size = data->geometry.bytes_per_sector;
+            data->ep_out->request.size = req_size;
             data->ep_out->request.req_type = UIO_REQUEST_READ_FULL;
             rt_usbd_io_request(func->device, data->ep_out, &data->ep_out->request);
-            data->block ++;
+            data->block += sector_count;
         }
         else
         {
@@ -1049,13 +1074,19 @@ static rt_err_t _function_enable(ufunction_t func)
         return -RT_ERROR;
     }
 
-    data->ep_in->buffer = (rt_uint8_t*)rt_malloc_align(RT_ALIGN(data->geometry.bytes_per_sector, USB_DMA_ALIGN_SIZE), USB_DMA_ALIGN_SIZE);
+    if (data->geometry.bytes_per_sector > RT_USB_MSTORAGE_BUFLEN) {
+        rt_kprintf("RT_USB_MSTORAGE_BUFLEN too short! Set it >= %d (bytes per sector)\n",
+                   data->geometry.bytes_per_sector);
+        return -RT_ERROR;
+    }
+
+    data->ep_in->buffer = (rt_uint8_t*)rt_malloc_align(RT_ALIGN(RT_USB_MSTORAGE_BUFLEN, USB_DMA_ALIGN_SIZE), USB_DMA_ALIGN_SIZE);
     if(data->ep_in->buffer == RT_NULL)
     {
         rt_kprintf("no memory\n");
         return -RT_ENOMEM;
     }
-    data->ep_out->buffer = (rt_uint8_t*)rt_malloc_align(RT_ALIGN(data->geometry.bytes_per_sector, USB_DMA_ALIGN_SIZE), USB_DMA_ALIGN_SIZE);
+    data->ep_out->buffer = (rt_uint8_t*)rt_malloc_align(RT_ALIGN(RT_USB_MSTORAGE_BUFLEN, USB_DMA_ALIGN_SIZE), USB_DMA_ALIGN_SIZE);
     if(data->ep_out->buffer == RT_NULL)
     {
         rt_free_align(data->ep_in->buffer);
