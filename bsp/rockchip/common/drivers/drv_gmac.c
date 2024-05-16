@@ -490,6 +490,9 @@ rt_err_t rt_rockchip_eth_tx(rt_device_t dev, struct pbuf *p)
 {
     struct rockchip_eth *eth = (struct rockchip_eth *)dev;
     struct GMAC_HANDLE *pGMAC = &eth->instance;
+#ifdef RT_USING_GMAC_PTP
+    struct PTP_TIME timestamp;
+#endif
     rt_uint8_t *ptr = RT_NULL;
     rt_err_t status = RT_EOK;
 
@@ -516,6 +519,14 @@ rt_err_t rt_rockchip_eth_tx(rt_device_t dev, struct pbuf *p)
     {
         rk_gmac_dbg(&eth->parent, "GMAC send failed: %d\n", status);
     }
+    else
+    {
+#ifdef RT_USING_GMAC_PTP
+        HAL_GMAC_GetTxTimestamp(pGMAC, &timestamp);
+        p->time_sec = timestamp.sec;
+        p->time_nsec = timestamp.nsec;
+#endif
+    }
 
     /* unlock ETH device */
     rt_sem_release(&eth->sem_lock);
@@ -530,6 +541,9 @@ struct pbuf *rt_rockchip_eth_rx(rt_device_t dev)
     struct GMAC_HANDLE *pGMAC = &eth->instance;
     struct pbuf *p = RT_NULL;
     rt_uint8_t *ptr = RT_NULL;
+#ifdef RT_USING_GMAC_PTP
+    struct PTP_TIME timestamp;
+#endif
     rt_int32_t size;
 
     if (!pGMAC->phyStatus.link)
@@ -548,6 +562,11 @@ struct pbuf *rt_rockchip_eth_rx(rt_device_t dev)
         {
             pbuf_take(p, ptr, size);
         }
+#ifdef RT_USING_GMAC_PTP
+        HAL_GMAC_GetRxTimestamp(pGMAC, &timestamp);
+        p->time_sec = timestamp.sec;
+        p->time_nsec = timestamp.nsec;
+#endif
         rt_rockchip_dump_hex(p->payload, p->tot_len);
         HAL_GMAC_CleanRX(pGMAC);
         HAL_DCACHE_InvalidateByRange((rt_int32_t)ptr, HAL_GMAC_MAX_PACKET_SIZE);
@@ -566,6 +585,95 @@ struct pbuf *rt_rockchip_eth_rx(rt_device_t dev)
 
     return p;
 }
+
+#ifdef RT_USING_GMAC_PTP
+int rt_rockchip_ptp_set_time(void *handle, struct PTP_TIME *timestamp)
+{
+    struct rockchip_eth *eth = (struct rockchip_eth *)handle;
+    struct GMAC_HANDLE *pGMAC;
+
+    if (eth)
+    {
+        pGMAC = &eth->instance;
+        return HAL_GMAC_PTPSetTime(pGMAC, timestamp);
+    }
+
+    return -RT_ERROR;
+}
+
+int rt_rockchip_ptp_get_time(void *handle, struct PTP_TIME *timestamp)
+{
+    struct rockchip_eth *eth = (struct rockchip_eth *)handle;
+    struct GMAC_HANDLE *pGMAC;
+
+    if (eth)
+    {
+        pGMAC = &eth->instance;
+        HAL_GMAC_PTPGetTime(pGMAC, timestamp);
+        return RT_EOK;
+    }
+
+    return -RT_ERROR;
+}
+
+int rt_rockchip_ptp_update_offset(void *handle, struct PTP_TIME_OFFSET *timeoffset)
+{
+    struct rockchip_eth *eth = (struct rockchip_eth *)handle;
+    struct GMAC_HANDLE *pGMAC;
+
+    if (eth)
+    {
+        pGMAC = &eth->instance;
+        return HAL_GMAC_PTPUpdateTimeOffset(pGMAC, timeoffset);
+    }
+
+    return -RT_ERROR;
+}
+
+int rt_rockchip_ptp_adj_freq(void *handle, int32_t adj)
+{
+    struct rockchip_eth *eth = (struct rockchip_eth *)handle;
+    struct GMAC_HANDLE *pGMAC;
+
+    if (eth)
+    {
+        pGMAC = &eth->instance;
+        return HAL_GMAC_PTPAdjFreq(pGMAC, adj);
+    }
+
+    return -RT_ERROR;
+}
+
+int rt_rockchip_ptp_start(void *handle)
+{
+    struct rockchip_eth *eth = (struct rockchip_eth *)handle;
+    const struct HAL_GMAC_DEV *gmac_dev;
+    struct GMAC_HANDLE *pGMAC;
+
+    if (eth)
+    {
+        pGMAC = &eth->instance;
+        gmac_dev = eth->dev;
+        HAL_GMAC_PTPStart(pGMAC, clk_get_rate(gmac_dev->ptpClkID),
+                          HAL_GMAC_PTP_FINEUPDATE);
+        return RT_EOK;
+    }
+
+    return -RT_ERROR;
+}
+
+void *rt_rockchip_ptp_get_handle(void)
+{
+    struct rockchip_eth *const *eth;
+
+    for (eth = rockchip_eth_table; *eth != RT_NULL; eth++)
+    {
+        return *eth;
+    }
+
+    return RT_NULL;
+}
+#endif
 
 int rt_rockchip_hw_eth_init(void)
 {
@@ -654,6 +762,11 @@ int rt_rockchip_hw_eth_init(void)
         {
             rt_kprintf("eth_device_init faild: %d\n", state);
         }
+
+#ifdef RT_USING_GMAC_PTP
+        HAL_CRU_ClkEnable(gmac_dev->ptpClkGateID);
+        rt_rockchip_ptp_start(*eth);
+#endif
 
         eth_device_linkchange(&((*eth)->parent), RT_FALSE);
         /* start phy monitor */
