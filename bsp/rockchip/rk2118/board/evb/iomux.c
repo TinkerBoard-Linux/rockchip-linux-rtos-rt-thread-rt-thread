@@ -82,6 +82,27 @@ void i2c0_iomux_config(void)
 #endif
 
 /**
+ * @brief  Config iomux for I2C1
+ */
+void i2c1_iomux_config(void)
+{
+    HAL_PINCTRL_SetIOMUX(GPIO_BANK4,
+                         GPIO_PIN_A3 |  // I2C1_SCL
+                         GPIO_PIN_A4,   // I2C1_SDA
+                         PIN_CONFIG_MUX_FUNC1);
+}
+
+/**
+ * @brief  Config iomux for SPDIF
+ */
+void spdif_rx1_iomux_config(void)
+{
+    HAL_PINCTRL_SetRMIO(GPIO_BANK4,
+                        GPIO_PIN_D4,   // SPDIF_RX1
+                        RMIO_SPDIF_RX1);
+}
+
+/**
  * @brief  Config iomux for uart1
  */
 void uart1_iomux_config(void)
@@ -127,6 +148,40 @@ void sdmmc_iomux_config(void)
                          PIN_CONFIG_DRV_LEVEL1);
 
     //*((unsigned long *)0x50180134) = 0x40004;
+}
+
+/**
+ * @brief  Config iomux for SAI0
+ */
+void sai0_iomux_config(void)
+{
+    HAL_PINCTRL_SetRMIO(GPIO_BANK4,
+                        GPIO_PIN_A0,   // SAI0_I2S_MCLK
+                        RMIO_SAI0_MCLK);
+
+    HAL_PINCTRL_SetRMIO(GPIO_BANK4,
+                        GPIO_PIN_A1,   // SAI0_I2S_SCLK
+                        RMIO_SAI0_SCLK);
+
+    HAL_PINCTRL_SetRMIO(GPIO_BANK4,
+                        GPIO_PIN_A2,   // SAI0_I2S_LRCK
+                        RMIO_SAI0_LRCK);
+
+    HAL_PINCTRL_SetRMIO(GPIO_BANK4,
+                        GPIO_PIN_A5,   // SAI0_I2S_SDI0
+                        RMIO_SAI0_SDI0);
+
+    HAL_PINCTRL_SetRMIO(GPIO_BANK4,
+                        GPIO_PIN_A7,   // SAI0_I2S_SDI1
+                        RMIO_SAI0_SDI1);
+
+    HAL_PINCTRL_SetRMIO(GPIO_BANK4,
+                        GPIO_PIN_B1,   // SAI0_I2S_SDI2
+                        RMIO_SAI0_SDI2);
+
+    HAL_PINCTRL_SetRMIO(GPIO_BANK4,
+                        GPIO_PIN_B4,   // SAI0_I2S_SDI3
+                        RMIO_SAI0_SDI3);
 }
 
 /**
@@ -312,6 +367,11 @@ void rt_hw_iomux_config(void)
 #ifdef RT_USING_SDIO0
     // conflict with JTAG_MCU_SWO/TMSTCK
     sdmmc_iomux_config();
+#endif
+#ifdef RT_USING_IT6632X
+    i2c1_iomux_config();
+    sai0_iomux_config();
+    spdif_rx1_iomux_config();
 #endif
 }
 
