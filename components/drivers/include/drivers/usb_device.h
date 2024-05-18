@@ -168,6 +168,7 @@ struct ufunction_ops
     rt_err_t (*enable)(struct ufunction* func);
     rt_err_t (*disable)(struct ufunction* func);
     rt_err_t (*sof_handler)(struct ufunction* func);
+    rt_err_t (*setup)(struct ufunction* func, ureq_t setup);
 };
 typedef struct ufunction_ops* ufunction_ops_t;
 
