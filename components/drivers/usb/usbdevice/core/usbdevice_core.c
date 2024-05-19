@@ -2067,7 +2067,33 @@ rt_err_t rt_usbd_ep_in_handler(udcd_t dcd, rt_uint8_t address, rt_size_t size)
     msg.dcd = dcd;
     msg.content.ep_msg.ep_addr = address;
     msg.content.ep_msg.size = size;
+
+#if defined(RT_USB_DEVICE_UAC1)
+    udevice_t device;
+    uep_t ep;
+
+    device = rt_usbd_find_device(dcd);
+    if (device)
+    {
+        ep = rt_usbd_find_endpoint(device, RT_NULL, address);
+        if (ep && USB_EP_ATTR(ep->ep_desc->bmAttributes) == USB_EP_ATTR_ISOC)
+        {
+
+            /* handle isoc-in data immediately */
+            _data_notify(device, &msg.content.ep_msg);
+        }
+        else
+        {
+            rt_usbd_event_signal(&msg);
+        }
+    }
+    else
+    {
+        rt_kprintf("%s: failed\n", __func__);
+    }
+#else
     rt_usbd_event_signal(&msg);
+#endif
 
     return RT_EOK;
 }
@@ -2082,7 +2108,33 @@ rt_err_t rt_usbd_ep_out_handler(udcd_t dcd, rt_uint8_t address, rt_size_t size)
     msg.dcd = dcd;
     msg.content.ep_msg.ep_addr = address;
     msg.content.ep_msg.size = size;
+
+#if defined(RT_USB_DEVICE_UAC1)
+    udevice_t device;
+    uep_t ep;
+
+    device = rt_usbd_find_device(dcd);
+    if (device)
+    {
+        ep = rt_usbd_find_endpoint(device, RT_NULL, address);
+        if (ep && USB_EP_ATTR(ep->ep_desc->bmAttributes) == USB_EP_ATTR_ISOC)
+        {
+            /* handle isoc-out data immediately */
+            _data_notify(device, &msg.content.ep_msg);
+        }
+        else
+        {
+            rt_usbd_event_signal(&msg);
+        }
+
+    }
+    else
+    {
+        rt_kprintf("%s: failed\n", __func__);
+    }
+#else
     rt_usbd_event_signal(&msg);
+#endif
 
     return RT_EOK;
 }
