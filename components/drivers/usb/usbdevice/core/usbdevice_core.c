@@ -1537,9 +1537,10 @@ ualtsetting_t rt_usbd_find_altsetting(uintf_t intf, rt_uint8_t value)
 uep_t rt_usbd_find_endpoint(udevice_t device, ufunction_t* pfunc, rt_uint8_t ep_addr)
 {
     uep_t ep;
-    struct rt_list_node *i, *j, *k;
+    struct rt_list_node *i, *j, *k, *m;
     ufunction_t func;
     uintf_t intf;
+    ualtsetting_t altsetting;
 
     /* parameter check */
     RT_ASSERT(device != RT_NULL);
@@ -1551,15 +1552,18 @@ uep_t rt_usbd_find_endpoint(udevice_t device, ufunction_t* pfunc, rt_uint8_t ep_
         for(j=func->intf_list.next; j!=&func->intf_list; j=j->next)
         {
             intf = (uintf_t)rt_list_entry(j, struct uinterface, list);
-            for(k=intf->curr_setting->ep_list.next;
-                    k!=&intf->curr_setting->ep_list; k=k->next)
+            for(m=intf->setting_list.next; m!=&intf->setting_list; m=m->next)
             {
-                ep = (uep_t)rt_list_entry(k, struct uendpoint, list);
-                if(EP_ADDRESS(ep) == ep_addr)
+                altsetting = (ualtsetting_t)rt_list_entry(m, struct ualtsetting, list);
+                for(k=altsetting->ep_list.next; k!=&altsetting->ep_list; k=k->next)
                 {
-                    if (pfunc != RT_NULL)
-                        *pfunc = func;
-                    return ep;
+                    ep = (uep_t)rt_list_entry(k, struct uendpoint, list);
+                    if(EP_ADDRESS(ep) == ep_addr)
+                    {
+                        if (pfunc != RT_NULL)
+                            *pfunc = func;
+                        return ep;
+                    }
                 }
             }
         }
