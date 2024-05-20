@@ -55,8 +55,9 @@ SRAM_CPU0_TFM_SIZE      = 0x00010000; /* 64 KB */
 SRAM_CPU0_RTT_SIZE      = 0x00010000; /* 64 KB */
 SRAM_DSP0_SIZE          = 0x00050000; /* 320 KB */
 SRAM_DSP1_SIZE          = 0x00048000; /* 288 KB */
-SRAM_DSP2_SIZE          = 0x00047000; /* 284 KB */
+SRAM_DSP2_SIZE          = 0x00046000; /* 280 KB */
 SRAM_SPI2APB_SIZE       = 0x00001000; /* 4 KB */
+UNCACHE_HEAP_SIZE       = 0x00001000; /* 4 KB */
 
 /* Automatically calculated base addresses for SRAM */
 SRAM_CPU0_TFM_BASE     = SRAM_BASE;
@@ -65,6 +66,7 @@ SRAM_DSP0_BASE         = (SRAM_CPU0_RTT_BASE + SRAM_CPU0_RTT_SIZE);
 SRAM_DSP1_BASE         = (SRAM_DSP0_BASE + SRAM_DSP0_SIZE);
 SRAM_DSP2_BASE         = (SRAM_DSP1_BASE + SRAM_DSP1_SIZE);
 SRAM_SPI2APB_BASE      = (SRAM_DSP2_BASE + SRAM_DSP2_SIZE);
+UNCACHE_HEAP_BASE      = (SRAM_SPI2APB_BASE + SRAM_SPI2APB_SIZE);
 
 /* -------------------------------------------------------------------------- */
 /* DRAM Memory Layout                                                         */

@@ -203,11 +203,11 @@ SECTIONS
 #ifdef RT_USING_UNCACHE_HEAP
     .uncache.heap (NOLOAD) :
     {
-        . = ALIGN(__UNCACHE_HEAP_SIZE);
+        . = ALIGN(UNCACHE_HEAP_SIZE);
         PROVIDE(__uncache_heap_start__ = .);
-        . = . + __UNCACHE_HEAP_SIZE;
+        . = . + UNCACHE_HEAP_SIZE;
         PROVIDE(__uncache_heap_end__ = .);
-        . = ALIGN(__UNCACHE_HEAP_SIZE);
+        . = ALIGN(UNCACHE_HEAP_SIZE);
     } > MEM_U
 #endif
 
