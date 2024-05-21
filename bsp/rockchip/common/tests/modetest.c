@@ -34,6 +34,8 @@
 
 #define MAX_PLANE_CNT   4
 
+#define ALIGN_UP(x, a)  (((x) + (a) - 1) & ~((a) - 1))
+
 struct plane_arg
 {
     uint32_t plane_id; /* the id of plane to use */
@@ -80,24 +82,34 @@ static void framebuffer_free(void *base)
 
 static uint32_t get_stride(uint32_t format, uint32_t width)
 {
+    uint32_t stride;
+
     switch (format)
     {
     case RTGRAPHIC_PIXEL_FORMAT_ARGB888:
     case RTGRAPHIC_PIXEL_FORMAT_ABGR888:
-        return width * 4;
+        stride = width * 4;
+        break;
     case RTGRAPHIC_PIXEL_FORMAT_RGB888:
-        return width * 3;
+        stride = width * 3;
+        break;
     case RTGRAPHIC_PIXEL_FORMAT_BGR565:
     case RTGRAPHIC_PIXEL_FORMAT_RGB565:
-        return width * 2;
+        stride = width * 2;
+        break;
     case RTGRAPHIC_PIXEL_FORMAT_YUV420:
     case RTGRAPHIC_PIXEL_FORMAT_YUV422:
     case RTGRAPHIC_PIXEL_FORMAT_YUV444:
-        return width;
+        stride = width;
+        break;
     default:
         rt_kprintf("Unsupported format: %d\n", format);
-        return width * 4;
+        stride = width * 4;
+        break;
     }
+
+    /* align up to 4 byte since vopl requires it */
+    return ALIGN_UP(stride, 4);
 }
 
 static void usage(void)
