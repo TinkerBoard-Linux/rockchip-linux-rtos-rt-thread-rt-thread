@@ -133,6 +133,10 @@ menu "Enable SPI"
         bool "Enable SPI2"
         default n
 
+    config RT_USING_SPI_PM_PERFORMANCE
+        bool "Turn off power consumption operation to enhance performance"
+        default n
+
     config RT_USING_SPI_SLAVE_FLEXIBLE_LENGTH
         bool "Support stop SPI slave transmission when cs inactive"
         default n
