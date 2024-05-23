@@ -66,32 +66,32 @@
  */
 
 /**
- * @brief  Config iomux for UART2
+ * @brief  Config iomux for UART0
  */
-void uart2_iomux_config(void)
+void uart0_iomux_config(void)
 {
-    HAL_PINCTRL_SetRMIO(GPIO_BANK3,
-                        GPIO_PIN_B4,   // UART2_TX_AUDIO_DEBUG
-                        RMIO_UART2_TX_RM1);
+    HAL_PINCTRL_SetIOMUX(GPIO_BANK0,
+                         GPIO_PIN_B1 |  // UART0_TX
+                         GPIO_PIN_B2,   // UART0_RX
+                         PIN_CONFIG_MUX_FUNC1);
+}
 
-    HAL_PINCTRL_SetRMIO(GPIO_BANK3,
-                        GPIO_PIN_B5,   // UART2_RX_AUDIO_DEBUG
-                        RMIO_UART2_RX_RM1);
+/**
+ * @brief  Config all SAIX_MCLK as OUTPUT
+ */
+void sai_mclkout_config_all(void)
+{
+    WRITE_REG_MASK_WE(GRF->SOC_CON1, HAL_GENMASK(7, 0), HAL_GENMASK(7, 0));
 }
 
 void rt_hw_iomux_config(void)
 {
-    dsp_jtag_iomux_config();
-    mcu_jtag_m0_iomux_config();
-    i2c2_iomux_config();
     uart0_iomux_config();
-    uart2_iomux_config();
     sai_mclkout_config_all();
-    spi0_m1_iomux_config();
 }
 
 /** @} */  // IOMUX_Public_Functions
 
 /** @} */  // IOMUX
 
-/** @} */  // RKBSP_Board_Driver
+/** @} */  // RKBSP_Board_Drive
