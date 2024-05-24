@@ -70,7 +70,11 @@
 #ifdef XIP_DEBUG
 void xip_dbg(uint8_t c)
 {
+#if RKMCU_RK2118
+    UART0->THR = c;
+#else
     UART1->THR = c;
+#endif
     HAL_DelayMs(30);
 }
 #else
@@ -719,7 +723,11 @@ static rt_size_t snor_mtd_read(struct rt_mtd_nor_device *dev, rt_off_t pos, rt_u
     struct SPI_NOR *nor = &spiflash->nor;
     int ret;
 
+#if defined(XIP_DEBUG) && defined(RT_SNOR_XIP_DATA_BEGIN)
+    rt_kprintf("%s pos = %08x,size = %08x, limite to %08x\n", __func__, pos, size, RT_SNOR_XIP_DATA_BEGIN);
+#else
     snor_dbg("%s pos = %08x,size = %08x\n", __func__, pos, size);
+#endif
 
     RT_ASSERT(dev != RT_NULL);
     RT_ASSERT(size != 0);
@@ -810,6 +818,10 @@ int rt_hw_snor_init(void)
 {
     int ret;
 
+#ifdef XIP_DEBUG
+    rt_kprintf("%s speed=%d %d\n", __func__, RT_SNOR_SPEED, RT_SNOR_XIP_DATA_BEGIN);
+#endif
+
 #if defined(RT_USING_SNOR_FSPI_HOST)
     ret = snor_init(0, "snor", SPIFLASH_FSPI_HOST);
 #endif
@@ -822,6 +834,10 @@ int rt_hw_snor_init(void)
     ret = snor_init(0, "snor", SPIFLASH_SPI_HOST);
 #elif defined(RT_USING_SNOR_FSPI_HOST) && defined(RT_USING_SNOR_SPI_HOST)
     ret = snor_init(1, "snor1", SPIFLASH_SPI_HOST);
+#endif
+
+#ifdef XIP_DEBUG
+    rt_kprintf("%s finished ret=%d\n", __func__, ret);
 #endif
 
     return ret;
