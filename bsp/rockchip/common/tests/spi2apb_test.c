@@ -23,6 +23,136 @@
 #include <stdlib.h>
 #include "../drivers/spi2apb.h"
 
+#include "spi2apb_flash_obj.h"
+
+#ifdef RT_USING_COMMON_TEST_SPI2APB_FLASH_OBJ
+
+// #define SLV_DEBUG
+
+#ifdef SLV_DEBUG
+#define slv_dbg(...)     rt_kprintf(__VA_ARGS__)
+#else
+#define slv_dbg(...)
+#endif
+
+extern uint32_t __spi2apb_buffer_start__[];
+#define SRAM_SPI2APB_BASE (uint32_t)__spi2apb_buffer_start__
+
+rt_device_t spi2apb_device = RT_NULL;
+struct rt_mtd_nor_device *snor_device = RT_NULL;
+struct rt_workqueue *isr_workqueue;
+struct rt_work isr_work;
+
+rt_err_t spi_test_spi2apb_flash_obj_set_status(rt_uint8_t index, rt_uint8_t status)
+{
+    spi2apb_flash_obj_status packet;
+    rt_err_t ret;
+
+    slv_dbg("%s index=%x status=%x\n", __func__, index, status);
+
+    packet.item.index = index;
+    packet.item.status = status & 0xff;
+    packet.item.reserved = 0;
+    ret = rt_device_control(spi2apb_device, RT_DEVICE_CTRL_SPI2APB_WRITE_REG2, &packet.d32);
+    if (ret)
+    {
+        rt_kprintf("spi2apb test write reg2 failed.\n");
+    }
+
+    return ret;
+}
+
+rt_err_t spi_test_spi2apb_flash_obj_read(rt_uint8_t index, rt_uint16_t addr, void *buffer)
+{
+    rt_err_t ret;
+
+    spi_test_spi2apb_flash_obj_set_status(index, SPI2APB_FLASH_OBJ_SLAVE_BUSY);
+    ret = rt_mtd_nor_read(snor_device, addr * SPI2APB_FLASH_OBJ_PACKET_NOR_SECTOR_SIZE, buffer, SPI2APB_FLASH_OBJ_PACKET_NOR_SECTOR_SIZE);
+    if (ret != SPI2APB_FLASH_OBJ_PACKET_NOR_SECTOR_SIZE)
+    {
+        spi_test_spi2apb_flash_obj_set_status(index, SPI2APB_FLASH_OBJ_SLAVE_ERROR);
+        rt_kprintf("%s failed, ret=%d\n", __func__, ret);
+    }
+    else
+    {
+        spi_test_spi2apb_flash_obj_set_status(index, SPI2APB_FLASH_OBJ_SLAVE_READ_DATA_READY);
+    }
+
+    return ret;
+}
+
+rt_err_t spi_test_spi2apb_flash_obj_write(rt_uint8_t index, rt_uint16_t addr, void *buffer)
+{
+    rt_err_t ret;
+
+    spi_test_spi2apb_flash_obj_set_status(index, SPI2APB_FLASH_OBJ_SLAVE_BUSY);
+    ret = rt_mtd_nor_erase_block(snor_device, addr * SPI2APB_FLASH_OBJ_PACKET_NOR_SECTOR_SIZE, SPI2APB_FLASH_OBJ_PACKET_NOR_SECTOR_SIZE);
+    if (ret)
+    {
+        spi_test_spi2apb_flash_obj_set_status(index, SPI2APB_FLASH_OBJ_SLAVE_ERROR);
+        rt_kprintf("%s erase failed, ret=%d\n", __func__, ret);
+    }
+    ret = rt_mtd_nor_write(snor_device, addr * SPI2APB_FLASH_OBJ_PACKET_NOR_SECTOR_SIZE, buffer, SPI2APB_FLASH_OBJ_PACKET_NOR_SECTOR_SIZE);
+    if (ret != SPI2APB_FLASH_OBJ_PACKET_NOR_SECTOR_SIZE)
+    {
+        spi_test_spi2apb_flash_obj_set_status(index, SPI2APB_FLASH_OBJ_SLAVE_ERROR);
+        rt_kprintf("%s write failed, ret=%d\n", __func__, ret);
+    }
+    else
+    {
+        spi_test_spi2apb_flash_obj_set_status(index, SPI2APB_FLASH_OBJ_SLAVE_SUCCESS);
+    }
+
+    return ret;
+}
+
+static void spi_test_spi2apb_flash_obj_work(struct rt_work *work, void *work_data)
+{
+    spi2apb_flash_obj_packet packet;
+
+    rt_device_control(spi2apb_device, RT_DEVICE_CTRL_SPI2APB_READ_REG1, (void *)&packet.d32);
+
+    slv_dbg("cmd=0x%x index=0x%x addr=0x%x\n", packet.item.cmd, packet.item.index, packet.item.addr);
+    switch (packet.item.cmd)
+    {
+    case SPI2APB_FLASH_OBJ_CMD_READ:
+        spi_test_spi2apb_flash_obj_read(packet.item.index, packet.item.addr, (void *)SRAM_SPI2APB_BASE);
+        break;
+    case SPI2APB_FLASH_OBJ_CMD_PROG:
+        spi_test_spi2apb_flash_obj_write(packet.item.index, packet.item.addr, (void *)SRAM_SPI2APB_BASE);
+        break;
+    case SPI2APB_FLASH_OBJ_CMD_PROG_SRAM:
+        /* to-do */
+        break;
+    default:
+        break;
+    }
+}
+
+rt_err_t spi_test_spi2apb_flash_obj_init(void)
+{
+    if (!snor_device)
+    {
+        snor_device = (struct rt_mtd_nor_device *)rt_device_find("snor");
+        if (snor_device ==  RT_NULL)
+        {
+            rt_kprintf("Did not find device: snor....\n");
+            return -RT_ERROR;
+        }
+    }
+
+    isr_workqueue = rt_workqueue_create("flash_obj_workqueue", 1024, 5);
+    rt_work_init(&isr_work, spi_test_spi2apb_flash_obj_work, NULL);
+
+    return spi_test_spi2apb_flash_obj_set_status(0, SPI2APB_FLASH_OBJ_SLAVE_IDLE);
+}
+
+void spi_test_spi2apb_flash_obj_callback(rt_uint32_t value)
+{
+    rt_workqueue_dowork(isr_workqueue, &isr_work);
+}
+#endif
+
 void spi2apb_test_callback(rt_uint32_t value)
 {
     rt_kprintf("spi2apb_test_callback reg1: 0x%x\n", value);
@@ -41,13 +171,14 @@ void spi2apb_test_show_usage()
     rt_kprintf("spi2apb_test read spi2apb 1\n");
     /* config spi2apb query status */
     rt_kprintf("spi2apb_test query spi2apb\n");
-    /* config spi2apb write reg2 calue */
-    rt_kprintf("spi2apb_test write spi2apb 0x12345678\n");
+    /* config spi2apb write reg2 value */
+    rt_kprintf("spi2apb_test write spi2apb 0x600\n");
+    /* initial spi2apb flash object */
+    rt_kprintf("spi2apb_test flash_obj spi2apb\n");
 }
 
 void spi2apb_test(int argc, char **argv)
 {
-    rt_device_t spi2apb_device = RT_NULL;
     struct rt_spi2apb_configuration config;
     rt_err_t ret;
     char *cmd;
@@ -149,6 +280,30 @@ void spi2apb_test(int argc, char **argv)
             rt_kprintf("spi2apb test write reg2 failed.\n");
             return;
         }
+    }
+    else if (!rt_strcmp(cmd, "flash_obj"))
+    {
+#ifdef RT_USING_COMMON_TEST_SPI2APB_FLASH_OBJ
+        ret = spi_test_spi2apb_flash_obj_init();
+        if (ret)
+        {
+            rt_kprintf("flash_obj initital failed\n");
+            return;
+        }
+
+        ret = rt_device_control(spi2apb_device, RT_DEVICE_CTRL_SPI2APB_REGISTER_CB,
+                                (void *)spi_test_spi2apb_flash_obj_callback);
+        if (ret)
+            rt_kprintf("flash_obj register callback failed\n");
+        else
+        {
+            rt_kprintf("flash_obj init success\n");
+        }
+        return;
+#else
+        rt_kprintf("please define RT_USING_COMMON_TEST_SPI2APB_FLASH_OBJ firstly\n");
+        return;
+#endif
     }
     else
     {

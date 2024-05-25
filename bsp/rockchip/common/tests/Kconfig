@@ -157,6 +157,9 @@ config RT_USING_COMMON_TEST
     config RT_USING_COMMON_TEST_SPI2APB_UPGRADE
         bool "Enable BSP Common SPI2APB UPGRADE TEST"
         select RT_USING_DFS
+
+    config RT_USING_COMMON_TEST_SPI2APB_FLASH_OBJ
+        bool "Enable BSP Common SPI2APB_FLASH_OBJ TEST"
         depends on RT_USING_SPI
         default n
 
