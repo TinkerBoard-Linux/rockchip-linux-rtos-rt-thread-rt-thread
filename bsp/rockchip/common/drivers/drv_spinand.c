@@ -287,7 +287,11 @@ RT_WEAK struct rt_fspi_device g_fspi_spinand =
     .dev_type = DEV_SPINAND,
     .chip_select = 1,
 #else
+#ifdef CONFIG_RT_USING_SNOR
     .host_id = 1,
+#else
+    .host_id = 0,
+#endif
     .dev_type = DEV_SPINAND,
     .chip_select = 0,
 #endif
