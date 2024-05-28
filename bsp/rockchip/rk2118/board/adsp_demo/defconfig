@@ -244,6 +244,54 @@ CONFIG_PKG_CMBACKTRACE_PRINT_ENGLISH=y
 # RT-Thread Utestcases
 #
 # CONFIG_RT_USING_UTESTCASES is not set
+
+#
+# RT-Thread third party package
+#
+# CONFIG_PKG_CMSIS_RTOS2 is not set
+# CONFIG_RT_USING_WLAN_WICED is not set
+# CONFIG_RT_USING_NETUTILS is not set
+
+#
+# Bluetooth
+#
+# CONFIG_BT_ENABLED is not set
+
+#
+# examples bluetooth
+#
+
+#
+# Bluetooth examlpes
+#
+
+#
+# Example 'BT API TEST' Config
+#
+# CONFIG_BT_API_TEST is not set
+
+#
+# Example 'BT DISCOVERY' Config
+#
+# CONFIG_BT_DISCOVERY_EXAMPLES is not set
+
+#
+# Example 'A2DP SINK' Config
+#
+# CONFIG_A2DP_SINK_EXAMPLE is not set
+
+#
+# Example 'A2DP SOURCE' Config 
+#
+# CONFIG_A2DP_SOURCE_EXAMPLE is not set
+
+#
+# Example 'HFP CLIENT' Config
+#
+# CONFIG_HFP_CLIENT_EXAMPLE is not set
+# CONFIG_RT_USING_CYPRESS is not set
+# CONFIG_RT_USING_AUDIO_SERVER is not set
+# CONFIG_RT_USING_AMPAK is not set
 # CONFIG_RT_USING_PKGS is not set
 
 #
@@ -362,11 +410,15 @@ CONFIG_RT_USING_SNOR_FSPI_HOST=y
 #
 # RT-Thread rockchip RK2118 drivers
 #
+# CONFIG_RT_USING_CODEC_ES8388 is not set
 CONFIG_RT_USING_CRU=y
 CONFIG_RT_USING_DMA=y
 CONFIG_RT_USING_DMA_PL330=y
 CONFIG_RT_USING_DMA0=y
 # CONFIG_RT_USING_DMA1 is not set
+# CONFIG_RT_USING_DMA2 is not set
+# CONFIG_RT_USING_DMA3 is not set
+# CONFIG_RT_USING_DMA4 is not set
 
 #
 # Enable I2C
@@ -401,7 +453,7 @@ CONFIG_RT_USING_SYSTICK=y
 #
 CONFIG_RT_USING_UART=y
 CONFIG_RT_USING_UART0=y
-# CONFIG_RT_USING_UART1 is not set
+CONFIG_RT_USING_UART1=y
 CONFIG_RT_USING_UART2=y
 # CONFIG_RT_USING_UART3 is not set
 # CONFIG_RT_USING_DISPLAY is not set
@@ -439,10 +491,10 @@ CONFIG_RT_USING_HIFI4=y
 CONFIG_RT_USING_RTT_CODECS=y
 # CONFIG_RT_USING_CODEC_AD2428 is not set
 # CONFIG_RT_USING_CODEC_AK5736VN is not set
-# CONFIG_RT_USING_CODEC_ES8388 is not set
 # CONFIG_RT_USING_CODEC_TAS5805M is not set
 CONFIG_RT_USING_CODEC_TAS6424L=y
 # CONFIG_RT_USING_CODEC_TDA7708 is not set
+# CONFIG_RT_USING_RKSTUDIO_TUNING is not set
 CONFIG_RT_USING_RKSTUDIO_COMM=y
 
 #
