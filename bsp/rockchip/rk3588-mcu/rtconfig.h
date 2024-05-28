@@ -4,7 +4,7 @@
 /* Automatically generated file; DO NOT EDIT. */
 /* RT-Thread Configuration */
 
-#define RKMCU_RK3588_PMU
+#define HAL_PMU_MCU_CORE
 
 /* RT-Thread Kernel */
 

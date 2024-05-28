@@ -21,17 +21,17 @@ config BSP_RK3588
 
 choice
     prompt "RK3588 MCU"
-    default RKMCU_RK3588_PMU
+    default HAL_PMU_MCU_CORE
 
-    config RKMCU_RK3588_PMU
+    config HAL_PMU_MCU_CORE
         select ARCH_ARM_CORTEX_M0
         bool "RK3588 MCU of PMU"
 
-    config RKMCU_RK3588_NPU
+    config HAL_NPU_MCU_CORE
         select ARCH_ARM_CORTEX_M0
         bool "RK3588 MCU of NPU"
 
-    config RKMCU_RK3588_DDR
+    config HAL_DDR_MCU_CORE
         select ARCH_ARM_CORTEX_M0
         bool "RK3588 MCU of DDR(no cache)"
 endchoice

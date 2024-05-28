@@ -1,7 +1,7 @@
 /* Automatically generated file; DO NOT EDIT. */
 /* RT-Thread Configuration */
-/* RKMCU_RK3588_NPU is not set */
-/* RKMCU_RK3588_DDR is not set */
+/* HAL_NPU_MCU_CORE is not set */
+/* HAL_DDR_MCU_CORE is not set */
 /* RT-Thread Kernel */
 /* RT_USING_CORE_FREERTOS is not set */
 /* RT_THREAD_PRIORITY_8 is not set */

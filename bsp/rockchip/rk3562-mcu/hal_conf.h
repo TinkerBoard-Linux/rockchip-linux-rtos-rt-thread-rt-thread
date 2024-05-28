@@ -16,13 +16,13 @@
 #define SOC_RK3562
 
 /* Cache maintain need the decoded addr, it must be matched with pre-loader */
-#if defined(RKMCU_RK3562_BUS)
+#if defined(HAL_BUS_MCU_CORE)
 #define HAL_CACHE_DECODED_ADDR_BASE          0x08200000  /* Not really necessary */
 #endif
 
 #define SYS_TIMER TIMER5 /* System timer designation (RK TIMER) */
 
-#if defined(RKMCU_RK3562_PMU) && defined(RT_USING_CACHE)
+#if defined(HAL_PMU_MCU_CORE) && defined(RT_USING_CACHE)
 #error "there is no cache in rk3562 pmu mcu!"
 #endif
 

@@ -128,7 +128,7 @@ void timer_test(void)
     rt_kprintf("systimer 1s count: %ld(%lld, %lld)\n", count, start, end);
     RT_ASSERT(PLL_INPUT_OSC_RATE - count < 1000000);
 
-#if !defined(RKMCU_RK3588_NPU)
+#if !defined(HAL_NPU_MCU_CORE)
     rt_kprintf("test external irq\n");
     timer = TIMER_EXT_1;
     desc_timer = true;

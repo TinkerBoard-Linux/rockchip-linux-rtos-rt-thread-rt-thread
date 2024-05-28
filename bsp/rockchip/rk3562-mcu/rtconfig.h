@@ -4,7 +4,7 @@
 /* Automatically generated file; DO NOT EDIT. */
 /* RT-Thread Configuration */
 
-#define RKMCU_RK3562_BUS
+#define HAL_BUS_MCU_CORE
 
 /* RT-Thread Kernel */
 

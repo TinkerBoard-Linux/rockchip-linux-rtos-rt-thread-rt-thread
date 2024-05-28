@@ -4,11 +4,11 @@ MEMORY
 {
     DDR   (rxw) : ORIGIN = 0x00000000, LENGTH = 512K
     LINUX_RPMSG (rxw) : ORIGIN = 0x00100000, LENGTH = 0x500000 /* shared memory for linux rpmsg */
-#if defined(RKMCU_RK3588_PMU)
+#if defined(HAL_PMU_MCU_CORE)
     TCM   (rxw) : ORIGIN = 0x20000000, LENGTH = 16K
-#elif defined(RKMCU_RK3588_NPU)
+#elif defined(HAL_NPU_MCU_CORE)
     TCM   (rxw) : ORIGIN = 0x20000000, LENGTH = 64K
-#elif defined(RKMCU_RK3588_DDR)
+#elif defined(HAL_DDR_MCU_CORE)
     TCM   (rxw) : ORIGIN = 0x20000000, LENGTH = 32K
 #endif
 }

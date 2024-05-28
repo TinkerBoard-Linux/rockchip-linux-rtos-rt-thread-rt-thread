@@ -12,15 +12,16 @@
 
 #include "rtconfig.h"
 
+#define SOC_RK3588
 #define HAL_MCU_CORE
 #define SOC_RK3588
 
 /* Cache maintain need the decoded addr, it must be matched with pre-loader */
-#if defined(RKMCU_RK3588_PMU)
+#if defined(HAL_PMU_MCU_CORE)
 #define HAL_CACHE_DECODED_ADDR_BASE          0x07b00000
-#elif defined(RKMCU_RK3588_DDR)
+#elif defined(HAL_DDR_MCU_CORE)
 #define HAL_CACHE_DECODED_ADDR_BASE          0x300000  /* Not really necessary */
-#elif defined(RKMCU_RK3588_NPU)
+#elif defined(HAL_NPU_MCU_CORE)
 #define HAL_CACHE_DECODED_ADDR_BASE          0x400000
 #endif
 
