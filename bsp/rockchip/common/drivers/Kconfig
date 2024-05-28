@@ -680,6 +680,8 @@ endmenu
 menuconfig RT_USING_SPINAND
     bool "Enable ROCKCHIP SPI Nand Flash"
     select RT_USING_MTD_NAND
+    select RT_USING_DFS
+    select RT_USING_MINI_FTL
     default n
 
 if RT_USING_SPINAND
@@ -689,6 +691,12 @@ if RT_USING_SPINAND
         default 80000000
         help
             Reset the speed of SPI Nand flash based on SPI Nand characteristics, usually it range from 80MHz to 133MHz.
+
+    config RT_USING_MINI_FTL
+        int "Support mini ftl"
+        default y
+        help
+            Support apis with mini ftl, mainly implementing bad block management within the partition.
 
 choice
     prompt "Choose SPI Nand Flash Adapter"
@@ -750,15 +758,17 @@ menu "Enable FTL"
     config RT_USING_FTL
         bool "Enable Flash FTL"
         default n
-choice
-    prompt "Choose Flash FTL for RK SPINAND driver"
-    default RT_USING_DHARA
+if RT_USING_FTL
+    choice
+        prompt "Choose Flash FTL for RK SPINAND driver"
+        default RT_USING_DHARA
 
-    config RT_USING_DHARA
-        bool "Enable DHARA FTL"
-        depends on RT_USING_SPINAND
-        default n
-endchoice
+        config RT_USING_DHARA
+            bool "Enable DHARA FTL"
+            depends on RT_USING_SPINAND
+            default n
+    endchoice
+endif
 endmenu
 
 menu "RT-Thread rockchip USB Host driver"
