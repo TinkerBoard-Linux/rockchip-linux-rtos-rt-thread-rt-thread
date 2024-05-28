@@ -21,6 +21,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <getopt.h>
+#include <rthw.h>
 
 #include "hal_base.h"
 
@@ -46,7 +47,9 @@ static void
 read_memory(unsigned long phys_addr, uint8_t *addr, int len, int iosize)
 {
     int i;
-
+#if defined(RT_USING_CACHE)
+    rt_hw_cpu_dcache_ops(RT_HW_CACHE_INVALIDATE, (void *)addr, len);
+#endif
     while (len)
     {
         rt_kprintf("%08lx: ", phys_addr);
@@ -104,6 +107,9 @@ write_memory(uint8_t *addr, int len, int iosize, unsigned long value)
         }
         break;
     }
+#if defined(RT_USING_CACHE)
+    rt_hw_cpu_dcache_ops(RT_HW_CACHE_FLUSH, (void *)addr, len);
+#endif
 }
 
 int io_mem(int argc, char **argv)
