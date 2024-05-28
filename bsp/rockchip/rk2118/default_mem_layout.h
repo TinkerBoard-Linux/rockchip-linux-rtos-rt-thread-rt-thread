@@ -52,9 +52,9 @@ SRAM_BASE               = 0x30200000;
 
 /* User-modifiable sizes */
 SRAM_CPU0_TFM_SIZE      = 0x00010000; /* 64 KB */
-SRAM_CPU0_RTT_SIZE      = 0x00010000; /* 64 KB */
+SRAM_CPU0_RTT_SIZE      = 0x00020000; /* 128 KB */
 SRAM_DSP0_SIZE          = 0x00050000; /* 320 KB */
-SRAM_DSP1_SIZE          = 0x00048000; /* 288 KB */
+SRAM_DSP1_SIZE          = 0x00038000; /* 224 KB */
 SRAM_DSP2_SIZE          = 0x00046000; /* 280 KB */
 SRAM_SPI2APB_SIZE       = 0x00001000; /* 4 KB */
 UNCACHE_HEAP_SIZE       = 0x00001000; /* 4 KB */
