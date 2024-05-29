@@ -79,6 +79,10 @@
 #define HAL_PMU_MODULE_ENABLED
 #endif
 
+#ifdef RT_USING_PWM
+#define HAL_PWM_MODULE_ENABLED
+#endif
+
 #ifdef RT_USING_UART
 #define HAL_UART_MODULE_ENABLED
 #endif

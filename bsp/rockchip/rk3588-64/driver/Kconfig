@@ -60,6 +60,26 @@ config RT_USING_PMU
     bool "Enable PMU"
     default y
 
+if RT_USING_PWM
+menu "Enable PWM"
+    config RT_USING_PWM0
+        bool "Enable PWM0"
+        default n
+
+    config RT_USING_PWM1
+        bool "Enable PWM1"
+        default n
+
+    config RT_USING_PWM2
+        bool "Enable PWM2"
+        default n
+
+    config RT_USING_PWM3
+        bool "Enable PWM3"
+        default n
+endmenu
+endif
+
 config RT_USING_SYSTICK
     bool "Enable SYSTICK"
     default y
