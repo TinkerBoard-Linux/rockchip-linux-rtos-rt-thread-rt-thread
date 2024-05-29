@@ -13,8 +13,6 @@
 
 #include "board_base.h"
 
-#define RT_USING_CODEC_TAS5805M
-
 #ifdef RT_USING_CODEC_TAS5805M
 #define TAS5805M_I2C_BUS "i2c0"
 #define TAS5805M_SDB_GPIO_BANK GPIO_BANK3
