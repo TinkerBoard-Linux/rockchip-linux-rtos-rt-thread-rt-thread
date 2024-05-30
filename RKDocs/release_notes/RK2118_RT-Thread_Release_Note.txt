@@ -1,5 +1,19 @@
 ===========RK2118_RT-Thread SDK Release Note===========
 
+[RK2118_RT-Thead_SDK_Beta_V0.2.0_20240530.xml change log]
+1. adsp_demo: update to audio v2 driver
+2. evb_partybox_demo: update to audio v2 driver, support IEC61937 demux
+3. add dsp fw buildin support
+4. librkstudio: support wavplayer, hw param modify, fix some bug
+5. replay libc with libc_nano
+6. startup speed optimization
+7. add emmc boot support
+8. unified heap memory allocation
+9. add spi2apb upgrade test demo
+10. evb support ap6256 wifi
+11. fix usb stability issues
+12. ethernet ptp support
+
 [RK2118_RT-Thead_SDK_Beta_V0.1.0_20240415.xml change log]
 1. soundbar demo: mp3 dec, howling suppression + mixer, vocal seperation
 2. rkstudio: real-time sound adjustment support
