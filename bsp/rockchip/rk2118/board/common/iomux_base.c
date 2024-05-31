@@ -127,6 +127,20 @@ RT_WEAK  void lcdc_iomux_config(void)
                          GPIO_PIN_B2 |  // VO_LCDC_D7
                          GPIO_PIN_B3,   // VO_LCDC_RDN_M0
                          PIN_CONFIG_MUX_FUNC4);
+    HAL_PINCTRL_SetParam(GPIO_BANK3,
+                         GPIO_PIN_A0 |  // VO_LCDC_CSN
+                         GPIO_PIN_A1 |  // VO_LCDC_RS
+                         GPIO_PIN_A2 |  // VO_LCDC_WRN
+                         GPIO_PIN_A3 |  // VO_LCDC_D0
+                         GPIO_PIN_A4 |  // VO_LCDC_D1
+                         GPIO_PIN_A5 |  // VO_LCDC_D2
+                         GPIO_PIN_A6 |  // VO_LCDC_D3
+                         GPIO_PIN_A7 |  // VO_LCDC_D4
+                         GPIO_PIN_B0 |  // VO_LCDC_D5
+                         GPIO_PIN_B1 |  // VO_LCDC_D6
+                         GPIO_PIN_B2 |  // VO_LCDC_D7
+                         GPIO_PIN_B3,   // VO_LCDC_RDN_M0
+                         PIN_CONFIG_DRV_LEVEL1);
 }
 
 /**
