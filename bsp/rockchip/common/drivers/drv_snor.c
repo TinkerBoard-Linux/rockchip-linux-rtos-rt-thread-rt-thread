@@ -568,7 +568,7 @@ static int snor_init(uint8_t dev_id, char *name, enum spiflash_host type)
     mtd_dev->block_start  = 0;
     mtd_dev->block_end    = HAL_SNOR_GetCapacity(nor) / mtd_dev->block_size;
     rt_mtd_nor_register_device(name, mtd_dev);
-    rk_partition_init(mtd_dev);
+    mtd_nor_rk_partition_init(mtd_dev);
     spiflash->type = type;
 
 exit:

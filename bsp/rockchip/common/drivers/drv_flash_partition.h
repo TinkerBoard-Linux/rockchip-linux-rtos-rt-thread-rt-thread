@@ -152,7 +152,9 @@ struct rt_flash_partition
 
 rt_err_t mtd_nor_init_partition(struct rt_mtd_nor_device *mtd_nor, struct rt_flash_partition *parts);
 rt_err_t blk_init_partition(struct rt_mtd_nor_device *mtd_nor, struct rt_flash_partition *parts);
-uint32_t rk_partition_init(struct rt_mtd_nor_device *mtd);
+uint32_t rk_partition_init(struct rk_partition_info *part_temp, uint32_t flash_size);
+uint32_t mtd_nor_rk_partition_init(struct rt_mtd_nor_device *mtd);
+uint32_t mtd_nand_rk_partition_init(struct rt_mtd_nand_device *mtd);
 int32_t get_rk_partition(struct rt_flash_partition **part);
 int change_part_name(int em_part_type, char *new_name);
 ssize_t read_rk_partition(char *part_name, void *buf, size_t count, off_t offset);
