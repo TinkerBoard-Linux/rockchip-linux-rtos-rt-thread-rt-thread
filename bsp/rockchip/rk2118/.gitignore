@@ -2,7 +2,6 @@
 *.map
 *.dblite
 *.elf
-*.bin
 *.hex
 *.axf
 *.exe
@@ -21,6 +20,7 @@ libraries
 *.a
 *.i
 *.d
+*.ld
 cconfig.h
 
 # Ignore OS X Desktop Services Store files
