@@ -57,6 +57,7 @@ static void spi2apb_flash_obj_mst_show_usage()
     rt_kprintf("2. spi2apb_flash_obj_mst spi2apb_readsram <spi_dev> <size>\n");
     rt_kprintf("3. spi2apb_flash_obj_mst spi2apb_writemsg <spi_dev> <reg> <val>\n");
     rt_kprintf("4. spi2apb_flash_obj_mst spi2apb_querymsg <spi_dev>\n");
+    rt_kprintf("4. spi2apb_flash_obj_mst spi2apb_querystatus <spi_dev>\n");
     rt_kprintf("5. spi2apb_flash_obj_mst write_sector <spi_dev> <sector> <val> <loops>\n");
     rt_kprintf("6. spi2apb_flash_obj_mst read_sector <spi_dev> <sector> <loops>\n");
     rt_kprintf("7. spi2apb_flash_obj_mst stress <spi_dev> <sector> <n_sec>\n");
@@ -65,6 +66,7 @@ static void spi2apb_flash_obj_mst_show_usage()
     rt_kprintf("\tspi2apb_flash_obj_mst spi2apb_readsram spi1_0 32\n");
     rt_kprintf("\tspi2apb_flash_obj_mst spi2apb_writemsg spi1_0 1 55\n");
     rt_kprintf("\tspi2apb_flash_obj_mst spi2apb_querymsg spi1_0\n");
+    rt_kprintf("\tspi2apb_flash_obj_mst spi2apb_querystatus spi1_0\n");
     rt_kprintf("\tspi2apb_flash_obj_mst write_sector spi1_0 512 1 10\n");
     rt_kprintf("\tspi2apb_flash_obj_mst read_sector spi1_0 512 10\n");
     rt_kprintf("\tspi2apb_flash_obj_mst stress spi1_0 512 32\n");
@@ -231,6 +233,12 @@ static rt_err_t spi2apb_flash_obj_mst_spi2apb_progsram(uint32_t addr, uint8_t *b
     uint8_t cmd[16];
     uint32_t val;
 
+    if (addr & 0x3 || size & 0x3)
+    {
+        rt_kprintf("%s failed, addr=%x size=%x should 4Bytes aligned!\n", __func__, addr, size);
+        return -RT_EINVAL;
+    }
+
     memset(cmd, 0xa5, 16);
 
     cmd[0] = 0x11;
@@ -272,6 +280,12 @@ static rt_err_t spi2apb_flash_obj_mst_spi2apb_readsram(uint32_t addr, uint8_t *b
 {
     uint8_t cmd[16];
     uint32_t val, *cmd32;
+
+    if (addr & 0x3 || size & 0x3)
+    {
+        rt_kprintf("%s failed, addr=%x size=%x should 4Bytes aligned!\n", __func__, addr, size);
+        return -RT_EINVAL;
+    }
 
     cmd32 = (uint32_t *)&cmd;
 
@@ -336,7 +350,11 @@ static rt_err_t spi2apb_flash_obj_mst_wait_status(rt_uint8_t index, rt_uint8_t e
     while (timeout > rt_tick_get());
 
     if (ret)
-        rt_kprintf("%s wait tiemout, status=%d mp=%x-sp=%x\n", __func__, status.item.status, index, status.item.index);
+    {
+        rt_kprintf("%s wait tiemout, st=%x-%x ph=%x-%x\n", __func__, status.item.status, expect, status.item.index, index);
+        rt_kprintf("Setting SPI2APB reg2 to ready at first:\n");
+        rt_kprintf("  spi2apb_test write spi2apb 0x500\n");
+    }
 
     return ret;
 }
