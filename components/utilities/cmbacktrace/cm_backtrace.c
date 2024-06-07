@@ -340,7 +340,7 @@ static bool disassembly_ins_is_bl_blx(uint32_t addr) {
  *
  * @return depth
  */
-size_t cm_backtrace_call_stack(uint32_t *buffer, size_t size, uint32_t sp) {
+size_t cm_backtrace_call_stack(uint32_t *buffer, size_t size, uint32_t sp, uint32_t stack_addr, uint32_t stack_len) {
     uint32_t stack_start_addr = main_stack_start_addr, pc;
     size_t depth = 0, stack_size = main_stack_size;
     bool regs_saved_lr_is_valid = false;
@@ -364,6 +364,11 @@ size_t cm_backtrace_call_stack(uint32_t *buffer, size_t size, uint32_t sp) {
         }
 #endif /* CMB_USING_OS_PLATFORM */
 
+    }
+
+    if (stack_addr) {
+        stack_start_addr = stack_addr;
+        stack_size = stack_len;
     }
 
     if (stack_is_overflow) {
@@ -407,7 +412,7 @@ static void print_call_stack(uint32_t sp) {
     size_t i, cur_depth = 0;
     uint32_t call_stack_buf[CMB_CALL_STACK_MAX_DEPTH] = {0};
 
-    cur_depth = cm_backtrace_call_stack(call_stack_buf, CMB_CALL_STACK_MAX_DEPTH, sp);
+    cur_depth = cm_backtrace_call_stack(call_stack_buf, CMB_CALL_STACK_MAX_DEPTH, sp, 0, 0);
 
     for (i = 0; i < cur_depth; i++) {
         rt_sprintf(call_stack_info + i * (8 + 1), "%08lx", (unsigned long)call_stack_buf[i]);
@@ -599,6 +604,88 @@ static uint32_t statck_del_fpu_regs(uint32_t fault_handler_lr, uint32_t sp) {
 }
 #endif
 
+static void dump_thread_call_stack(uint32_t sp, uint32_t stack_addr, uint32_t stack_len)
+{
+    size_t i, cur_depth = 0;
+    uint32_t call_stack_buf[CMB_CALL_STACK_MAX_DEPTH] = {0};
+
+    cur_depth = cm_backtrace_call_stack(call_stack_buf, CMB_CALL_STACK_MAX_DEPTH, sp, stack_addr, stack_len);
+
+    for (i = 0; i < cur_depth; i++) {
+        sprintf(call_stack_info + i * (8 + 1), "%08lx", call_stack_buf[i]);
+        call_stack_info[i * (8 + 1) + 8] = ' ';
+    }
+
+    if (cur_depth) {
+        cmb_println(print_info[PRINT_CALL_STACK_INFO], fw_name, CMB_ELF_FILE_EXTENSION_NAME, cur_depth * (8 + 1),
+        call_stack_info);
+    } else {
+        cmb_println(print_info[PRINT_CALL_STACK_ERR]);
+    }
+}
+
+#ifdef RT_USING_CORE_FREERTOS
+
+#include "task.h"
+
+int cm_dump_thread(void)
+{
+    TaskStatus_t *pxStatusArray;
+    UBaseType_t uxNumberOfTasks, uxReturned, ux;
+    uint32_t ulTotalRunTime, xStack, xSize;
+
+    uxNumberOfTasks = uxTaskGetNumberOfTasks();
+    if (uxNumberOfTasks == 0)
+    {
+        return -RT_EINVAL;
+    }
+
+    pxStatusArray = ( TaskStatus_t * ) rt_malloc( uxNumberOfTasks * sizeof( TaskStatus_t ) );
+    if (pxStatusArray == NULL)
+    {
+        return -RT_ENOMEM;
+    }
+
+    uxReturned = uxTaskGetSystemState( pxStatusArray, uxNumberOfTasks, &ulTotalRunTime );
+    if( uxReturned == ( UBaseType_t ) 0 )
+    {
+        rt_free(pxStatusArray);
+        return -RT_EINVAL;
+    }
+
+    for( ux = 0; ux < uxReturned; ux++ )
+    {
+        vTaskGetStackInfo(pxStatusArray[ux].xHandle, &xStack, &xSize);
+        //dump_thread_call_stack(sp, xStack, xSize);
+    }
+
+    rt_free(pxStatusArray);
+    return RT_EOK;
+}
+#else
+int cm_dump_thread(void)
+{
+    struct rt_thread *thread;
+    struct rt_list_node *node;
+    struct rt_object_information *info;
+    struct rt_list_node *list;
+
+    info = rt_object_get_information(RT_Object_Class_Thread);
+    list = &info->object_list;
+
+    for (node = list->next; node != list; node = node->next)
+    {
+        thread = rt_list_entry(node, struct rt_thread, list);
+
+        rt_kprintf("thread: %s, stack: %p, size: 0x%x, sp: %p, ", thread->name,
+            thread->stack_addr, thread->stack_size, thread->sp);
+        dump_thread_call_stack((uint32_t)thread->sp, (uint32_t)thread->stack_addr, thread->stack_size);
+    }
+
+    return RT_EOK;
+}
+#endif
+
 /**
  * backtrace for fault
  * @note only call once
@@ -701,4 +788,71 @@ void cm_backtrace_fault(uint32_t fault_handler_lr, uint32_t fault_handler_sp) {
 #endif
 
     print_call_stack(stack_pointer);
+    cmb_println("======================more thread backtrace=====================");
+    cm_dump_thread();
 }
+
+#ifdef RT_USING_FINSH
+
+static int dump_stat(void)
+{
+    rt_enter_critical();
+
+#ifdef RT_USING_SEMAPHORE
+    extern long list_sem(void);
+    list_sem();
+    rt_kprintf("\n");
+#endif
+#ifdef RT_USING_EVENT
+    extern long list_event(void);
+    list_event();
+    rt_kprintf("\n");
+#endif
+#ifdef RT_USING_MUTEX
+    extern long list_mutex(void);
+    list_mutex();
+    rt_kprintf("\n");
+#endif
+#ifdef RT_USING_MAILBOX
+    extern long list_mailbox(void);
+    list_mailbox();
+    rt_kprintf("\n");
+#endif
+#ifdef RT_USING_MESSAGEQUEUE
+    extern long list_msgqueue(void);
+    list_msgqueue();
+    rt_kprintf("\n");
+#endif
+#ifdef RT_USING_MEMHEAP
+    extern long list_memheap(void);
+    list_memheap();
+    rt_kprintf("\n");
+#endif
+#ifdef RT_USING_MEMPOOL
+    extern long list_mempool(void);
+    list_mempool();
+    rt_kprintf("\n");
+#endif
+#ifdef RT_USING_DEVICE
+    extern long list_device(void);
+    list_device();
+    rt_kprintf("\n");
+#endif
+
+    extern long list_timer(void);
+    extern long list_thread(void);
+    list_timer();
+    rt_kprintf("\n");
+    list_thread();
+    rt_kprintf("\n");
+
+    cm_dump_thread();
+
+    rt_exit_critical();
+
+    return RT_EOK;
+}
+
+MSH_CMD_EXPORT(dump_stat, dump system stat);
+#endif
+
