@@ -98,6 +98,8 @@ static rt_err_t rockchip_spi2apb_control(rt_device_t dev, int cmd, void *arg)
     {
     case RT_DEVICE_CTRL_SPI2APB_CONFIGURATION:
         config = (struct rt_spi2apb_configuration *)arg;
+        device->config.mode = config->mode;
+        device->config.clock_polarity = config->clock_polarity;
         HAL_SPI2APB_Configurate(pReg, config->mode | config->clock_polarity);
         break;
     case RT_DEVICE_CTRL_SPI2APB_QUERY_STATUS:
