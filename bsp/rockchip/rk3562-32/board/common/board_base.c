@@ -63,6 +63,16 @@ RT_WEAK const struct uart_board g_uart0_board =
 };
 #endif /* RT_USING_UART0 */
 
+#if defined(RT_USING_UART7)
+RT_WEAK const struct uart_board g_uart7_board =
+{
+    .baud_rate = UART_BR_1500000,
+    .dev_flag = ROCKCHIP_UART_SUPPORT_FLAG_DEFAULT,
+    .bufer_size = RT_SERIAL_RB_BUFSZ,
+    .name = "uart7",
+};
+#endif /* RT_USING_UART7 */
+
 #if defined(RT_USING_SMP)
 struct mem_desc platform_mem_desc[] =
 {
@@ -129,6 +139,9 @@ static struct GIC_AMP_IRQ_INIT_CFG irqsConfig[] =
 #ifdef RT_USING_RPMSG_LITE
     GIC_AMP_IRQ_CFG_ROUTE(MBOX_AP_IRQn, 0xd0, CPU_GET_AFFINITY(0, 0)),
     GIC_AMP_IRQ_CFG_ROUTE(MBOX_BB_IRQn, 0xd0, CPU_GET_AFFINITY(3, 0)),
+#endif
+#ifdef RT_USING_UART7
+    GIC_AMP_IRQ_CFG_ROUTE(UART7_IRQn, 0xd0, CPU_GET_AFFINITY(3, 0)),
 #endif
     GIC_AMP_IRQ_CFG_ROUTE(0, 0, CPU_GET_AFFINITY(1, 0)),   /* sentinel */
 };

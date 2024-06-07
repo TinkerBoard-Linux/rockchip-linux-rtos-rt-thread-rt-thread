@@ -22,6 +22,18 @@ RT_WEAK  void uart0_m0_iomux_config(void)
 }
 #endif
 
+#ifdef RT_USING_UART7
+RT_WEAK void uart7_m1_iomux_config(void)
+{
+    HAL_PINCTRL_SetIOMUX(GPIO_BANK1,
+                         GPIO_PIN_B3,
+                         PIN_CONFIG_MUX_FUNC3);
+    HAL_PINCTRL_SetIOMUX(GPIO_BANK1,
+                         GPIO_PIN_B4,
+                         PIN_CONFIG_MUX_FUNC3);
+}
+#endif
+
 #ifdef RT_USING_GMAC
 #ifdef RT_USING_GMAC0
 /**
