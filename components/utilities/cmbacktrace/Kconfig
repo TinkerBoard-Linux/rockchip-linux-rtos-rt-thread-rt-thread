@@ -83,4 +83,25 @@ if RT_USING_CMBACKTRACE
             depends on CMB_USING_FAL_BACKUP_LOG_TO_FILE
     endif
 
+    config PKG_CMBACKTRACE_FAULT_DUMP_TO_FLASH
+        bool
+        prompt "Dump the fault to flash"
+        select RT_USING_DFS
+        select DFS_USING_POSIX
+        default n
+        help
+          Dump the fault information to flash, you need a breakpad partition.
+
+    if PKG_CMBACKTRACE_FAULT_DUMP_TO_FLASH
+
+        config PKG_CMBACKTRACE_FLASH_PARTITION_NAME
+            string "the name of partition which you want store fault information."
+            default "breakpad"
+
+        config PKG_CMBACKTRACE_DUMP_BUF_SIZE
+            int "the buffer size for dump fault information to flash."
+            default 4096
+
+    endif
+
 endif

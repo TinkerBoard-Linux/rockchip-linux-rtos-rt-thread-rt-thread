@@ -604,6 +604,273 @@ static uint32_t statck_del_fpu_regs(uint32_t fault_handler_lr, uint32_t sp) {
 }
 #endif
 
+#ifdef PKG_CMBACKTRACE_FAULT_DUMP_TO_FLASH
+#include "auto_version.h"
+#include <dfs_file.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <dirent.h>
+
+#ifndef PKG_CMBACKTRACE_FLASH_PARTITION_NAME
+#define PKG_CMBACKTRACE_FLASH_PARTITION_NAME  "breakpad"
+#endif
+#ifndef PKG_CMBACKTRACE_DUMP_BUF_SIZE
+#define PKG_CMBACKTRACE_DUMP_BUF_SIZE  4096
+#endif
+
+#define PKG_CMBACKTRACE_FORWARD_FILE_PATH     "/tombstone"
+#define PKG_CMBACKTRACE_FORWARD_FILE_MAX      5
+
+static char log_buf[PKG_CMBACKTRACE_DUMP_BUF_SIZE];
+static rt_device_t flash = RT_NULL;
+
+static void write_log_to_flash(const char *str, int flush)
+{
+    static int log_buf_offset = 0, flash_pos = 0, flash_size = 0, sector_size = PKG_CMBACKTRACE_DUMP_BUF_SIZE;
+    struct rt_device_blk_geometry stat;
+    rt_size_t length, len, writes, secs;
+    rt_err_t ret;
+    int padding_len;
+    console_hook hook;
+
+    /* Disable and save hook to avoid recursion */
+    hook = rt_console_set_output_hook(NULL);
+
+    if (flash == RT_NULL) {
+        flash = rt_device_find(PKG_CMBACKTRACE_FLASH_PARTITION_NAME);
+        if (flash == RT_NULL) {
+            goto exit;
+        }
+
+        ret = rt_device_open(flash, RT_DEVICE_OFLAG_WRONLY);
+        if (ret != RT_EOK) {
+            goto exit;
+        }
+
+        ret = rt_device_control(flash, RT_DEVICE_CTRL_BLK_GETGEOME, &stat);
+        if (ret != RT_EOK || (PKG_CMBACKTRACE_DUMP_BUF_SIZE % stat.bytes_per_sector) != 0) {
+            sector_size = -1;
+        }
+        else {
+            sector_size = stat.bytes_per_sector;
+            flash_size = stat.sector_count;
+        }
+
+        // set flash write critical mode
+        ret = rt_device_control(flash, RT_DEVICE_CTRL_BLK_SETEMER, NULL);
+        if (ret != RT_EOK) {
+            goto exit;
+        }
+    }
+
+    if (sector_size == -1)
+        goto exit;
+
+    length = rt_strlen(str);
+    while(length > 0) {
+        len = sizeof(log_buf) - log_buf_offset;
+        len = len > length ? length : len;
+
+        rt_memcpy(&log_buf[log_buf_offset], str, len);
+        log_buf_offset += len;
+        length -= len;
+
+        if (log_buf_offset >= sizeof(log_buf)) {
+            log_buf_offset = 0;
+
+            secs = PKG_CMBACKTRACE_DUMP_BUF_SIZE / sector_size;
+            if ((flash_pos + secs) > flash_size) {
+                goto exit;
+            }
+            writes = rt_device_write(flash, flash_pos, log_buf, secs);
+            if (writes != secs) {
+                goto exit;
+            }
+            flash_pos += writes;
+        }
+    }
+
+    if (flush) {
+        secs = (log_buf_offset + sector_size - 1) / sector_size;
+        if ((flash_pos + secs) > flash_size) {
+            goto exit;
+        }
+        padding_len = sector_size - log_buf_offset % sector_size;
+        memset(&log_buf[log_buf_offset], 0, padding_len);
+        writes = rt_device_write(flash, flash_pos, log_buf, secs);
+        if (writes != secs) {
+            goto exit;
+        }
+        flash_pos += writes;
+        log_buf_offset = 0;
+
+        log_buf[0] = 0x55;
+        log_buf[1] = 0xaa;
+        sprintf(&log_buf[2], "%04d", flash_pos);
+        writes = rt_device_write(flash, flash_size - 1, log_buf, 1);
+        if (writes != 1) {
+            goto exit;
+        }
+    }
+
+exit:
+    if (flush && flash) {
+        rt_device_close(flash);
+        flash = RT_NULL;
+    }
+    rt_console_set_output_hook(hook);
+}
+
+static int forward_log(void)
+{
+    rt_device_t dev;
+    rt_err_t ret;
+    rt_size_t secs, sector_size, flash_pos, flash_size, reads, writes, log_size;
+    int remain;
+    struct rt_device_blk_geometry flash_stat;
+    struct stat dir_st;
+    struct statfs fs_st;
+    DIR *dir = RT_NULL;
+    struct dirent *dirent;
+    int last, cur, fd = -1;
+    char file_path[32];
+    char old_path[32];
+
+    /* found log size from last sector of flash*/
+    dev = rt_device_find(PKG_CMBACKTRACE_FLASH_PARTITION_NAME);
+    if (dev == RT_NULL) {
+        goto exit;
+    }
+
+    ret = rt_device_open(dev, RT_DEVICE_OFLAG_RDONLY);
+    if (ret != RT_EOK) {
+        goto exit;
+    }
+
+    ret = rt_device_control(dev, RT_DEVICE_CTRL_BLK_GETGEOME, &flash_stat);
+    if (ret != RT_EOK || (PKG_CMBACKTRACE_DUMP_BUF_SIZE % flash_stat.bytes_per_sector) != 0) {
+        sector_size = -1;
+        goto exit;
+    }
+    else {
+        sector_size = flash_stat.bytes_per_sector;
+        flash_size = flash_stat.sector_count;
+    }
+
+    reads = rt_device_read(dev, flash_size - 1, log_buf, 1);
+    if (reads != 1) {
+        goto exit;
+    }
+
+    if (log_buf[0] != 0x55 || log_buf[1] != 0xaa) {
+        goto exit;
+    }
+    else {
+        log_buf[6] = '\0';
+        log_size = atoi(&log_buf[2]);
+    }
+
+    rt_kprintf("\n found a fault log: size=%d\n", log_size * sector_size);
+
+    if (log_size > flash_size)
+        log_size = flash_size;
+
+    /* check it has enough free space */
+    ret = dfs_statfs("/", &fs_st);
+    if (ret != RT_EOK
+        || (fs_st.f_bfree * fs_st.f_bsize) < (log_size * sector_size)) {
+        goto exit;
+    }
+
+    /* check the forward path */
+    ret = dfs_file_stat(PKG_CMBACKTRACE_FORWARD_FILE_PATH, &dir_st);
+    if (ret != RT_EOK || !S_ISDIR(dir_st.st_mode)) {
+        ret = mkdir(PKG_CMBACKTRACE_FORWARD_FILE_PATH, 0);
+        if (ret != RT_EOK) {
+            goto exit;
+        }
+    }
+
+    /* find the last log file */
+    dir = opendir(PKG_CMBACKTRACE_FORWARD_FILE_PATH);
+    if (dir == RT_NULL) {
+        goto exit;
+    }
+    cur = -1;
+    for (;;)
+    {
+        dirent = readdir(dir);
+        if (dirent == RT_NULL) break;
+
+        if (rt_strstr(dirent->d_name, "cur_")) {
+            cur = atoi(&dirent->d_name[4]);
+            break;
+        }
+    }
+
+    if (cur < 0 || cur >= PKG_CMBACKTRACE_FORWARD_FILE_MAX) {
+        cur = 0;
+    }
+
+    last = cur;
+    if (++cur >= PKG_CMBACKTRACE_FORWARD_FILE_MAX) {
+        cur = 0;
+    }
+
+    snprintf(file_path, sizeof(file_path), "%s/log_%d", PKG_CMBACKTRACE_FORWARD_FILE_PATH, cur);
+    unlink(file_path);
+    fd = open(file_path, O_WRONLY | O_TRUNC | O_CREAT, 0);
+    if (fd < 0) {
+        goto exit;
+    }
+
+    remain = log_size * sector_size;
+    flash_pos = 0;
+    while (remain > 0) {
+        secs = PKG_CMBACKTRACE_DUMP_BUF_SIZE / sector_size;
+        secs = remain < (secs * sector_size) ? remain / sector_size : secs;
+        reads = rt_device_read(dev, flash_pos, log_buf, secs);
+        if (reads != secs) {
+            goto exit;
+        }
+        flash_pos += secs;
+
+        writes = write(fd, log_buf, secs * sector_size);
+        if (writes != (secs * sector_size)) {
+            goto exit;
+        }
+        remain -= writes;
+    }
+
+    snprintf(file_path, sizeof(file_path), "%s/cur_%d", PKG_CMBACKTRACE_FORWARD_FILE_PATH, cur);
+    snprintf(old_path, sizeof(old_path), "%s/cur_%d", PKG_CMBACKTRACE_FORWARD_FILE_PATH, last);
+    if (rename(old_path, file_path) != RT_EOK) {
+        close(fd);
+        fd = open(file_path, O_WRONLY | O_TRUNC | O_CREAT, 0);
+    }
+
+    /* clear the log magic */
+    memset(log_buf, 0, 2);
+    rt_device_write(dev, flash_size - 1, log_buf, 1);
+
+exit:
+    if (dev) {
+        rt_device_close(dev);
+    }
+    if (dir) {
+        closedir(dir);
+    }
+    if (fd > 0) {
+        close(fd);
+    }
+    memset(log_buf, 0, sizeof(log_buf));
+
+    return RT_EOK;
+}
+
+INIT_APP_EXPORT(forward_log);
+#endif
+
 static void dump_thread_call_stack(uint32_t sp, uint32_t stack_addr, uint32_t stack_len)
 {
     size_t i, cur_depth = 0;
@@ -708,6 +975,11 @@ void cm_backtrace_fault(uint32_t fault_handler_lr, uint32_t fault_handler_sp) {
 
     on_fault = true;
 
+#ifdef PKG_CMBACKTRACE_FAULT_DUMP_TO_FLASH
+    rt_console_set_output_hook(write_log_to_flash);
+    rt_kprintf("version info: %s\n", FIRMWARE_AUTO_VERSION);
+#endif
+
     cmb_println("");
     cm_backtrace_firmware_info();
 
@@ -790,6 +1062,11 @@ void cm_backtrace_fault(uint32_t fault_handler_lr, uint32_t fault_handler_sp) {
     print_call_stack(stack_pointer);
     cmb_println("======================more thread backtrace=====================");
     cm_dump_thread();
+
+#ifdef PKG_CMBACKTRACE_FAULT_DUMP_TO_FLASH
+    rt_console_set_output_hook(NULL);
+    write_log_to_flash("dump stat success!", 1);
+#endif
 }
 
 #ifdef RT_USING_FINSH
