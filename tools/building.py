@@ -166,6 +166,8 @@ def PrepareBuilding(env, root_directory, has_libcpu=False, remove_components = [
     Env['RTT_ROOT'] = Rtt_Root
     # set BSP_ROOT in ENV
     Env['BSP_ROOT'] = Dir('#').abspath
+    from genversion import genversion
+    genversion(Env)
 
     sys.path = sys.path + [os.path.join(Rtt_Root, 'tools')]
 
