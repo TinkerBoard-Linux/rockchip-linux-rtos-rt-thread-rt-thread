@@ -1052,6 +1052,7 @@ enum rt_device_class_type
 #define RT_DEVICE_CTRL_BLK_SYNC         (RT_DEVICE_CTRL_BASE(Block) + 2)            /**< flush data to block device */
 #define RT_DEVICE_CTRL_BLK_ERASE        (RT_DEVICE_CTRL_BASE(Block) + 3)            /**< erase block on block device */
 #define RT_DEVICE_CTRL_BLK_AUTOREFRESH  (RT_DEVICE_CTRL_BASE(Block) + 4)            /**< block device : enter/exit auto refresh mode */
+#define RT_DEVICE_CTRL_BLK_SETEMER      (RT_DEVICE_CTRL_BASE(Block) + 5)            /**< block device : enter emergency mode */
 #define RT_DEVICE_CTRL_NETIF_GETMAC     (RT_DEVICE_CTRL_BASE(NetIf) + 1)            /**< get mac address */
 #define RT_DEVICE_CTRL_MTD_FORMAT       (RT_DEVICE_CTRL_BASE(MTD) + 1)              /**< format a MTD device */
 

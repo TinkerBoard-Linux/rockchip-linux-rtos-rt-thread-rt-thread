@@ -521,6 +521,41 @@ static int rk_mmc_get_response(struct mmc_driver *mmc_drv, struct rt_mmcsd_cmd *
     return 0;
 }
 
+static int rk_mmc_write_emergency_check(struct mmc_driver *mmc_drv, struct HAL_MMC_HOST *hal_host)
+{
+    rt_uint32_t status;
+    int loop;
+
+    for (loop = 10000; loop > 0; loop--)
+    {
+        status = HAL_MMC_GetRawInterrupt(hal_host);
+
+        if (status & MMC_INIT_STATUS_DATA_ERROR)
+        {
+            rt_kprintf("ERROR: %s, data error, status: 0x%x\n", __func__, status);
+            mmc_drv->transfer_state = MMC_INIT_STATUS_DATA_ERROR;
+            return -RT_ERROR;
+        }
+
+        if (status & MMC_INT_STATUS_TRANSFER_OVER)
+        {
+            mmc_drv->transfer_state = 0;
+            break;
+        }
+        HAL_DelayMs(1);
+    }
+
+    HAL_MMC_ClearRawInterrupt(hal_host, MMC_INT_STATUS_ALL);
+    if (loop <= 0)
+    {
+        rt_kprintf("ERROR: %s, dto timeout, status: 0x%x\n", __func__, status);
+        mmc_drv->transfer_state = MMC_INIT_STATUS_DATA_ERROR;
+        return -RT_ETIMEOUT;
+    }
+
+    return 0;
+}
+
 static int rk_mmc_start_transfer(struct mmc_driver *mmc_drv)
 {
     struct HAL_MMC_HOST *hal_host = (struct HAL_MMC_HOST *)mmc_drv->priv;
@@ -539,13 +574,20 @@ static int rk_mmc_start_transfer(struct mmc_driver *mmc_drv)
 
     PRINT_MMC_DBG("%s, start\n", __func__);
 
-    //open data interrupts
-    reg = HAL_MMC_GetInterruptMask(hal_host);
-    reg |= MMC_INT_STATUS_DATA;
-    HAL_MMC_SetInterruptMask(hal_host, reg);
+    if (mmc_drv->is_write_emergency)
+    {
+        ret = rk_mmc_write_emergency_check(mmc_drv, hal_host);
+    }
+    else
+    {
+        //open data interrupts
+        reg = HAL_MMC_GetInterruptMask(hal_host);
+        reg |= MMC_INT_STATUS_DATA;
+        HAL_MMC_SetInterruptMask(hal_host, reg);
 
-    //fixme: spin_unlock_irqrestore(&host->lock, flags);
-    ret = rt_completion_wait(&mmc_drv->transfer_completion, RT_TICK_PER_SECOND * 10);
+        //fixme: spin_unlock_irqrestore(&host->lock, flags);
+        ret = rt_completion_wait(&mmc_drv->transfer_completion, RT_TICK_PER_SECOND * 50);
+    }
 
     reg = HAL_MMC_GetInterruptMask(hal_host);
     reg &= ~MMC_INT_STATUS_DATA;
@@ -640,6 +682,12 @@ static void rk_mmc_request(struct rt_mmcsd_host *host, struct rt_mmcsd_req *req)
         rt_kprintf("ERROR: %s fail to reset FIFO", __func__);
         cmd->err = -RT_ERROR;
         goto out;
+    }
+
+    if (req->is_write_emergency)
+    {
+        HAL_MMC_ClearRawInterrupt(hal_host, MMC_INT_STATUS_ALL);
+        mmc_drv->is_write_emergency = req->is_write_emergency;
     }
 
     rk_mmc_prepare_data(mmc_drv);

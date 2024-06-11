@@ -44,12 +44,18 @@ static rt_uint32_t allocated_host_num = 0;
 
 void mmcsd_host_lock(struct rt_mmcsd_host *host)
 {
-    rt_mutex_take(&host->bus_lock, RT_WAITING_FOREVER);
+    if (host->card && host->card->is_write_emergency)
+        return;
+    else
+        rt_mutex_take(&host->bus_lock, RT_WAITING_FOREVER);
 }
 
 void mmcsd_host_unlock(struct rt_mmcsd_host *host)
 {
-    rt_mutex_release(&host->bus_lock);
+    if (host->card && host->card->is_write_emergency)
+        return;
+    else
+        rt_mutex_release(&host->bus_lock);
 }
 
 void mmcsd_req_complete(struct rt_mmcsd_host *host)

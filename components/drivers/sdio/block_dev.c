@@ -118,6 +118,7 @@ static rt_err_t rt_mmcsd_req_blk(struct rt_mmcsd_card *card,
     rt_memset(&data, 0, sizeof(struct rt_mmcsd_data));
     req.cmd = &cmd;
     req.data = &data;
+    req.is_write_emergency = card->is_write_emergency;
 
     cmd.arg = sector;
     if (!(card->flags & CARD_FLAG_SDHC))
@@ -224,6 +225,8 @@ static rt_err_t rt_mmcsd_control(rt_device_t dev, int cmd, void *args)
     case RT_DEVICE_CTRL_BLK_GETGEOME:
         rt_memcpy(args, &blk_dev->geometry, sizeof(struct rt_device_blk_geometry));
         break;
+    case RT_DEVICE_CTRL_BLK_SETEMER:
+        blk_dev->card->is_write_emergency = true;
     default:
         break;
     }

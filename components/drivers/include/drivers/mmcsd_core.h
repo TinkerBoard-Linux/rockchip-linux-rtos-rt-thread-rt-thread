@@ -103,6 +103,7 @@ struct rt_mmcsd_req {
     struct rt_mmcsd_data  *data;
     struct rt_mmcsd_cmd   *cmd;
     struct rt_mmcsd_cmd   *stop;
+    bool is_write_emergency;
 };
 
 /*the following is response bit*/

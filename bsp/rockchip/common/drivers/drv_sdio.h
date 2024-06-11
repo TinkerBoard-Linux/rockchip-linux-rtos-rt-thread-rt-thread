@@ -34,6 +34,7 @@ struct mmc_driver
     void  *priv;
     rt_uint32_t transfer_state;
     rt_uint32_t *mmc_dma_buf;
+    bool is_write_emergency;
 };
 
 struct rk_mmc_platform_data
