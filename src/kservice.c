@@ -1296,9 +1296,11 @@ void rt_kputs(const char *str)
 
 console_hook console_output_hook = RT_NULL;
 
-void rt_console_set_output_hook(console_hook hook)
+console_hook rt_console_set_output_hook(console_hook hook)
 {
+    console_hook old = console_output_hook;
     console_output_hook = hook;
+    return old;
 }
 
 #ifdef RT_USING_SMP
