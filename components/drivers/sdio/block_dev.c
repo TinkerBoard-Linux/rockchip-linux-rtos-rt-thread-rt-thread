@@ -476,7 +476,10 @@ rt_int32_t rt_mmcsd_blk_probe(struct rt_mmcsd_card *card)
                 }
 
                 /* Given name is with allocated host id and its partition index. */
-                rt_snprintf(dname, sizeof(dname), "sd%dp%d", host_id, i);
+                if (part.name[0])
+                    rt_strncpy(dname, part.name, sizeof(dname));
+                else
+                    rt_snprintf(dname, sizeof(dname), "sd%dp%d", host_id, i);
                 blk_dev = rt_mmcsd_create_blkdev(card, (const char*)dname, &part);
                 if ( blk_dev == RT_NULL )
                 {
