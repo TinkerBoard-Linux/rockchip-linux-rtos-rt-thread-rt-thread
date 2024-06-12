@@ -413,6 +413,7 @@ uint32_t mtd_nor_rk_partition_init(struct rt_mtd_nor_device *mtd)
     return RT_EOK;
 }
 
+#ifdef RT_USING_SPINAND
 /* Parse RK_PARTITION for rk flash partition */
 uint32_t mtd_nand_rk_partition_init(struct rt_mtd_nand_device *mtd)
 {
@@ -435,6 +436,7 @@ uint32_t mtd_nand_rk_partition_init(struct rt_mtd_nand_device *mtd)
 
     return RT_EOK;
 }
+#endif
 
 /* Get RK_PARTITION */
 int32_t get_rk_partition(struct rt_flash_partition **part)
