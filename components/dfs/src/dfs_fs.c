@@ -289,6 +289,7 @@ static int dfs_filesystem_get_gpt_partition(struct dfs_partition *part,
     gpt_ent = (gpt_entry *)(&buf[index]);
 
     /* get partition info for gpt entry */
+    rt_strncpy(part->name, (char *)gpt_ent->partition_name, sizeof(part->name));
     part->type = 0x0B;
     part->offset = gpt_ent->starting_lba;
     part->size = gpt_ent->ending_lba - gpt_ent->starting_lba;
@@ -332,6 +333,7 @@ static int dfs_filesystem_get_rk_partition(struct dfs_partition *part,
     }
 
     /* get partition info for gpt entry */
+    rt_strncpy(part->name, (char *)part_temp->part[pindex].sz_name, sizeof(part->name));
     part->type = 0x0B;
     part->offset = (uint32_t)part_temp->part[pindex].ui_pt_off;
     if (part_temp->part[pindex].ui_pt_sz == 0xFFFFFFFF || (part_temp->part[pindex].ui_part_property & RK_PARTITION_NO_PARTITION_SIZE))
@@ -394,6 +396,7 @@ int dfs_filesystem_get_partition(struct dfs_partition *part,
 
     /* set partition information
      *    size is the number of 512-Byte */
+    rt_memset(part->name, 0, sizeof(part->name));      /* MBR has no partition name */
     part->type = type;
     part->offset = *(dpt + 8) | *(dpt + 9) << 8 | *(dpt + 10) << 16 | *(dpt + 11) << 24;
     part->size = *(dpt + 12) | *(dpt + 13) << 8 | *(dpt + 14) << 16 | *(dpt + 15) << 24;
