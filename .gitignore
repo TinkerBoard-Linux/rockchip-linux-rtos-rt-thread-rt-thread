@@ -2,7 +2,6 @@
 *.map
 *.dblite
 *.elf
-*.bin
 *.hex
 *.axf
 *.exe
@@ -40,7 +39,6 @@ cconfig.h
 GPUCache
 
 # Ignore rockchip output file
-bsp/rockchip/common/hal
 bsp/rockchip/*/documents/html
 bsp/rockchip/*/documents/latex
 bsp/rockchip/*/auto_version.h
@@ -50,7 +48,6 @@ bsp/rockchip/tools/log
 bsp/rockchip/swallow
 bsp/rockchip/pisces
 components/hifi3
-components/hifi4
 components/rknpu
 third_party/audio/audio_server/source
 applications/wearable
