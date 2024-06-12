@@ -97,6 +97,9 @@ SECTIONS
     .ARM.exidx   :
     {
         *(.ARM.exidx* .gnu.linkonce.armexidx.*)
+
+        /* This is used by the startup in order to initialize the .data secion */
+        _sidata = .;
     } > DDR
     __exidx_end = .;
 
@@ -133,6 +136,9 @@ SECTIONS
         PROVIDE(__ctors_start__ = .);
         KEEP(*(SORT(.ctors.*)))
         KEEP(*(.ctors))
+        /* new GCC version uses .init_array */
+        KEEP (*(SORT(.init_array.*)))
+        KEEP (*(.init_array))
         PROVIDE(__ctors_end__ = .);
     } > DDR
 
