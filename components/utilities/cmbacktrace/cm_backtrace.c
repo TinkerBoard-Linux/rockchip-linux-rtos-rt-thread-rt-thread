@@ -721,7 +721,7 @@ exit:
     rt_console_set_output_hook(hook);
 }
 
-static int forward_log(void)
+static void forward_log(void *parameter)
 {
     rt_device_t dev;
     rt_err_t ret;
@@ -735,9 +735,19 @@ static int forward_log(void)
     int last, cur, fd = -1;
     char file_path[32];
     char old_path[32];
+    int retry = 0;
 
-    /* found log size from last sector of flash*/
-    dev = rt_device_find(PKG_CMBACKTRACE_FLASH_PARTITION_NAME);
+    /* found log size from last sector of flash */
+    while (retry++ < 10) {
+        dev = rt_device_find(PKG_CMBACKTRACE_FLASH_PARTITION_NAME);
+        if (dev == RT_NULL) {
+            rt_thread_mdelay(100);
+        }
+        else {
+            break;
+        }
+    }
+
     if (dev == RT_NULL) {
         goto exit;
     }
@@ -864,11 +874,23 @@ exit:
         close(fd);
     }
     memset(log_buf, 0, sizeof(log_buf));
+}
+
+int forward_thread_init(void)
+{
+    rt_thread_t tid;
+
+    tid = rt_thread_create("forward", forward_log, RT_NULL,
+                           2048, RT_THREAD_PRIORITY_MAX - 2, 20);
+    RT_ASSERT(tid != RT_NULL);
+
+    rt_kprintf("create forward thread\n");
+    rt_thread_startup(tid);
 
     return RT_EOK;
 }
 
-INIT_APP_EXPORT(forward_log);
+INIT_APP_EXPORT(forward_thread_init);
 #endif
 
 static void dump_thread_call_stack(uint32_t sp, uint32_t stack_addr, uint32_t stack_len)
