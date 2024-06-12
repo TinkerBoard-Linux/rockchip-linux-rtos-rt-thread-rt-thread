@@ -1136,8 +1136,8 @@ int rt_hw_spinand_init(void)
     struct dfs_partition part;
     int32_t ret, i;
     uint32_t block_size;
-#ifdef RT_USING_DHARA
     uint32_t block_reserved;
+#ifdef RT_USING_DHARA
     struct dhara_device *dhara_dev;
     uint32_t root_part_offset = DHARA_DEFAULT_OFFSET;
     uint32_t root_part_size = 0xFFFFFFFF;
@@ -1263,8 +1263,8 @@ int rt_hw_spinand_init(void)
         }
     }
 #if defined(RT_ROOT_PART_OFFSET) && defined(RT_ROOT_PART_SIZE)
-    dhara_dev->nand.start_blocks = RT_ROOT_PART_OFFSET / block_size;
-    dhara_dev->nand.num_blocks = RT_ROOT_PART_SIZE / block_size;
+    dhara_dev->nand.start_blocks = RT_ROOT_PART_OFFSET * 512 / block_size;
+    dhara_dev->nand.num_blocks = RT_ROOT_PART_SIZE * 512 / block_size;
 #endif
 
     dhara_dev->nand.log2_page_size = __rt_ffs(mtd_dev->page_size) - 1;
