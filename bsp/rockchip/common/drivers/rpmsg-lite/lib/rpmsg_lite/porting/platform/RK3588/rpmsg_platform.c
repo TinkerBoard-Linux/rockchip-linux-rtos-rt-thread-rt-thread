@@ -241,8 +241,9 @@ int32_t platform_deinit_interrupt(uint32_t vector_id)
 
 void platform_notify(uint32_t vector_id)
 {
-    uint32_t link_id;
+    uint32_t link_id, timeout = 0;
     struct MBOX_CMD_DAT tx_msg;
+    HAL_Status ret = HAL_ERROR;
 #ifdef RL_PLATFORM_USING_MBOX
 #ifndef HAL_AP_CORE
     uint32_t ch_id;
@@ -258,15 +259,32 @@ void platform_notify(uint32_t vector_id)
 
     env_lock_mutex(platform_lock);
 
+    timeout = HAL_GetTick() + 500;  /* 500mS */
+
+    do
+    {
 #ifdef RL_PLATFORM_USING_MBOX
 #ifdef HAL_AP_CORE
-    HAL_MBOX_SendMsg(rl_pMBox, RL_GET_R_CPU_ID(vector_id), &tx_msg);
+        ret = HAL_MBOX_SendMsg(rl_pMBox, RL_GET_R_CPU_ID(vector_id), &tx_msg);
 #else
-    platform_cache_all_flush_invalidate();
-    HAL_MBOX_SendMsg(rl_pMBox, ch_id, &tx_msg);
+        platform_cache_all_flush_invalidate();
+        ret = HAL_MBOX_SendMsg(rl_pMBox, ch_id, &tx_msg);
 #endif
 #endif /* RL_PLATFORM_USING_MBOX */
+        if (ret == HAL_OK)
+        {
+            goto out;
+        }
+        else if (ret != HAL_BUSY)
+        {
+            printf("error: %s %d: Send MBOX Msg failed\n", __func__, __LINE__);
+            goto out;
+        }
+    }
+    while (timeout > HAL_GetTick());
 
+    printf("error: %s %d: timeout for Send MBOX Msg (id = %x)\n", __func__, __LINE__, vector_id);
+out:
     env_unlock_mutex(platform_lock);
 }
 
