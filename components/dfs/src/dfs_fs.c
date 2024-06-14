@@ -251,6 +251,19 @@ const char *dfs_filesystem_get_mounted_path(struct rt_device *device)
     return path;
 }
 
+void utf16le_to_ascii(char* ascii_str, const char* utf16le_str, int n) {
+    int i = 0;
+
+    while (*utf16le_str || *(utf16le_str + 1)) {
+        if (++i >= n)
+            break;
+
+        *ascii_str++ = *utf16le_str;
+        utf16le_str += 2;
+    }
+    *ascii_str = '\0';
+}
+
 /**
  * this function will fetch the GPT partition table on specified buffer.
  *
@@ -289,11 +302,11 @@ static int dfs_filesystem_get_gpt_partition(struct dfs_partition *part,
     gpt_ent = (gpt_entry *)(&buf[index]);
 
     /* get partition info for gpt entry */
-    rt_strncpy(part->name, (char *)gpt_ent->partition_name, sizeof(part->name));
+    utf16le_to_ascii(part->name, (const char *)gpt_ent->partition_name, sizeof(part->name));    /* the name of gpt partition is unicode, do not use strcpy */
     part->type = 0x0B;
     part->offset = gpt_ent->starting_lba;
     part->size = gpt_ent->ending_lba - gpt_ent->starting_lba;
-    rt_kprintf("pindex=%d, name=%s, offset=%d, size=%d\n", pindex, gpt_ent->partition_name, part->offset, part->size);
+    rt_kprintf("pindex=%d, name=%s, offset=%d, size=%d\n", pindex, part->name, part->offset, part->size);
 
     if (part->size != 0)
         return RT_EOK;

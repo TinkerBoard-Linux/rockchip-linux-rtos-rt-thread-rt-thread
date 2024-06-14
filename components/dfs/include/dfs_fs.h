@@ -59,7 +59,7 @@ struct dfs_filesystem
 /* file system partition table */
 struct dfs_partition
 {
-    char name[RT_NAME_MAX];  /* the name of partition */
+    char name[72];       /* the name of partition, there are 72 bytes for GPT, 32 bytes for RK partition */
     uint8_t type;        /* file system type */
     off_t  offset;       /* partition start offset */
     size_t size;         /* partition size */
