@@ -1,3 +1,9 @@
+/**
+  * Copyright (c) 2024 Rockchip Electronics Co., Ltd
+  *
+  * SPDX-License-Identifier: Apache-2.0
+  */
+
 #ifndef _MEM_LAYOUT_H_
 #define _MEM_LAYOUT_H_
 
