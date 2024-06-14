@@ -71,6 +71,10 @@ SRAM_DSP0_BASE         = (SRAM_CPU0_RTT_BASE + SRAM_CPU0_RTT_SIZE);
 SRAM_DSP1_BASE         = (SRAM_DSP0_BASE + SRAM_DSP0_SIZE);
 SRAM_DSP2_BASE         = (SRAM_DSP1_BASE + SRAM_DSP1_SIZE);
 SRAM_SPI2APB_BASE      = (SRAM_DSP2_BASE + SRAM_DSP2_SIZE);
+SRAM_END               = (SRAM_SPI2APB_BASE + SRAM_SPI2APB_SIZE);
+
+ASSERT(SRAM_END <= 0x30300000, "SRAM overflow")
+ASSERT(SRAM_SPI2APB_BASE == 0x302FF000, "the addr for spi2apb must be 0x302ff000")
 
 /* -------------------------------------------------------------------------- */
 /* DRAM Memory Layout                                                         */
