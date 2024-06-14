@@ -70,5 +70,6 @@ config RT_USING_HIFI4
 source "$RTT_DIR/components/hifi4/samples/rk2118/Kconfig"
 source "$RTT_DIR/components/hifi4/rtt/app/Kconfig"
 source "$RTT_DIR/components/hifi4/rtt/codecs/Kconfig"
+source "$RTT_DIR/components/hifi4/rtt/rkstudio_comm/Kconfig"
 source "$RTT_DIR/components/hifi4/rtt/rkstudio_parser/Kconfig"
 endmenu
