@@ -76,12 +76,12 @@ void rt_hw_spin_lock(rt_hw_spinlock_t *lock)
         : "=&r" (lock_val), "=&r" (new_lockval), "=&r" (tmp), "+Q" (*lock)
         : "Q" (lock->tickets.owner), "I" (1 << 16)
         : "memory");
-    __DMB();
+    rt_hw_dmb();
 }
 
 void rt_hw_spin_unlock(rt_hw_spinlock_t *lock)
 {
-    __DMB();
+    rt_hw_dmb();
     __asm__ volatile (
         "stlrh   %w1, %0\n"
         : "=Q" (lock->tickets.owner)
