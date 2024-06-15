@@ -140,7 +140,7 @@ cpu_in_el1:
     msr     sctlr_el1, x1
 
 #ifdef RT_USING_SMP
-    ldr     x1, =_start
+    ldr     x1, =__stack_top
     cmp     sp, x1
     bne     secondary_cpu_c_start
 #endif /* RT_USING_SMP */
