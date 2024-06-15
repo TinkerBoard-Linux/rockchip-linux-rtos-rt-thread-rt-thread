@@ -14,6 +14,8 @@
 
 #include "board.h"
 #include "mmu.h"
+#include "interrupt.h"
+#include "gicv3.h"
 #include "hal_base.h"
 #include "hal_bsp.h"
 #include "drv_heap.h"
@@ -218,4 +220,65 @@ void rt_hw_board_init(void)
 #ifdef RT_USING_COMPONENTS_INIT
     rt_components_board_init();
 #endif
+
+#ifdef RT_USING_SMP
+    /* install IPI handle */
+    rt_hw_ipi_handler_install(RT_SCHEDULE_IPI, rt_scheduler_ipi_handler);
+#endif
+
 }
+
+#if defined(RT_USING_SMP)
+#include "psci.h"
+
+/* The more common mpidr_el1 table, redefine it in BSP if it is in other cases */
+rt_uint64_t rt_cpu_mpidr_early[] =
+{
+    [0] = 0x81000000,
+    [1] = 0x81000100,
+    [2] = 0x81000200,
+    [3] = 0x81000300,
+    [4] = 0x81000400,
+    [5] = 0x81000500,
+    [6] = 0x81000600,
+    [7] = 0x81000700,
+    [RT_CPUS_NR] = 0
+};
+
+void rt_hw_secondary_cpu_up(void)
+{
+    int i;
+    extern void secondary_cpu_start(void);
+    extern rt_uint64_t rt_cpu_mpidr_early[];
+
+    /* TODO: Fix cpu1 und exception */
+    for (i = 1; i < RT_CPUS_NR; ++i)
+    {
+        HAL_CPUDelayUs(10000);
+        arm_psci_cpu_on(rt_cpu_mpidr_early[i], (rt_ubase_t)(secondary_cpu_start));
+    }
+}
+
+void secondary_cpu_c_start(void)
+{
+    rt_hw_mmu_init();
+    rt_hw_spin_lock(&_cpus_lock);
+
+    arm_gic_cpu_init(0, platform_get_gic_cpu_base());
+#ifdef BSP_USING_GICV3
+    arm_gic_redist_init(0, platform_get_gic_redist_base());
+#endif
+    rt_hw_vector_init();
+    generic_timer_config();
+    arm_gic_umask(0, RT_SCHEDULE_IPI);
+
+    rt_kprintf("\rcall cpu %d on success\n", rt_hw_cpu_id());
+
+    rt_system_scheduler_start();
+}
+
+void rt_hw_secondary_cpu_idle_exec(void)
+{
+    __WFE();
+}
+#endif

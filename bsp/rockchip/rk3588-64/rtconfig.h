@@ -8,6 +8,8 @@
 
 #define RT_USING_CORE_RTTHREAD
 #define RT_NAME_MAX 8
+#define RT_USING_SMP
+#define RT_CPUS_NR 8
 #define RT_ALIGN_SIZE 4
 #define RT_THREAD_PRIORITY_32
 #define RT_THREAD_PRIORITY_MAX 32
@@ -18,6 +20,7 @@
 #define RT_USING_IDLE_HOOK
 #define RT_IDLE_HOOK_LIST_SIZE 4
 #define IDLE_THREAD_STACK_SIZE 2048
+#define SYSTEM_THREAD_STACK_SIZE 2048
 
 /* kservice optimization */
 
@@ -61,7 +64,7 @@
 
 #define RT_USING_COMPONENTS_INIT
 #define RT_USING_USER_MAIN
-#define RT_MAIN_THREAD_STACK_SIZE 4096
+#define RT_MAIN_THREAD_STACK_SIZE 2048
 #define RT_MAIN_THREAD_PRIORITY 10
 #define RT_USING_MSH
 #define RT_USING_FINSH
@@ -122,6 +125,31 @@
 
 /* RT-Thread Utestcases */
 
+
+/* RT-Thread third party package */
+
+
+/* Bluetooth */
+
+
+/* examples bluetooth */
+
+/* Bluetooth examlpes */
+
+/* Example 'BT API TEST' Config */
+
+
+/* Example 'BT DISCOVERY' Config */
+
+
+/* Example 'A2DP SINK' Config */
+
+
+/* Example 'A2DP SOURCE' Config  */
+
+
+/* Example 'HFP CLIENT' Config */
+
 #define BSP_RK3588
 #define RT_USING_FPU
 
@@ -175,6 +203,12 @@
 
 /* RT-Thread rockchip RPMSG driver */
 
+
+/* Enable FTL */
+
+
+/* RT-Thread rockchip USB Host driver */
+
 /* RT-Thread rockchip RK3588 drivers */
 
 
@@ -187,6 +221,7 @@
 
 /* Enable GMAC */
 
+#define RT_USING_SYSTICK
 
 /* Enable UART */
 
@@ -208,9 +243,7 @@
 
 /* RT-Thread third party package */
 
-
 /* Bluetooth */
-
 
 /* examples bluetooth */
 
@@ -218,15 +251,11 @@
 
 /* Example 'BT API TEST' Config */
 
-
 /* Example 'BT DISCOVERY' Config */
-
 
 /* Example 'A2DP SINK' Config */
 
-
 /* Example 'A2DP SOURCE' Config  */
-
 
 /* Example 'HFP CLIENT' Config */
 
