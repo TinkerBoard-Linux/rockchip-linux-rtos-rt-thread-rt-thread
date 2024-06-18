@@ -89,6 +89,6 @@ if PLATFORM == 'gcc':
 
     CXXFLAGS = CFLAGS
 
-DUMP_ACTION = OBJDUMP + ' -D -S $TARGET > rtt.asm\n'
-POST_ACTION = OBJCPY + ' -O binary $TARGET rtthread.bin\n' + SIZE + ' $TARGET \n'
+    DUMP_ACTION = OBJDUMP + ' -D -S $TARGET > rtt.asm\n'
+    POST_ACTION = OBJCPY + ' -O binary $TARGET rtthread.bin\n' + SIZE + ' $TARGET \n'
 
