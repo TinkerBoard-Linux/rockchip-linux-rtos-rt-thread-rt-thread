@@ -126,7 +126,7 @@ static struct GIC_IRQ_AMP_CTRL irqConfig =
 {
     .cpuAff = CPU_GET_AFFINITY(0, 0),
     .defPrio = 0xd0,
-    .defRouteAff = CPU_GET_AFFINITY(3, 0),
+    .defRouteAff = CPU_GET_AFFINITY(0, 0),
     .irqsCfg = &irqsConfig[0],
 };
 #endif
