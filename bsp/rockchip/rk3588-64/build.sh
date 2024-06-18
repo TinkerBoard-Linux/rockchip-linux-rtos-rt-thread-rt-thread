@@ -12,14 +12,22 @@ usage() {
 
 # TODO: Please plan the memory according to the actual needs of the project.
 # Requiring 2M alignment.
-CPU0_MEM_BASE=0x02000000
+CPU0_MEM_BASE=0x04000000
 CPU1_MEM_BASE=0x00800000
 CPU2_MEM_BASE=0x01000000
 CPU3_MEM_BASE=0x01800000
+CPU4_MEM_BASE=0x02000000
+CPU5_MEM_BASE=0x02800000
+CPU6_MEM_BASE=0x03000000
+CPU7_MEM_BASE=0x03800000
 CPU0_MEM_SIZE=0x00800000
 CPU1_MEM_SIZE=0x00800000
 CPU2_MEM_SIZE=0x00800000
 CPU3_MEM_SIZE=0x00800000
+CPU4_MEM_SIZE=0x00800000
+CPU5_MEM_SIZE=0x00800000
+CPU6_MEM_SIZE=0x00800000
+CPU7_MEM_SIZE=0x00800000
 
 make_rtt() {
     export RTT_PRMEM_BASE=$(eval echo \$CPU$1_MEM_BASE)
@@ -37,9 +45,16 @@ make_rtt() {
 }
 
 case $1 in
-    0|1|2|3) make_rtt $1 ;;
-    all) make_rtt 0; make_rtt 1; make_rtt 2; make_rtt 3 ;;
-    *) usage; exit ;;
+    0|1|2|3|4|5|6|7)
+        make_rtt $1
+        ;;
+    all)
+        for i in {0..7};
+            do make_rtt $i;
+        done
+        ;;
+    *)
+        usage; exit ;;
 esac
 
 #./mkimage.sh

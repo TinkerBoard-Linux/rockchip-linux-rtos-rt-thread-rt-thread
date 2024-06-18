@@ -19,7 +19,7 @@
 			cpu          = <0x000>;  // mpidr
 			thumb        = <0>;      // 0: arm or thumb2; 1: thumb
 			hyp          = <0>;      // 0: el1/svc; 1: el2/hyp
-			load         = <0x02000000>;
+			load         = <0x04000000>;
 			size         = <0x00800000>;
 			srambase     = <0xff000000>;
 			sramsize     = <0x00100000>;
@@ -32,8 +32,8 @@
 	};
 
 	share_memory {
-		base         = <0x02f00000>;
-		size         = <0x00100000>;
+		base         = <0x07800000>;
+		size         = <0x00400000>;
 	};
 
 	configurations {
