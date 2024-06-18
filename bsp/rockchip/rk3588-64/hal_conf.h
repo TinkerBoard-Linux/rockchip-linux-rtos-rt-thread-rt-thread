@@ -39,7 +39,7 @@
 
 #ifdef HAL_GIC_MODULE_ENABLED
 #define HAL_GIC_AMP_FEATURE_ENABLED
-#define HAL_GIC_WAIT_LINUX_INIT_ENABLED
+//#define HAL_GIC_WAIT_LINUX_INIT_ENABLED
 #endif
 
 #ifdef RT_USING_CRU
@@ -98,6 +98,8 @@
 #define HAL_DBG_WRN_ON
 #define HAL_DBG_ERR_ON
 #define HAL_ASSERT_ON
+
+#define HAL_SHARED_DEBUG_UART_LOCK_ID (0U)
 
 #endif
 
