@@ -163,8 +163,11 @@ void rt_hw_board_init(void)
     /* HAL_Init */
     HAL_Init();
 
-    /* hal bsp init */
+    /* HAL bsp init */
     BSP_Init();
+
+    /* HAL spinlock init */
+    HAL_SPINLOCK_Init(HAL_CPU_TOPOLOGY_GetCurrentCpuId() + 1);
 
     /* initialize hardware interrupt */
 #ifdef HAL_GIC_MODULE_ENABLED
