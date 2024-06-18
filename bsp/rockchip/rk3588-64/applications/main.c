@@ -26,7 +26,13 @@ void config_freq(void)
 
 int main(int argc, char **argv)
 {
-    rt_kprintf("Hello RK3588 RT-Thread! CPU_ID\n");
+#ifdef RT_USING_SMP
+    rt_kprintf("Hello RK3588 RT-Thread!\n");
+#else
+    uint32_t cpu_id = HAL_CPU_TOPOLOGY_GetCurrentCpuId();
+
+    rt_kprintf("Hello RK3588 RT-Thread! CPU_ID=%d\n", cpu_id);
+#endif
 
     return RT_EOK;
 }
