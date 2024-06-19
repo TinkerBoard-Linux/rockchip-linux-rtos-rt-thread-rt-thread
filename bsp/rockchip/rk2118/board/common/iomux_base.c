@@ -221,6 +221,15 @@ RT_WEAK  void spi2_iomux_config(void)
     HAL_PINCTRL_SetIOMUX(GPIO_BANK3,
                          GPIO_PIN_A4,   // SPI2_CRQ
                          PIN_CONFIG_MUX_FUNC0);
+
+    HAL_PINCTRL_SetParam(GPIO_BANK3,
+                         GPIO_PIN_A0,   // SPI2_CLK
+                         PIN_CONFIG_DRV_LEVEL2);
+    HAL_PINCTRL_SetParam(GPIO_BANK3,
+                         GPIO_PIN_A1 |  // SPI2_CSN0
+                         GPIO_PIN_A2 |  // SPI2_MOSI
+                         GPIO_PIN_A3,   // SPI2_MISO
+                         PIN_CONFIG_DRV_LEVEL3);
 }
 
 /**
