@@ -1,6 +1,6 @@
+/* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright (C) 2022 Fuzhou Rockchip Electronics Co., Ltd
- * SPDX-License-Identifier: GPL-2.0
+ * Copyright (c) 2024 Rockchip Electronics Co., Ltd.
  */
 
 /dts-v1/;
@@ -14,11 +14,14 @@
 			data         = /incbin/("rtt3.bin");
 			type         = "firmware";
 			compression  = "none";
-			arch         = "arm";
-			cpu          = <0x300>;
-			thumb        = <0>;
-			hyp          = <0>;
+			arch         = "arm64";	 // "arm64" or "arm"
+			cpu          = <0x300>;  // mpidr
+			thumb        = <0>;      // 0: arm or thumb2; 1: thumb
+			hyp          = <0>;      // 0: el1/svc; 1: el2/hyp
 			load         = <0x01800000>;
+			size         = <0x00800000>;
+			srambase     = <0xff000000>;
+			sramsize     = <0x00100000>;
 			udelay       = <10000>;
 			hash {
 				algo = "sha256";
@@ -50,6 +53,8 @@
 				cpu          = <0x000>;
 				thumb        = <0>;
 				hyp          = <0>;
+				load         = <0x02100000>;
+				load_c       = <0x05480000>;
 				udelay       = <0>;
 			};
 		};
