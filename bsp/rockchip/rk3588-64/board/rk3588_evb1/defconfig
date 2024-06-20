@@ -408,10 +408,7 @@ CONFIG_RT_BOARD_NAME="rk3588_evb1"
 # Enable CAN
 #
 CONFIG_RT_USING_CRU=y
-CONFIG_RT_USING_DMA=y
-CONFIG_RT_USING_DMA_PL330=y
-CONFIG_RT_USING_DMA0=y
-# CONFIG_RT_USING_DMA1 is not set
+# CONFIG_RT_USING_DMA is not set
 
 #
 # Enable GMAC
@@ -439,7 +436,6 @@ CONFIG_RT_USING_UART5=y
 #
 # Audio Interfaces
 #
-CONFIG_RT_USING_PCM=y
 
 #
 # RT-Thread bsp test case
