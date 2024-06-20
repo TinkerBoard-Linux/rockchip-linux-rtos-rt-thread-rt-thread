@@ -113,11 +113,19 @@ static struct GIC_AMP_IRQ_INIT_CFG irqsConfig[] =
     /* TODO: Config the irqs here. */
 
     /* TODO: By default, UART2 is used for master core CPU0, and UART5 is used for remote core CPU3 */
+#ifdef RT_USING_UART2
     GIC_AMP_IRQ_CFG_ROUTE(UART2_IRQn, 0xd0, CPU_GET_AFFINITY(0, 0)),
+#endif
+#ifdef RT_USING_UART5
     GIC_AMP_IRQ_CFG_ROUTE(UART5_IRQn, 0xd0, CPU_GET_AFFINITY(3, 0)),
+#endif
     /* DMAC0 for I2S0/I2S1 and DMAC1 for I2S2/I2S3 */
+#ifdef RT_USING_RT_USING_DMA0
     GIC_AMP_IRQ_CFG_ROUTE(DMAC0_IRQn, 0xd0, CPU_GET_AFFINITY(3, 0)),
+#endif
+#ifdef RT_USING_RT_USING_DMA1
     GIC_AMP_IRQ_CFG_ROUTE(DMAC1_IRQn, 0xd0, CPU_GET_AFFINITY(3, 0)),
+#endif
 #ifdef HAL_GIC_WAIT_LINUX_INIT_ENABLED
     /* route tick to cpu3 when GIC init by linux */
     GIC_AMP_IRQ_CFG_ROUTE(TICK_IRQn, 0xd0, CPU_GET_AFFINITY(3, 0)),
