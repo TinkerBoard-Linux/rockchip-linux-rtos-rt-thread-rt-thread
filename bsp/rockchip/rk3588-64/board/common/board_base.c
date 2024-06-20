@@ -118,6 +118,10 @@ static struct GIC_AMP_IRQ_INIT_CFG irqsConfig[] =
     /* DMAC0 for I2S0/I2S1 and DMAC1 for I2S2/I2S3 */
     GIC_AMP_IRQ_CFG_ROUTE(DMAC0_IRQn, 0xd0, CPU_GET_AFFINITY(3, 0)),
     GIC_AMP_IRQ_CFG_ROUTE(DMAC1_IRQn, 0xd0, CPU_GET_AFFINITY(3, 0)),
+#ifdef HAL_GIC_WAIT_LINUX_INIT_ENABLED
+    /* route tick to cpu3 when GIC init by linux */
+    GIC_AMP_IRQ_CFG_ROUTE(TICK_IRQn, 0xd0, CPU_GET_AFFINITY(3, 0)),
+#endif
 
     GIC_AMP_IRQ_CFG_ROUTE(0, 0, CPU_GET_AFFINITY(0, 0)),   /* sentinel */
 };
@@ -175,19 +179,6 @@ void rt_hw_board_init(void)
 #endif
     rt_hw_interrupt_init();
 
-    /* tick init */
-    HAL_SetTickFreq(1000 / RT_TICK_PER_SECOND);
-
-#ifdef RT_USING_SYSTICK
-    generic_timer_config();
-#else
-    rt_hw_interrupt_install(TICK_IRQn, tick_isr, RT_NULL, "tick");
-    rt_hw_interrupt_umask(TICK_IRQn);
-    HAL_TIMER_Init(TICK_TIMER, TIMER_FREE_RUNNING);
-    HAL_TIMER_SetCount(TICK_TIMER, (PLL_INPUT_OSC_RATE / RT_TICK_PER_SECOND) - 1);
-    HAL_TIMER_Start_IT(TICK_TIMER);
-#endif
-
 #ifdef RT_USING_PIN
     rt_hw_iomux_config();
 #endif
@@ -199,6 +190,19 @@ void rt_hw_board_init(void)
 
 #ifdef RT_USING_CONSOLE
     rt_console_set_device(RT_CONSOLE_DEVICE_NAME);
+#endif
+
+    /* tick init */
+    HAL_SetTickFreq(1000 / RT_TICK_PER_SECOND);
+
+#ifdef RT_USING_SYSTICK
+    generic_timer_config();
+#else
+    rt_hw_interrupt_install(TICK_IRQn, tick_isr, RT_NULL, "tick");
+    rt_hw_interrupt_umask(TICK_IRQn);
+    HAL_TIMER_Init(TICK_TIMER, TIMER_FREE_RUNNING);
+    HAL_TIMER_SetCount(TICK_TIMER, (PLL_INPUT_OSC_RATE / RT_TICK_PER_SECOND) - 1);
+    HAL_TIMER_Start_IT(TICK_TIMER);
 #endif
 
 #ifdef RT_USING_HEAP
