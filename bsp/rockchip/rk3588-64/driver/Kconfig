@@ -162,7 +162,6 @@ menu "Audio Interfaces"
     config RT_USING_PCM
         bool
         select RT_USING_DMA
-        default y
 endmenu
 endmenu
 endmenu
