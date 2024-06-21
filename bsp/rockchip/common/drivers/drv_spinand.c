@@ -1207,14 +1207,19 @@ int rt_hw_spinand_init(void)
         }
     }
 
-    spinand->pageBuf = rt_calloc(1, spinand->secPerPage * SPINAND_SECTOR_FULL_SIZE);
+    spinand->pageBuf = rt_calloc(1, 2 * spinand->secPerPage * SPINAND_SECTOR_SIZE);
     RT_ASSERT(spinand->pageBuf);
     ret = HAL_SPINAND_ReadPageRaw(spinand, 0, spinand->pageBuf, RT_FALSE);
     if (ret >= 0)
     {
+        ret = HAL_SPINAND_ReadPageRaw(spinand, 1, (uint8_t *)(spinand->pageBuf) +
+                                      spinand->secPerPage * SPINAND_SECTOR_SIZE, RT_FALSE);
+    }
+    if (ret >= 0)
+    {
         for (i = 0; i < RK_PARTITION_MAX_PARTITION; i++)
         {
-            ret = dfs_filesystem_get_partition(&part, (uint8_t *)(spinand->pageBuf), 4, i);
+            ret = dfs_filesystem_get_partition(&part, (uint8_t *)(spinand->pageBuf), 8, i);
             if (ret == RT_EOK)
             {
                 dhara_dbg("part%d type=%x off=%x size=%x\n", i, part.type, part.offset, part.size);
