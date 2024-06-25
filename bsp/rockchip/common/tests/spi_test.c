@@ -20,6 +20,7 @@
 #include <stdbool.h>
 #include <drivers/spi.h>
 #include "hal_base.h"
+#include "drv_spi.h"
 
 struct spi_test_data
 {
@@ -311,6 +312,7 @@ void spi_test(int argc, char **argv)
         cfg.data_width = data->data_width;
         cfg.mode = data->mode | data->spi_mode | data->bit_first;
         cfg.max_hz = data->max_speed_hz;
+        spi_device->config.reserved = RK_SPI_RESERVED_RSD_0;
         rt_spi_configure(spi_device, &cfg);
 
         rt_kprintf("spi %s, mode%d, %s, %dHz speed, data_width=%d\n",

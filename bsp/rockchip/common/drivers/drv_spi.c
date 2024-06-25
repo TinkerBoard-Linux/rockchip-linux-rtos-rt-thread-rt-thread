@@ -36,6 +36,7 @@
 #include "hal_base.h"
 #include "drv_clock.h"
 #include "drv_pm.h"
+#include "drv_spi.h"
 #include "dma.h"
 #include "hal_bsp.h"
 
@@ -230,6 +231,9 @@ static rt_err_t rockchip_spi_configure(struct rt_spi_device *device,
         return RT_EOK;
     }
 
+    /* RSD */
+    pSPIConfig->rsd = CR0_RSD(configuration->reserved & RK_SPI_RESERVED_RSD_MASK);
+
     pSPIConfig->speed = configuration->max_hz;
     if (pSPIConfig->opMode == CR0_OPM_MASTER)
     {
@@ -269,7 +273,9 @@ static rt_err_t rockchip_spi_configure(struct rt_spi_device *device,
     }
     pSPI->config.configured = false;
 
-    spi_dbg(pSPI, "SPI SCLK %dHz, speed %dHz\n", pSPI->maxFreq, pSPIConfig->speed);
+    spi_dbg(&spi->bus.parent, "SPI SCLK %dHz, speed %dHz, width=%d, mode=%x, resersved=%x\n",
+            pSPI->maxFreq, pSPIConfig->speed,
+            configuration->data_width, configuration->mode, configuration->reserved);
     rt_mutex_release(&spi->spi_lock);
 
     return RT_EOK;
